@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -32,7 +32,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Web;
 using System.Xml;
-
+using ASC.Common.Logging;
 using ASC.Core;
 using ASC.Web.Core.Files;
 
@@ -119,7 +119,7 @@ namespace ASC.Web.Studio.Core
             }
             catch (Exception e)
             {
-                log4net.LogManager.GetLogger("ASC").Error("DebugInfo", e);
+                LogManager.GetLogger("ASC").Error("DebugInfo", e);
             }
 
             return "";
@@ -165,7 +165,7 @@ namespace ASC.Web.Studio.Core
                 }
                 catch (Exception e)
                 {
-                    log4net.LogManager.GetLogger("ASC").Error("DebugInfo", e);
+                    LogManager.GetLogger("ASC").Error("DebugInfo", e);
                 }
 
                 return "";

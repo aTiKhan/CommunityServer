@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -71,7 +71,7 @@ namespace ASC.Web.UserControls.Bookmarking.Common
         protected override void OnPreRender(EventArgs e)
         {
             base.OnPreRender(e);
-            Page.RegisterBodyScripts("~/products/community/modules/bookmarking/UserControls/Common/ActionButton/js/actionbutton.js");
+            Page.RegisterBodyScripts("~/Products/Community/Modules/Bookmarking/UserControls/Common/ActionButton/js/actionbutton.js");
         }
     }
 }

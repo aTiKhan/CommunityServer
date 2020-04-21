@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -199,6 +199,11 @@ namespace ASC.Core
             if (u.ID == Guid.Empty) SecurityContext.DemandPermissions(Constants.Action_AddRemoveUser);
             else SecurityContext.DemandPermissions(new UserSecurityProvider(u.ID), Constants.Action_EditUser);
 
+            if (Constants.MaxEveryoneCount <= GetUsersByGroup(Constants.GroupEveryone.ID).Length)
+            {
+                throw new TenantQuotaException("Maximum number of users exceeded");
+            }
+
             if (u.Status == EmployeeStatus.Active)
             {
                 var q = CoreContext.TenantManager.GetTenantQuota(CoreContext.TenantManager.GetCurrentTenant().TenantId);
@@ -206,6 +211,11 @@ namespace ASC.Core
                 {
                     throw new TenantQuotaException(string.Format("Exceeds the maximum active users ({0})", q.ActiveUsers));
                 }
+            }
+
+            if (u.Status == EmployeeStatus.Terminated && u.ID == CoreContext.TenantManager.GetCurrentTenant().OwnerId)
+            {
+                throw new InvalidOperationException("Can not disable tenant owner.");
             }
 
             var newUser = userService.SaveUser(CoreContext.TenantManager.GetCurrentTenant().TenantId, u);
@@ -237,6 +247,11 @@ namespace ASC.Core
         {
             if (IsSystemUser(id)) return null;
             return userService.GetUserPhoto(CoreContext.TenantManager.GetCurrentTenant().TenantId, id);
+        }
+
+        public IEnumerable<Guid> GetUserGroupsId(Guid id)
+        {
+            return GetUsers(id).GetUserGroupsId();
         }
 
         public GroupInfo[] GetUserGroups(Guid id)
@@ -286,6 +301,30 @@ namespace ASC.Core
             result.Sort((group1, group2) => String.Compare(group1.Name, group2.Name, StringComparison.Ordinal));
 
             return result.ToArray();
+        }
+
+        internal IEnumerable<Guid> GetUserGroupsGuids(Guid userID)
+        {
+            var result = new List<Guid>();
+
+            var refs = GetRefsInternal();
+
+            var store = refs as UserGroupRefStore;
+            if (store != null)
+            {
+                var userRefs = store.GetRefsByUser(userID);
+
+                if (userRefs != null)
+                {
+                    var toAdd = userRefs.Where(r => !r.Removed && 
+                        r.RefType == UserGroupRefType.Contains && 
+                        !Constants.BuildinGroups.Any(g => g.ID.Equals(r.GroupId)))
+                        .Select(r => r.GroupId);
+                    result.AddRange(toAdd);
+                }
+            }
+
+            return result;
         }
 
         public bool IsUserInGroup(Guid userId, Guid groupId)

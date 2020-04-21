@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -32,9 +32,9 @@ using ASC.ActiveDirectory.Base.Data;
 using ASC.ActiveDirectory.Base.Expressions;
 using ASC.ActiveDirectory.Base.Settings;
 using ASC.ActiveDirectory.ComplexOperations;
+using ASC.Common.Logging;
 using ASC.Core;
 using ASC.Core.Users;
-using log4net;
 // ReSharper disable RedundantToStringCall
 
 namespace ASC.ActiveDirectory.Base
@@ -48,7 +48,7 @@ namespace ASC.ActiveDirectory.Base
         public Dictionary<LdapObject, LdapSettingsStatus> AllSkipedDomainGroups { get; private set; }
 
         private string _ldapDomain;
-        private static readonly string UnknownDomain = ConfigurationManager.AppSettings["ldap.domain"] ?? "unknown";
+        private static readonly string UnknownDomain = ConfigurationManager.AppSettings["ldap.domain"] ?? "LDAP";
 
         public string LDAPDomain {
             get
@@ -91,7 +91,7 @@ namespace ASC.ActiveDirectory.Base
 
             Resource = resource;
 
-            _log = LogManager.GetLogger(typeof(LdapUserImporter));
+            _log = LogManager.GetLogger("ASC");
 
             _watchedNestedGroups = new List<string>();
         }
@@ -321,7 +321,10 @@ namespace ASC.ActiveDirectory.Base
             List<LdapObject> ldapUserGroupList;
 
             if (!TryGetLdapUserGroups(ldapUser, out ldapUserGroupList))
+            {
+                _log.DebugFormat("TrySyncUserGroupMembership(username: '{0}' sid: '{1}') no ldap groups found", userInfo.UserName, ldapUser.Sid);
                 return false;
+            }
 
             if (!LdapHelper.IsConnected)
                 LdapHelper.Connect();
@@ -339,27 +342,26 @@ namespace ASC.ActiveDirectory.Base
 
                 if (Equals(groupInfo, Constants.LostGroupInfo))
                 {
+                    _log.DebugFormat("TrySyncUserGroupMembership(groupname: '{0}' sid: '{1}') no portal group found, creating", ldapUserGroup.DistinguishedName, ldapUserGroup.Sid);
                     groupInfo = CoreContext.UserManager.SaveGroupInfo(ldapUserGroup.ToGroupInfo(Settings, _log));
 
+                    _log.DebugFormat("TrySyncUserGroupMembership(username: '{0}' sid: '{1}') adding user to group (groupname: '{2}' sid: '{3}')", userInfo.UserName, ldapUser.Sid, groupInfo.Name, groupInfo.Sid);
                     CoreContext.UserManager.AddUserIntoGroup(userInfo.ID, groupInfo.ID);
-
-                    actualPortalLdapGroups.Add(groupInfo);
                 }
                 else if (!portalUserLdapGroups.Contains(groupInfo))
                 {
+                    _log.DebugFormat("TrySyncUserGroupMembership(username: '{0}' sid: '{1}') adding user to group (groupname: '{2}' sid: '{3}')", userInfo.UserName, ldapUser.Sid, groupInfo.Name, groupInfo.Sid);
                     CoreContext.UserManager.AddUserIntoGroup(userInfo.ID, groupInfo.ID);
-
-                    actualPortalLdapGroups.Add(groupInfo);
                 }
-            }
 
-            if (!actualPortalLdapGroups.Any())
-                return true;
+                actualPortalLdapGroups.Add(groupInfo);
+            }
 
             foreach (var portalUserLdapGroup in portalUserLdapGroups)
             {
                 if (!actualPortalLdapGroups.Contains(portalUserLdapGroup))
                 {
+                    _log.DebugFormat("TrySyncUserGroupMembership(username: '{0}' sid: '{1}') removing user from group (groupname: '{2}' sid: '{3}')", userInfo.UserName, ldapUser.Sid, portalUserLdapGroup.Name, portalUserLdapGroup.Sid);
                     CoreContext.UserManager.RemoveUserFromGroup(userInfo.ID, portalUserLdapGroup.ID);
                 }
             }
@@ -731,6 +733,46 @@ namespace ASC.ActiveDirectory.Base
             }
 
             return listResults;
+        }
+
+        public List<LdapObject> FindUsersByAttribute(string key, string value, StringComparison comparison = StringComparison.InvariantCultureIgnoreCase)
+        {
+            var users = new List<LdapObject>();
+
+            if (!AllDomainUsers.Any() && !TryLoadLDAPUsers())
+                return users;
+
+            return users.Where(us => !us.IsDisabled && string.Equals((string)us.GetValue(key), value, comparison)).ToList();
+        }
+
+        public List<LdapObject> FindUsersByAttribute(string key, IEnumerable<string> value, StringComparison comparison = StringComparison.InvariantCultureIgnoreCase)
+        {
+            var users = new List<LdapObject>();
+
+            if (!AllDomainUsers.Any() && !TryLoadLDAPUsers())
+                return users;
+
+            return AllDomainUsers.Where(us => !us.IsDisabled && value.Any(val => string.Equals(val, (string)us.GetValue(key), comparison))).ToList();
+        }
+
+        public List<LdapObject> FindGroupsByAttribute(string key, string value, StringComparison comparison = StringComparison.InvariantCultureIgnoreCase)
+        {
+            var gr = new List<LdapObject>();
+
+            if (!AllDomainGroups.Any() && !TryLoadLDAPGroups())
+                return gr;
+
+            return gr.Where(g => !g.IsDisabled && string.Equals((string)g.GetValue(key), value, comparison)).ToList();
+        }
+
+        public List<LdapObject> FindGroupsByAttribute(string key, IEnumerable<string> value, StringComparison comparison = StringComparison.InvariantCultureIgnoreCase)
+        {
+            var gr = new List<LdapObject>();
+
+            if (!AllDomainGroups.Any() && !TryLoadLDAPGroups())
+                return gr;
+
+            return AllDomainGroups.Where(g => !g.IsDisabled && value.Any(val => string.Equals(val, (string)g.GetValue(key), comparison))).ToList();
         }
 
         public Tuple<UserInfo, LdapObject> Login(string login, string password)

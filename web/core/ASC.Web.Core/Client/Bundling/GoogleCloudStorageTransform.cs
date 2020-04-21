@@ -1,26 +1,46 @@
-﻿#region Import
+/*
+ *
+ * (c) Copyright Ascensio System Limited 2010-2020
+ *
+ * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
+ * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
+ * In accordance with Section 7(a) of the GNU GPL its Section 15 shall be amended to the effect that 
+ * Ascensio System SIA expressly excludes the warranty of non-infringement of any third-party rights.
+ *
+ * THIS PROGRAM IS DISTRIBUTED WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR
+ * FITNESS FOR A PARTICULAR PURPOSE. For more details, see GNU GPL at https://www.gnu.org/copyleft/gpl.html
+ *
+ * You can contact Ascensio System SIA by email at sales@onlyoffice.com
+ *
+ * The interactive user interfaces in modified source and object code versions of ONLYOFFICE must display 
+ * Appropriate Legal Notices, as required under Section 5 of the GNU GPL version 3.
+ *
+ * Pursuant to Section 7 § 3(b) of the GNU GPL you must retain the original ONLYOFFICE logo which contains 
+ * relevant author attributions when distributing the software. If the display of the logo in its graphic 
+ * form is not reasonably feasible for technical reasons, you must include the words "Powered by ONLYOFFICE" 
+ * in every copy of the program you distribute. 
+ * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
+ *
+*/
 
-using ASC.Common.Web;
-using ASC.Data.Storage.Configuration;
-using Google;
-using Google.Apis.Auth.OAuth2;
-using Google.Cloud.Storage.V1;
-using log4net;
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Web.Configuration;
 using System.Web.Optimization;
-
-#endregion
+using ASC.Common.Logging;
+using ASC.Common.Web;
+using ASC.Data.Storage.Configuration;
+using Google;
+using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Storage.V1;
 
 
 namespace ASC.Web.Core.Client.Bundling
@@ -36,7 +56,7 @@ namespace ASC.Web.Core.Client.Bundling
         private static bool successInitialized = false;
 
         private static string _bucket = "";
-        private static string _jsonPath = "";
+        private static string _json = "";
         private static string _region = "";
 
         static GoogleCloudStorageTransform()
@@ -69,7 +89,7 @@ namespace ASC.Web.Core.Client.Bundling
                 {
                     if (h.Name == "cdn")
                     {
-                        _jsonPath = h.HandlerProperties["jsonPath"].Value;
+                        _json = h.HandlerProperties["json"].Value;
                         _bucket = h.HandlerProperties["bucket"].Value;
                         _region = h.HandlerProperties["region"].Value;
                         break;
@@ -86,13 +106,7 @@ namespace ASC.Web.Core.Client.Bundling
 
         private StorageClient GetStorage()
         {
-            GoogleCredential credential = null;
-
-            using (var jsonStream = new FileStream(_jsonPath, FileMode.Open,
-                FileAccess.Read, FileShare.Read))
-            {
-                credential = GoogleCredential.FromStream(jsonStream);
-            }
+            var credential = GoogleCredential.FromJson(_json);
 
             return StorageClient.Create(credential);
         }
@@ -162,7 +176,7 @@ namespace ASC.Web.Core.Client.Bundling
                             {
                                 objInfo = storage.GetObject(_bucket, key);
                             }
-                            catch(GoogleApiException  ex)
+                            catch (GoogleApiException ex)
                             {
                                 if (ex.HttpStatusCode == HttpStatusCode.NotFound)
                                 {
@@ -173,7 +187,7 @@ namespace ASC.Web.Core.Client.Bundling
                                     throw;
                                 }
                             }
-                        
+
                             if (objInfo != null)
                             {
                                 String contentMd5Hash = String.Empty;
@@ -193,7 +207,7 @@ namespace ASC.Web.Core.Client.Bundling
                                     upload = true;
                             }
 
-                          
+
                             if (upload)
                             {
 

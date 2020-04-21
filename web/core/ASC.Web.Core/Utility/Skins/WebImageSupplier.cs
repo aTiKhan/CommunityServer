@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -52,7 +52,7 @@ namespace ASC.Web.Core.Utility.Skins
             if (HttpContext.Current == null) return string.Empty;
 
             var currentThemePath = GetPartImageFolderRel(moduleID);
-            return WebPath.GetPath(currentThemePath.ToLower());
+            return WebPath.GetPath(currentThemePath);
         }
 
         private static string GetImageAbsoluteWebPath(string fileName, Guid partID)
@@ -62,7 +62,7 @@ namespace ASC.Web.Core.Utility.Skins
                 return string.Empty;
             }
             var filepath = GetPartImageFolderRel(partID) + "/" + fileName;
-            return WebPath.GetPath(filepath.ToLower());
+            return WebPath.GetPath(filepath);
         }
 
         private static string GetPartImageFolderRel(Guid partID)
@@ -79,7 +79,7 @@ namespace ASC.Web.Core.Utility.Skins
 
                 folderName = itemFolder ?? folderName;
             }
-            return folderName.TrimStart('~').ToLowerInvariant();
+            return folderName.TrimStart('~');
         }
 
         private static string GetAppThemeVirtualPath(IWebItem webitem)
@@ -92,7 +92,7 @@ namespace ASC.Web.Core.Utility.Skins
             var dir = webitem.StartURL.Contains(".") ?
                           webitem.StartURL.Substring(0, webitem.StartURL.LastIndexOf("/")) :
                           webitem.StartURL.TrimEnd('/');
-            return dir + "/app_themes";
+            return dir + "/App_Themes";
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -84,7 +84,7 @@
     }
 
     function initToolbar() {
-        $("#peopleSidepanel").find("a.dropdown-item:not(.invite-link)").bind("click", onButtonClick);
+        jq("#peopleSidepanel").find("a.dropdown-item:not(.invite-link)").bind("click", onButtonClick);
 
         jq("#actionGroupMenu").find("a.dropdown-item").bind("click", onButtonClick);
 
@@ -116,6 +116,15 @@
         }
     };
 
+    function initGroupList() {
+        var groupList = jq.tmpl("groupListTemplate", { groups: window.GroupManager.getAllGroups() });
+
+        jq("#groupList").empty().append(groupList);
+
+        if (groupList.length) {
+            jq("#groupListContainer .menu-item:first").toggleClass("none-sub-list sub-list");
+        }
+    };
 
     function initMenuList() {
         $(window).bind("change-group", onChangeGroup);
@@ -123,6 +132,7 @@
 
     $(function() {
         initToolbar();
+        initGroupList();
         initMenuList();
     });
 })(jQuery);

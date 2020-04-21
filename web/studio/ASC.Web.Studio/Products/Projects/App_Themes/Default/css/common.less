@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2015
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -22,6 +22,7 @@
  * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
  *
 */
+
 
 .loader-page{
     display:none
@@ -89,32 +90,32 @@
     /*---combobox status---*/
     #statusList li.dropdown-item {
         padding-left: 30px;
-        background-image: url('../images/projects_entity_statuses.png');
-        background-position: 2px center;
+        background-position: 8px 4px;
         background-repeat: no-repeat;
+        background-size: 16px 16px;
 
         &.open {
-            background-position: 10px -57px;
+            background-image: url('../../../../../skins/default/images/svg/projects/inbox.svg');
         }
 
         &.closed {
-            background-position: 10px -78px;
+            background-image: url('../../../../../skins/default/images/svg/projects/check_tick.svg');
         }
 
         &.paused {
-            background-position: 10px -95px;
+            background-image: url('../../../../../skins/default/images/svg/projects/pause.svg');
         }
 
         &.not-chargeable {
-            background-position: 10px 5px;
+            background-image: url('../../../../../skins/default/images/svg/projects/forbidden.svg');
         }
 
         &.not-billed {
-            background-position: 10px -16px;
+            background-image: url('../../../../../skins/default/images/svg/projects/circle-empty.svg');
         }
 
         &.billed {
-            background-position: 10px -37px;
+            background-image: url('../../../../../skins/default/images/svg/projects/payment-small.svg');
         }
     }
 }
@@ -330,6 +331,12 @@ table.listContainer {
     display: block;
 }
 
+body.media-width-0-1200 {
+    #CommonListContainer {
+        padding-bottom: 48px;
+    }
+}
+
 /*-----pagination-----*/
 
 #tableForNavigation {
@@ -365,7 +372,6 @@ table.listContainer {
 
 /*--projects info---*/
 .project-info-container {
-    padding-top: 8px;
     overflow: hidden;
     margin-bottom: 16px;
     position: relative;
@@ -373,18 +379,16 @@ table.listContainer {
     display: none;
 
     .count {
-        margin-left:2px;
+        margin-left: 2px;
     }
 
     .project-total-info {
-        max-height: 30px;
-
         .additional-info {
             color: #666;
             font-size: 12px;
         }
 
-        .header-with-menu {
+        &.header-with-menu {
             overflow: visible;
         }
 
@@ -392,26 +396,26 @@ table.listContainer {
             margin-top: 8px;
         }
 
-        .project-title {
+        &.project-title {
             display: inline-block;
-            max-width: 100%;
+            max-width: 1100px;
 
             span.private {
-                background: url("../images/small-icons.png") -1px -36px no-repeat;
-                height: 12px;
+                background: url('../../../../../skins/default/images/svg/projects/lockorange.svg') no-repeat;
+                height: 16px;
                 left: 12px;
                 position: absolute;
                 top: 21px;
-                width: 12px;
-            }
-
-            #subscribe {
-                float: left;
+                width: 16px;
             }
 
             .entity-menu {
-                float: left;
+                display: inline-block;
                 margin: 5px 0 0 7px;
+            }
+
+            #essenceTitle {
+                overflow-wrap: break-word;
             }
         }
     }
@@ -421,21 +425,21 @@ table.listContainer {
     }
 }
 
-#essenceTitle.truncated-text {
-    float: left;
-    overflow: hidden;
-    white-space: nowrap;
+
+body.media-width-0-1575 .project-info-container .project-title {
     max-width: 1000px;
 }
 
-body.media-width-0-1575:not(.media-width-0-1350) #essenceTitle.truncated-text {
-    max-width: 1000px;
+body.media-width-0-1500 .project-info-container .project-title {
+    max-width: 950px;
 }
-body.media-width-0-1350 #essenceTitle.truncated-text {
-    max-width: 800px;
+
+body.media-width-0-1350 .project-info-container .project-title {
+    max-width: 900px;
 }
-body.media-width-0-1150 #essenceTitle.truncated-text {
-    max-width: 600px;
+
+body.media-width-0-1150 .project-info-container .project-title {
+    max-width: 850px;
 }
 
 /*--- project navigation-----*/
@@ -581,7 +585,7 @@ body.media-width-0-1150 #essenceTitle.truncated-text {
     .taskProcess {
         height: 25px;
         padding-left: 25px;
-        background: url('../../../../../skins/default/Images/loader_16.gif') no-repeat 2px 7px;
+        background: url('../../../../../skins/default/images/loader_16.gif') no-repeat 2px 7px;
     }
 
     div.copy{
@@ -826,16 +830,16 @@ table.table-list {
                 .overdue,
                 .paused,
                 .closed {
-                    background: url('../images/projects_entity_statuses.png') no-repeat;
-                    background-position: 0 -60px;
+                    background: url('../../../../../skins/default/images/svg/projects/inbox.svg') no-repeat;
+                    //background-position: 0 -60px;
                 }
 
                 .closed {
-                    background-position: 0 -80px;
+                    background: url('../../../../../skins/default/images/svg/projects/check_tick.svg') no-repeat;
                 }
 
                 .paused {
-                    background-position: 0 -98px;
+                    background: url('../../../../../skins/default/images/svg/projects/pause.svg') no-repeat;
                 }
             }
         }
@@ -882,7 +886,7 @@ table.table-list {
             background-image: url('../images/empty_screen_subtasks.png');
         }
         &.filter{
-            background-image: url('../../../../../skins/Default/images/empty_screen_filter.png');
+            background-image: url('../../../../../skins/default/images/empty_screen_filter.png');
         }
     }
 }
@@ -940,7 +944,8 @@ table.table-list {
 #groupActionContainer {
     display: none;
 
-    #groupActionMenuSelector {
+    .studio-action-panel {
+        text-align:left;
         margin-top: 24px;
     }
 }

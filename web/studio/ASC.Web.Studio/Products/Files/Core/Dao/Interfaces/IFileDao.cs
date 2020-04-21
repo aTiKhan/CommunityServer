@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -66,6 +66,14 @@ namespace ASC.Files.Core
         File GetFile(object parentId, String title);
 
         /// <summary>
+        ///     Receive last file without forcesave
+        /// </summary>
+        /// <param name="fileId">file id</param>
+        /// <param name="fileVersion"></param>
+        /// <returns></returns>
+        File GetFileStable(object fileId, int fileVersion = -1);
+
+        /// <summary>
         ///  Returns all versions of the file
         /// </summary>
         /// <param name="fileId"></param>
@@ -83,8 +91,13 @@ namespace ASC.Files.Core
         ///     Gets the file (s) by ID (s) for share
         /// </summary>
         /// <param name="fileIds">id file</param>
+        /// <param name="filterType"></param>
+        /// <param name="subjectGroup"></param>
+        /// <param name="subjectID"></param>
+        /// <param name="searchText"></param>
+        /// <param name="searchInContent"></param>
         /// <returns></returns>
-        List<File> GetFilesForShare(object[] fileIds);
+        List<File> GetFilesForShare(object[] fileIds, FilterType filterType, bool subjectGroup, Guid subjectID, string searchText, bool searchInContent);
 
         /// <summary>
         /// 
@@ -99,14 +112,16 @@ namespace ASC.Files.Core
         /// <param name="parentId">folder id</param>
         /// <param name="orderBy"></param>
         /// <param name="filterType">filterType type</param>
+        /// <param name="subjectGroup"></param>
         /// <param name="subjectID"></param>
         /// <param name="searchText"> </param>
+        /// <param name="searchInContent"></param>
         /// <param name="withSubfolders"> </param>
         /// <returns>list of files</returns>
         /// <remarks>
         ///    Return only the latest versions of files of a folder
         /// </remarks>
-        List<File> GetFiles(object parentId, OrderBy orderBy, FilterType filterType, Guid subjectID, string searchText, bool withSubfolders = false);
+        List<File> GetFiles(object parentId, OrderBy orderBy, FilterType filterType, bool subjectGroup, Guid subjectID, string searchText, bool searchInContent, bool withSubfolders = false);
 
         /// <summary>
         /// Get stream of file
@@ -153,6 +168,14 @@ namespace ASC.Files.Core
         /// Save in all other cases
         /// </remarks>
         File SaveFile(File file, Stream fileStream);
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="file"></param>
+        /// <param name="fileStream"></param>
+        /// <returns></returns>
+        File ReplaceFileVersion(File file, Stream fileStream);
 
         /// <summary>
         ///   Deletes a file including all previous versions
@@ -241,19 +264,22 @@ namespace ASC.Files.Core
         /// Search files in SharedWithMe & Projects
         /// </summary>
         /// <param name="parentIds"></param>
+        /// <param name="filterType"></param>
+        /// <param name="subjectGroup"></param>
+        /// <param name="subjectID"></param>
         /// <param name="searchText"></param>
-        /// <param name="searchSubfolders"></param>
+        /// <param name="searchInContent"></param>
         /// <returns></returns>
-        List<File> GetFiles(object[] parentIds, string searchText = "", bool searchSubfolders = false);
+        List<File> GetFiles(object[] parentIds, FilterType filterType, bool subjectGroup, Guid subjectID, string searchText, bool searchInContent);
 
         /// <summary>
         /// Search the list of files containing text
         /// Only in TMFileDao
         /// </summary>
         /// <param name="text">search text</param>
-        /// <param name="folderType">type of parent folder</param>
+        /// <param name="bunch"></param>
         /// <returns>list of files</returns>
-        IEnumerable<File> Search(String text, FolderType folderType);
+        IEnumerable<File> Search(String text, bool bunch = false);
 
         /// <summary>
         ///   Checks whether file exists on storage

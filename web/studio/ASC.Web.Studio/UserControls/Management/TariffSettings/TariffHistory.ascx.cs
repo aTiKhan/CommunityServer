@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -43,7 +43,7 @@ namespace ASC.Web.Studio.UserControls.Management
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            Page.RegisterStyle("~/usercontrols/management/tariffsettings/css/tariffhistory.less");
+            Page.RegisterStyle("~/UserControls/Management/TariffSettings/css/tariffhistory.less");
 
             PaymentsRepeater.DataSource = Payments;
             PaymentsRepeater.DataBind();

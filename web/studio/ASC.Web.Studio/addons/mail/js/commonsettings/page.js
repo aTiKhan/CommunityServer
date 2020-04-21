@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -30,7 +30,8 @@ window.commonSettingsPage = (function($) {
         cbxEnableConversations,
         cbxDisplayAllImages,
         cbxCacheUnreadMessages,
-        cbxGoNextAfterMove;
+        cbxGoNextAfterMove,
+        cbxReplaceMessageBody;
 
     function init() {
         if (isInit === false) {
@@ -39,7 +40,8 @@ window.commonSettingsPage = (function($) {
             cbxEnableConversations = jq("#cbxEnableConversations"),
             cbxDisplayAllImages = jq("#cbxDisplayAllImages"),
             cbxCacheUnreadMessages = jq("#cbxCacheUnreadMessages"),
-            cbxGoNextAfterMove = jq("#cbxGoNextAfterMove");
+            cbxGoNextAfterMove = jq("#cbxGoNextAfterMove"),
+            cbxReplaceMessageBody = jq("#cbxReplaceMessageBody");
 
             cbxEnableConversations.on("change",
                 function () {
@@ -57,6 +59,7 @@ window.commonSettingsPage = (function($) {
                             mailBox.markFolderAsChanged(TMMail.sysfolders.spam.id);
                             mailCache.clear();
                             serviceManager.updateFolders({}, {}, ASC.Resources.Master.Resource.LoadingProcessing);
+                            window.userFoldersPanel.refresh();
                         },
                         error: function (e, error) {
                             window.toastr.error(window.MailApiErrorsResource.ErrorInternalServer);
@@ -123,6 +126,25 @@ window.commonSettingsPage = (function($) {
                     });
                     return false;
                 });
+
+            cbxReplaceMessageBody.on("change",
+                function () {
+                    var self = jq(this);
+
+                    var enabled = self.prop("checked");
+
+                    ASC.Mail.Presets.CommonSettings.ReplaceMessageBody = enabled;
+                    serviceManager.setEnableReplaceMessageBody(enabled, { enabled: enabled },
+                    {
+                        success: function () {},
+                        error: function (e, error) {
+                            window.toastr.error(window.MailApiErrorsResource.ErrorInternalServer);
+                            console.error(e, error);
+                            self.prop("checked", !enabled);
+                        }
+                    });
+                    return false;
+                });
         }
     }
 
@@ -150,6 +172,10 @@ window.commonSettingsPage = (function($) {
         return ASC.Mail.Presets.CommonSettings.EnableGoNextAfterMove;
     }
 
+    function replaceMessageBodyEnabled() {
+        return ASC.Mail.Presets.CommonSettings.ReplaceMessageBody;
+    }
+
     return {
         init: init,
         show: show,
@@ -158,6 +184,7 @@ window.commonSettingsPage = (function($) {
         isConversationsEnabled: isConversationsEnabled,
         AlwaysDisplayImages: alwaysDisplayImages,
         AutocacheMessagesEnabled: autocacheMessagesEnabled,
-        GoNextAfterMoveEnabled: goNextAfterMoveEnabled
+        GoNextAfterMoveEnabled: goNextAfterMoveEnabled,
+        ReplaceMessageBodyEnabled: replaceMessageBodyEnabled
     };
 })(jQuery);

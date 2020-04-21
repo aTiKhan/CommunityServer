@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -42,7 +42,7 @@ namespace ASC.Common.Threading
         private readonly ICache cache;
         private readonly ICacheNotify notify;
         private readonly TaskScheduler scheduler;
-        private readonly ConcurrentDictionary<string, CancellationTokenSource> cancelations;
+        private static readonly ConcurrentDictionary<string, CancellationTokenSource> cancelations = new ConcurrentDictionary<string, CancellationTokenSource>();
 
 
         static DistributedTaskQueue()
@@ -69,7 +69,6 @@ namespace ASC.Common.Threading
             scheduler = maxThreadsCount <= 0
                 ? TaskScheduler.Default
                 : new LimitedConcurrencyLevelTaskScheduler(maxThreadsCount);
-            cancelations = new ConcurrentDictionary<string, CancellationTokenSource>();
 
             notify.Subscribe<DistributedTaskCancelation>((c, a) =>
             {

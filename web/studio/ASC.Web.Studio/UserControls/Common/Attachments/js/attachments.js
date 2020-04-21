@@ -1,6 +1,6 @@
-/*
+﻿/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,7 +24,7 @@
 */
 
 
-window.Attachments = (function() {
+window.Attachments = (function () {
     var moduleName,
         isInit = false,
         isLoaded = false,
@@ -136,7 +136,7 @@ window.Attachments = (function() {
                                     "</a>",
                                 "</p>"]
                             .join('')
-            }).insertAfter("#popupDocumentUploader");
+            }).insertAfter(".wrapperFilesContainer");
         }
 
         ASC.Controls.AnchorController.bind(/files/, initUploader);
@@ -186,10 +186,6 @@ window.Attachments = (function() {
             });
         }
 
-        jq('#attachProjDocuments').on('click', function(event) {
-            ProjectDocumentsPopup.showPortalDocUploader();
-            return false;
-        });
         jq('#questionWindowAttachments #noButton').bind('click', function() {
             jq.unblockUI();
             return false;
@@ -341,12 +337,12 @@ window.Attachments = (function() {
         var ext = jq(".createFile").attr("id");
         title = replaceSpecCharacter(title) + ext;
         Teamlab.addDocFile(
-            { handler: hWindow },
+            {},
             rootFolderId,
             "file",
             { title: title, content: '', createNewIfExist: true },
-            function() { onCreateFile(arguments); },
-            { error: function(params) { params.handler.close(); } }
+            function() { onCreateFile(arguments, hWindow); },
+            { error: function() { hWindow.close(); } }
         );
         removeNewDocument();
     };
@@ -363,6 +359,8 @@ window.Attachments = (function() {
         var type;
         if (ASC.Files.Utility.CanImageView(fileTmpl.title)) {
             type = "image";
+        } else if (ASC.Files.MediaPlayer && ASC.Files.MediaPlayer.canPlay(fileTmpl.title)) {
+            type = "media"
         } else {
             if (ASC.Files.Utility.CanWebEdit(fileTmpl.title) && !ASC.Files.Utility.MustConvert(fileTmpl.title)) {
                 type = "editedFile";
@@ -561,7 +559,7 @@ window.Attachments = (function() {
         }
     };
 
-    var onCreateFile = function(response) {
+    var onCreateFile = function(response, hWindow) {
         var file = response[1];
 
         file.fileStatus = 1;
@@ -577,8 +575,8 @@ window.Attachments = (function() {
         }
         jq(".containerAction").show();
 
-        if (response[0].handler.location) {
-            response[0].handler.location.href = ASC.Files.Utility.GetFileWebEditorUrl(file.id);
+        if (hWindow.location) {
+            hWindow.location.href = ASC.Files.Utility.GetFileWebEditorUrl(file.id);
         }
     };
 
@@ -602,3 +600,7 @@ window.Attachments = (function() {
         setCreateNewEntityFlag: setCreateNewEntityFlag
     };
 })(jQuery);
+
+(jq(document).ready(function () {
+    jq("#mediaPlayer").appendTo("body");
+}));

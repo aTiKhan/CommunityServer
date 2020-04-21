@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -66,11 +66,22 @@ namespace ASC.Web.CRM.Classes
                 return fileUploadResult;
             }
 
-            var photoUri = OrganisationLogoManager.UploadLogo(file.InputStream, true);
+            try
+            {
+                var imageData = Global.ToByteArray(file.InputStream);
+                var imageFormat = ContactPhotoManager.CheckImgFormat(imageData);
+                var photoUri = OrganisationLogoManager.UploadLogo(imageData, imageFormat);
 
-            fileUploadResult.Success = true;
-            fileUploadResult.Data = photoUri;
-            return fileUploadResult;
+                fileUploadResult.Success = true;
+                fileUploadResult.Data = photoUri;
+                return fileUploadResult;
+            }
+            catch (Exception exception)
+            {
+                fileUploadResult.Success = false;
+                fileUploadResult.Message = exception.Message.HtmlEncode();
+                return fileUploadResult;
+            }
         }
     }
 }

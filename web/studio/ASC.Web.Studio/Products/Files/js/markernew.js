@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -169,7 +169,7 @@ window.ASC.Files.Marker = (function () {
 
         //track event
 
-        trackingGoogleAnalitics("documents", "shownews", "folder");
+        trackingGoogleAnalytics("documents", "shownews", "folder");
 
         var targetSize = {
             top: target.offset().top,
@@ -248,9 +248,19 @@ window.ASC.Files.Marker = (function () {
             });
 
             var targetSize = params.targetSize;
-            jq("#filesNewsPanel").css(
-                {
-                    "top": targetSize.top + targetSize.height,
+            var filesNewsPanel = jq("#filesNewsPanel");
+            var margin = 8;
+            var startY = targetSize.top + targetSize.height + margin;
+            var correctionY = 0;
+            var panelHeight = filesNewsPanel.outerHeight();
+            if (document.body.clientHeight - (startY - pageYOffset + panelHeight) < 0) {
+                startY = targetSize.top - margin;
+                correctionY = panelHeight;
+            }
+
+            filesNewsPanel
+                .css({
+                    "top": startY - correctionY,
                     "left": targetSize.left
                 })
                 .toggle()
@@ -290,7 +300,7 @@ window.ASC.Files.Marker = (function () {
             return false;
         });
 
-        jq("#mainMarkRead").click(function () {
+        jq("#studioPageContent").on("click", "#buttonMarkRead, #mainMarkRead.unlockAction", function () {
             ASC.Files.Actions.hideAllActionPanels();
             ASC.Files.Marker.markAsRead();
         });
@@ -309,13 +319,65 @@ window.ASC.Files.Marker = (function () {
         });
 
         jq("#filesNewsList").on("click", ".file-row:not(.folder-row):not(.error-entry) .entry-title .name a, .file-row:not(.folder-row):not(.error-entry) .thumb-file", function () {
-            //ASC.Files.Actions.hideAllActionPanels();
             var fileData = ASC.Files.UI.getObjectData(this);
-            var updated = ASC.Files.Folders.clickOnFile(fileData);
+            var updated = true;
 
-            if (!updated) {
+            if (ASC.Files.MediaPlayer && (ASC.Files.MediaPlayer.canPlay(fileData.title) || ASC.Files.Utility.CanImageView(fileData.title))) {
+                ASC.Files.Actions.hideAllActionPanels();
+
+                var newFiles = jq("#filesNewsList .file-row:not(.folder-row):not(.error-entry) .ft_Image, #filesNewsList .file-row:not(.folder-row):not(.error-entry) .ft_Video");
+
+                var mediaFiles = [];
+                var pos = 0;
+                for (var i = 0; i < newFiles.length; i++) {
+                    var fData = ASC.Files.UI.getObjectData(newFiles[i]);
+
+                    if (ASC.Files.MediaPlayer.canPlay(fData.title) || ASC.Files.Utility.CanImageView(fData.title)) {
+                        mediaFiles.push(fData);
+                        if (fileData.id === fData.id) {
+                            pos = mediaFiles.length - 1;
+                        }
+                    }
+                }
+
                 var newFolderId = jq("#filesNewsPanel").attr("data-id");
                 var newObj = jq(".is-new" + ASC.Files.UI.getSelectorId(newFolderId));
+
+                ASC.Files.MediaPlayer.init(-1, {
+                    playlist: mediaFiles,
+                    playlistPos: pos,
+                    onCloseAction: function (folderId) {
+                        if (!ASC.Files.Common.isCorrectId(ASC.Files.Folders.currentFolder.id)) {
+                            ASC.Files.Anchor.navigationSet(folderId, false);
+                            return;
+                        }
+
+                        ASC.Files.Anchor.navigationSet(ASC.Files.Folders.currentFolder.id, true);
+                    },
+                    onMediaChangedAction: function (fileId) {
+                        var newsObj = ASC.Files.UI.getEntryObject("file", fileId).find(".is-new");
+                        if (!newsObj.is(":visible")) {
+                            if (!newObj.is(":visible")) {
+                                newObj = ASC.Files.UI.getEntryObject("folder", newFolderId).find(".is-new");
+                            }
+                            prevCount = newObj.html() | 0;
+                            ASC.Files.Marker.setNewCount("folder", newFolderId, prevCount - 1);
+                        }
+
+                        ASC.Files.Marker.removeNewIcon("file", fileId);
+
+                        var hash = ASC.Files.MediaPlayer.getPlayHash(fileId);
+                        ASC.Files.Anchor.move(hash, true);
+                    },
+                    downloadAction: ASC.Files.Utility.GetFileDownloadUrl
+                });
+            } else {
+                updated = ASC.Files.Folders.clickOnFile(fileData);
+            }
+
+            if (!updated) {
+                newFolderId = jq("#filesNewsPanel").attr("data-id");
+                newObj = jq(".is-new" + ASC.Files.UI.getSelectorId(newFolderId));
                 if (!newObj.is(":visible")) {
                     newObj = ASC.Files.UI.getEntryObject("folder", newFolderId).find(".is-new");
                 }

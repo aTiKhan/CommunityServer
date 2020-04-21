@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,11 +25,7 @@
 
 
 jq(function () {
-    if (window.AccountLinkControl_SettingsView === true) {
-        jq(".account-links").html(jq.tmpl("template-accountLinkCtrl", { infos: window.AccountLinkControl_Providers }));
-    }
-
-    jq(".account-links").delegate('.popup', 'click', function () {
+    jq("#accountLinks, .account-links").delegate(".popup", "click", function () {
         var obj = jq(this);
         if (obj.hasClass('linked')) {
             //unlink
@@ -41,7 +37,7 @@ jq(function () {
                             break;
                         }
                     }
-                    jq(".account-links").html(jq.tmpl("template-accountLinkCtrl", { infos: window.AccountLinkControl_Providers }));
+                    jq("#accountLinks").html(jq.tmpl("template-accountLinkCtrl", { infos: window.AccountLinkControl_Providers }));
                 },
                 error: function (params, errors) {
                     toastr.error(errors[0]);
@@ -54,6 +50,10 @@ jq(function () {
         }
         return false;
     });
+
+    if (window.AccountLinkControl_SettingsView === true) {
+        jq("#accountLinks").html(jq.tmpl("template-accountLinkCtrl", { infos: window.AccountLinkControl_Providers }));
+    }
 });
 
 function loginCallback(profile) {
@@ -65,7 +65,7 @@ function loginCallback(profile) {
                     break;
                 }
             }
-            jq(".account-links").html(jq.tmpl("template-accountLinkCtrl", { infos: window.AccountLinkControl_Providers }));
+            jq("#accountLinks").html(jq.tmpl("template-accountLinkCtrl", { infos: window.AccountLinkControl_Providers }));
         },
         error: function (params, errors) {
             toastr.error(errors[0]);

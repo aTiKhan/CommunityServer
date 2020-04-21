@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -51,13 +51,10 @@ namespace ASC.Core.Tenants
 
         public static void ValidateDomainLength(string domain)
         {
-            if (string.IsNullOrEmpty(domain))
+            if (string.IsNullOrEmpty(domain)
+                || domain.Length < MinLength || MaxLength < domain.Length)
             {
-                throw new TenantTooShortException("Tenant domain can not be empty.");
-            }
-            if (domain.Length < MinLength || MaxLength < domain.Length)
-            {
-                throw new TenantTooShortException("The domain name must be between " + MinLength + " and " + MaxLength + " characters long.");
+                throw new TenantTooShortException("The domain name must be between " + MinLength + " and " + MaxLength + " characters long.", MinLength, MaxLength);
             }
         }
 

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -44,6 +44,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Web;
+using ASC.ElasticSearch;
+using ASC.Web.Community.Search;
 using Tag = ASC.Bookmarking.Pojo.Tag;
 
 namespace ASC.Bookmarking.Business
@@ -170,6 +172,7 @@ namespace ASC.Bookmarking.Business
 			Dao.UpdateBookmark(userBookmark, tags);
 			var b = GetBookmarkByID(userBookmark.BookmarkID);
 			SubscribeOnBookmarkComments(b);
+            FactoryIndexer<BookmarksUserWrapper>.IndexAsync(BookmarksUserWrapper.Create(userBookmark, b));
 			return b;
 		}
 

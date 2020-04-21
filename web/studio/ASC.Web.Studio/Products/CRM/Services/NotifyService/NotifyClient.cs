@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -43,15 +43,12 @@ using ASC.Notify.Model;
 using ASC.Notify.Patterns;
 using ASC.Notify.Recipients;
 using ASC.Core.Tenants;
-using ASC.Web.CRM.Classes;
 using ASC.CRM.Core;
 using System.Collections.Specialized;
+using ASC.Common.Logging;
 using ASC.Web.CRM.Core;
 using ASC.Web.CRM.Resources;
-using log4net;
-using ASC.Web.Studio.Core.Notify;
 using Autofac;
-using Twilio.Types;
 
 #endregion
 
@@ -214,16 +211,17 @@ namespace ASC.Web.CRM.Services.NotifyService
 
         }
 
-        public void SendAboutExportCompleted(Guid recipientID, String filePath)
+        public void SendAboutExportCompleted(Guid recipientID, String fileName, String filePath)
         {
             if (recipientID == Guid.Empty) return;
 
             var recipient = ToRecipient(recipientID);
 
-            client.SendNoticeToAsync(NotifyConstants.Event_ExportCompleted,
+            client.SendNoticeToAsync(CoreContext.Configuration.CustomMode ? NotifyConstants.Event_ExportCompletedCustomMode : NotifyConstants.Event_ExportCompleted,
                null,
                new[] { recipient },
                true,
+               new TagValue(NotifyConstants.Tag_EntityTitle, fileName),
                new TagValue(NotifyConstants.Tag_EntityRelativeURL, filePath));
 
         }
@@ -259,7 +257,7 @@ namespace ASC.Web.CRM.Services.NotifyService
             }
 
             client.SendNoticeToAsync(
-                NotifyConstants.Event_ImportCompleted,
+                CoreContext.Configuration.CustomMode ? NotifyConstants.Event_ImportCompletedCustomMode : NotifyConstants.Event_ImportCompleted,
                 null,
                 new[] { recipient },
                 true,

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -26,6 +26,7 @@
 
 using System;
 using System.Runtime.Serialization;
+using System.Web.Configuration;
 using ASC.Core;
 using ASC.Core.Common.Settings;
 using ASC.Core.Users;
@@ -36,6 +37,8 @@ namespace ASC.Web.Core.Users
     [DataContract]
     public class DisplayUserSettings : BaseSettings<DisplayUserSettings>
     {
+        private static readonly string RemovedProfileName = WebConfigurationManager.AppSettings["web.removed-profile-name"] ?? "profile removed";
+
         public override Guid ID
         {
             get { return new Guid("2EF59652-E1A7-4814-BF71-FEB990149428"); }
@@ -53,22 +56,12 @@ namespace ASC.Web.Core.Users
                 };
         }
 
-        public static string GetFullUserName(Guid userID)
-        {
-            return GetFullUserName(CoreContext.UserManager.GetUsers(userID));
-        }
-
-        public static string GetFullUserName(Guid userID, bool withHtmlEncode)
+        public static string GetFullUserName(Guid userID, bool withHtmlEncode = true)
         {
             return GetFullUserName(CoreContext.UserManager.GetUsers(userID), withHtmlEncode);
         }
 
-        public static string GetFullUserName(UserInfo userInfo)
-        {
-            return GetFullUserName(userInfo, DisplayUserNameFormat.Default, true);
-        }
-
-        public static string GetFullUserName(UserInfo userInfo, bool withHtmlEncode)
+        public static string GetFullUserName(UserInfo userInfo, bool withHtmlEncode = true)
         {
             return GetFullUserName(userInfo, DisplayUserNameFormat.Default, withHtmlEncode);
         }
@@ -81,7 +74,7 @@ namespace ASC.Web.Core.Users
             }
             if (!userInfo.ID.Equals(Guid.Empty) && !CoreContext.UserManager.UserExists(userInfo.ID))
             {
-                return "profile removed";
+                return RemovedProfileName;
             }
             var result = UserFormatter.GetUserName(userInfo, format);
             return withHtmlEncode ? result.HtmlEncode() : result;

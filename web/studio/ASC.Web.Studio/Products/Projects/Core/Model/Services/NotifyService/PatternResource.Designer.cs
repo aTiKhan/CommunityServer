@@ -67,9 +67,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         ///
         ///$AdditionalData 
         ///
-        ///&quot;Read more&quot;:&quot;${__VirtualRootPath}/products/projects/messages.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot; 
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__Virt [rest of string was truncated]&quot;;.
+        ///&quot;Read more&quot;:&quot;${__VirtualRootPath}/products/projects/messages.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot;.
         /// </summary>
         public static string pattern_EditedCommentForMessage {
             get {
@@ -101,7 +99,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         ///
         ///$AdditionalData.get_item(&quot;MessagePreview&quot;) 
         ///
-        ///#foreach($fileInfo in $AdditionalData.get_item(&quot;Files&quot;).Keys) 
+        ///#foreach($fileInfo in $AdditionalData.get_item(&quot;Files&quot;)) 
         ///
         ///#beforeall 
         ///
@@ -109,7 +107,9 @@ namespace ASC.Projects.Core.Services.NotifyService {
         ///
         ///#each 
         ///
-        ///&quot;$fileInfo&quot;:&quot;$AdditionalData.get_item [rest of string was truncated]&quot;;.
+        ///&quot;$fileInfo.Item1&quot;:&quot;$fileInfo.Item2&quot; 
+        ///
+        ///#end [rest of string was truncated]&quot;;.
         /// </summary>
         public static string pattern_EditMessage {
             get {
@@ -120,9 +120,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         /// <summary>
         ///   Looks up a localized string similar to h1.Projects. Import of the data from Basecamp
         ///
-        ///The new data has been successfully imported.
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath}&quot; portal. To change the notification type, please manage your &quot;subscription settings&quot;:&quot;$RecipientSubscriptionConfigURL&quot;.^.
+        ///The new data has been successfully imported..
         /// </summary>
         public static string pattern_ImportData {
             get {
@@ -133,9 +131,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         /// <summary>
         ///   Looks up a localized string similar to h1.You have been added to the project team: &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; 
         ///
-        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has added you to the team of the project:[&quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot;] 
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath}&quot; portal. To change the notification type, please manage your &quot;subscription settings&quot;:&quot;$Recip [rest of string was truncated]&quot;;.
+        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has added you to the team of the project:[&quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot;].
         /// </summary>
         public static string pattern_InviteToProject {
             get {
@@ -146,9 +142,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         /// <summary>
         ///   Looks up a localized string similar to h1.Overdue milestone notification: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#sortBy=deadline&amp;sortOrder=ascending&quot; 
         ///
-        ///The &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID&quot; milestone of the project &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; is overdue. 
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath}&quot; portal. To change t [rest of string was truncated]&quot;;.
+        ///The &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID&quot; milestone of the project &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; is overdue..
         /// </summary>
         public static string pattern_LateMilestone {
             get {
@@ -159,10 +153,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         /// <summary>
         ///   Looks up a localized string similar to h1.Discussion deleted: &quot;$EntityTitle&quot; 
         ///
-        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has deleted the discussion &quot;$EntityTitle&quot; in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project.
-        ///
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath}&quot; portal. To change the notification type, please manage your &quot;subscription settings&quot;:&quot;$RecipientSubscriptionConfigURL&quot;.^.
+        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has deleted the discussion &quot;$EntityTitle&quot; in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project..
         /// </summary>
         public static string pattern_MessageDeleted {
             get {
@@ -173,9 +164,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         /// <summary>
         ///   Looks up a localized string similar to h1.Milestone closed: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#status=closed&quot; 
         ///
-        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has closed the &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#status=closed&quot; milestone in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project.
-        ///
-        /// ^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath} [rest of string was truncated]&quot;;.
+        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has closed the &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#status=closed&quot; milestone in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project..
         /// </summary>
         public static string pattern_MilestoneClosed {
             get {
@@ -186,9 +175,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         /// <summary>
         ///   Looks up a localized string similar to h1.Milestone created: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot; 
         ///
-        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has added a new milestone: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#sortBy=create_on&amp;sortOrder=descending&quot; to the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project. 
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__VirtualRootPa [rest of string was truncated]&quot;;.
+        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has added a new milestone: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#sortBy=create_on&amp;sortOrder=descending&quot; to the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project..
         /// </summary>
         public static string pattern_MilestoneCreated {
             get {
@@ -199,9 +186,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         /// <summary>
         ///   Looks up a localized string similar to h1.Milestone due date notification: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#my=true&quot; 
         ///
-        ///Less than 48 hours is left till the due date of the &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#my=true&quot; milestone in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project.
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath}&quot; po [rest of string was truncated]&quot;;.
+        ///Less than 48 hours is left till the due date of the &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#my=true&quot; milestone in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project..
         /// </summary>
         public static string pattern_MilestoneDeadline {
             get {
@@ -214,9 +199,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         ///
         ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has deleted the milestone &quot;$EntityTitle&quot; in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project:
         ///
-        ///$AdditionalData 
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath}&quot; portal. To change the notification type, please manage your &quot;subscription settings&quot;:&quot;$RecipientSubscriptionConfigURL&quot;.^.
+        ///$AdditionalData.
         /// </summary>
         public static string pattern_MilestoneDeleted {
             get {
@@ -227,9 +210,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         /// <summary>
         ///   Looks up a localized string similar to h1.Milestone edited: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#my=true&quot; 
         ///
-        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has edited the &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#my=true&quot; milestone in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project. 
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath}&quot; portal. To [rest of string was truncated]&quot;;.
+        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has edited the &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#my=true&quot; milestone in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project..
         /// </summary>
         public static string pattern_MilestoneEdited {
             get {
@@ -242,9 +223,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         ///
         ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has resumed the milestone &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID&quot; in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project: 
         ///
-        ///$AdditionalData
-        ///
-        /// ^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath}&quot; porta [rest of string was truncated]&quot;;.
+        ///$AdditionalData.
         /// </summary>
         public static string pattern_MilestoneResumed {
             get {
@@ -259,9 +238,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         ///
         ///$AdditionalData 
         ///
-        ///&quot;Read more&quot;:&quot;${__VirtualRootPath}/products/projects/messages.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot; 
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__Virtu [rest of string was truncated]&quot;;.
+        ///&quot;Read more&quot;:&quot;${__VirtualRootPath}/products/projects/messages.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot;.
         /// </summary>
         public static string pattern_NewCommentForMessage {
             get {
@@ -340,9 +317,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         /// <summary>
         ///   Looks up a localized string similar to h1.Project deleted: &quot;$EntityTitle&quot; 
         ///
-        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has deleted the project &quot;$EntityTitle&quot; 
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath}&quot; portal. To change the notification type, please manage your &quot;subscription settings&quot;:&quot;$RecipientSubscriptionConfigURL&quot;.^.
+        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has deleted the project &quot;$EntityTitle&quot;.
         /// </summary>
         public static string pattern_ProjectDeleted {
             get {
@@ -533,9 +508,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         /// <summary>
         ///   Looks up a localized string similar to h1.Reminder about the task: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/tasks.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot; 
         ///
-        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; reminds you about the task: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/tasks.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot;: $AdditionalData.get_item(&quot;TaskDescription&quot;) 
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath}&quot; portal. To change the notification type, please manage your [rest of string was truncated]&quot;;.
+        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; reminds you about the task: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/tasks.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot;: $AdditionalData.get_item(&quot;TaskDescription&quot;).
         /// </summary>
         public static string pattern_ReminderAboutTask {
             get {
@@ -546,9 +519,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         /// <summary>
         ///   Looks up a localized string similar to h1.Reminder about the task: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/tasks.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot; 
         ///
-        ///Today is the deadline for the task: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/tasks.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot;: $AdditionalData.get_item(&quot;TaskDescription&quot;) 
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath}&quot; portal. To change the notification type, please manage your &quot;subscription settings&quot;:&quot;$Recipien [rest of string was truncated]&quot;;.
+        ///Today is the deadline for the task: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/tasks.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot;: $AdditionalData.get_item(&quot;TaskDescription&quot;).
         /// </summary>
         public static string pattern_ReminderAboutTaskDeadline {
             get {
@@ -559,9 +530,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         /// <summary>
         ///   Looks up a localized string similar to h1.You have been removed from the project team: &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot;
         ///
-        /// $__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has removed you from the team of the project: &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot;
-        ///
-        /// ^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath}&quot; portal. To change the notification type, please manage your &quot;subscription settings&quot;: [rest of string was truncated]&quot;;.
+        /// $__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has removed you from the team of the project: &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot;.
         /// </summary>
         public static string pattern_RemoveFromProject {
             get {
@@ -574,9 +543,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         ///
         ///$__DateTime you are no longer responsible for the task: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/tasks.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot; in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project: 
         ///
-        ///$AdditionalData.get_item(&quot;TaskDescription&quot;)
-        ///
-        /// ^You receive this email because you are a registered user of the &quot;${__Vir [rest of string was truncated]&quot;;.
+        ///$AdditionalData.get_item(&quot;TaskDescription&quot;).
         /// </summary>
         public static string pattern_RemoveResponsibleForTask {
             get {
@@ -587,9 +554,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         /// <summary>
         ///   Looks up a localized string similar to h1.Milestone assigned to you: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#my=true&quot; 
         ///
-        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has appointed you responsible for the milestone: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#my=true&quot; in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project. 
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;: [rest of string was truncated]&quot;;.
+        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has appointed you responsible for the milestone: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#my=true&quot; in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project..
         /// </summary>
         public static string pattern_ResponsibleForMilestone {
             get {
@@ -602,9 +567,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         ///
         ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has appointed you manager of the project &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot;: 
         ///
-        ///$AdditionalData 
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath}&quot; portal. To change the notification type, please manage your &quot;subscription setti [rest of string was truncated]&quot;;.
+        ///$AdditionalData.
         /// </summary>
         public static string pattern_ResponsibleForProject {
             get {
@@ -632,9 +595,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         ///
         ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has appointed you responsible for the task: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/tasks.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot; in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot; project: 
         ///
-        ///$AdditionalData.get_item(&quot;TaskDescription&quot;) 
-        ///
-        ///^You receive this email because you are [rest of string was truncated]&quot;;.
+        ///$AdditionalData.get_item(&quot;TaskDescription&quot;).
         /// </summary>
         public static string pattern_ResponsibleForTask {
             get {
@@ -748,9 +709,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         ///
         ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has deleted the task &quot;$EntityTitle&quot; in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project:
         ///
-        ///$AdditionalData 
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath}&quot; portal. To change the notification type, please manage your &quot;subscription settings&quot;:&quot;$RecipientSubscriptionConfigURL&quot;.^.
+        ///$AdditionalData.
         /// </summary>
         public static string pattern_TaskDeleted {
             get {
@@ -761,9 +720,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         /// <summary>
         ///   Looks up a localized string similar to h1.Task edited: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/tasks.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot;  
         ///
-        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has edited the  &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/tasks.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot; task in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project.
-        ///
-        ///^You receive this email because you are a registered user of the &quot;${__VirtualRootPath}&quot;:&quot;${__VirtualRootPath}&quot; portal. To change t [rest of string was truncated]&quot;;.
+        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has edited the  &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/tasks.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot; task in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project..
         /// </summary>
         public static string pattern_TaskEdited {
             get {
@@ -787,9 +744,7 @@ namespace ASC.Projects.Core.Services.NotifyService {
         /// <summary>
         ///   Looks up a localized string similar to h1.Task moved: &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/tasks.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot; 
         ///
-        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has moved the &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/tasks.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot; task to the &quot;$SubEntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#my=true&quot; milestone in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project. 
-        ///
-        ///^You receive thi [rest of string was truncated]&quot;;.
+        ///$__DateTime &quot;$__AuthorName&quot;:&quot;$__AuthorUrl&quot; has moved the &quot;$EntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/tasks.aspx?prjID=$ProjectID&amp;ID=$EntityID&quot; task to the &quot;$SubEntityTitle&quot;:&quot;${__VirtualRootPath}/products/projects/milestones.aspx?prjID=$ProjectID#my=true&quot; milestone in the &quot;$ProjectTitle&quot;:&quot;${__VirtualRootPath}/products/projects/projects.aspx?prjID=$ProjectID&quot; project..
         /// </summary>
         public static string pattern_TaskMovedToMilestone {
             get {

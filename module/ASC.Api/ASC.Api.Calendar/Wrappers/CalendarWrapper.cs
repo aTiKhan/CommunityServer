@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -214,6 +214,20 @@ namespace ASC.Api.Calendar.Wrappers
             set{}
         }
 
+        [DataMember(Name = "isTodo", Order = 0)]
+        public int IsTodo
+        {
+
+            get
+            {
+                if (UserCalendar.IsExistTodo())
+                    return (UserCalendar as BusinessObjects.Calendar).IsTodo;
+
+                return 0;
+            }
+            set { }
+        }
+
         [DataMember(Name = "owner", Order = 120)]
         public UserParams Owner
         {
@@ -239,6 +253,9 @@ namespace ASC.Api.Calendar.Wrappers
 
         [DataMember(Name = "events", Order = 150)]
         public List<EventWrapper> Events { get; set; }
+
+        [DataMember(Name = "todos", Order = 160)]
+        public List<TodoWrapper> Todos { get; set; }
 
         [DataMember(Name = "defaultAlert", Order = 160)]
         public EventAlertWrapper DefaultAlertType

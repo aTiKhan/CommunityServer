@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,6 +24,7 @@
 */
 
 
+using ASC.Web.Core.WhiteLabel;
 using ASC.Web.Studio.Utility;
 using System;
 using System.Web;
@@ -39,11 +40,13 @@ namespace ASC.Web.Studio.UserControls.Management
         }
 
         protected bool IsFreeTariff;
+        protected MailWhiteLabelSettings MailWhiteLabelSettings;
+        protected string HelpLink { get; set; }
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            Page.RegisterBodyScripts("~/usercontrols/management/tariffsettings/js/tarifflimitexceed.js")
-                .RegisterStyle("~/usercontrols/management/tariffsettings/css/tarifflimitexceed.less");
+            Page.RegisterBodyScripts("~/UserControls/Management/TariffSettings/js/tarifflimitexceed.js")
+                .RegisterStyle("~/UserControls/Management/TariffSettings/css/tarifflimitexceed.less");
 
             tariffLimitExceedUsersDialog.Options.IsPopup = true;
             tariffLimitExceedStorageDialog.Options.IsPopup = true;
@@ -52,6 +55,9 @@ namespace ASC.Web.Studio.UserControls.Management
 
             var quota = TenantExtra.GetTenantQuota();
             IsFreeTariff = (quota.Free || quota.NonProfit || quota.Trial) && !quota.Open;
+            MailWhiteLabelSettings = MailWhiteLabelSettings.Instance;
+
+            HelpLink = CommonLinkUtility.GetHelpLink();
         }
     }
 }

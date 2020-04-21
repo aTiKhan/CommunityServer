@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -48,7 +48,7 @@ namespace ASC.Web.UserControls.Wiki
         {
             get
             {
-                return "~/Products/Community/Modules/Wiki".ToLower();
+                return "~/Products/Community/Modules/Wiki";
             }
         }
 
@@ -56,7 +56,7 @@ namespace ASC.Web.UserControls.Wiki
         {
             get
             {
-                return "~/Products/Community/Modules/Wiki/Default.aspx".ToLower();
+                return "~/Products/Community/Modules/Wiki/Default.aspx";
             }
         }
 

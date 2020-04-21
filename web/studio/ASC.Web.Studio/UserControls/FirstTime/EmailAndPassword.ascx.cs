@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,9 +24,16 @@
 */
 
 
-using ASC.Web.Core.WhiteLabel;
-using ASC.Web.Studio.Core.Notify;
+using System;
+using System.Globalization;
+using System.IO;
+using System.Net;
+using System.Text;
+using System.Threading;
+using System.Web;
+using System.Web.UI;
 using AjaxPro;
+using ASC.Common.Logging;
 using ASC.Core;
 using ASC.Core.Billing;
 using ASC.Core.Tenants;
@@ -35,18 +42,13 @@ using ASC.MessagingSystem;
 using ASC.Web.Core;
 using ASC.Web.Core.Security;
 using ASC.Web.Core.Utility.Settings;
+using ASC.Web.Core.WhiteLabel;
 using ASC.Web.Studio.Core;
+using ASC.Web.Studio.Core.Notify;
 using ASC.Web.Studio.Core.Users;
 using ASC.Web.Studio.UserControls.Management;
 using ASC.Web.Studio.Utility;
-using log4net;
 using Resources;
-using System;
-using System.Globalization;
-using System.Text;
-using System.Threading;
-using System.Web;
-using System.Web.UI;
 using SecurityContext = ASC.Core.SecurityContext;
 
 namespace ASC.Web.Studio.UserControls.FirstTime
@@ -68,6 +70,11 @@ namespace ASC.Web.Studio.UserControls.FirstTime
                     && !CoreContext.Configuration.Standalone
                     && string.IsNullOrEmpty(CoreContext.TenantManager.GetCurrentTenant().PartnerId);
             }
+        }
+
+        protected bool IsAmi
+        {
+            get { return !string.IsNullOrEmpty(SetupInfo.AmiMetaUrl); }
         }
 
         protected bool RequestLicense
@@ -106,8 +113,8 @@ namespace ASC.Web.Studio.UserControls.FirstTime
         {
             Page.RegisterBodyScripts(
                 "~/js/uploader/jquery.fileupload.js",
-                "~/usercontrols/firsttime/js/manager.js")
-                .RegisterStyle("~/usercontrols/firsttime/css/EmailAndPassword.less");
+                "~/UserControls/FirstTime/js/manager.js")
+                .RegisterStyle("~/UserControls/FirstTime/css/emailandpassword.less");
 
             var script = new StringBuilder();
 
@@ -124,7 +131,7 @@ namespace ASC.Web.Studio.UserControls.FirstTime
 
         [AjaxMethod]
         [SecurityPassthrough]
-        public object SaveData(string email, string pwd, string lng, string promocode, bool analytics)
+        public object SaveData(string email, string pwd, string lng, string promocode, string amiid, bool analytics)
         {
             try
             {
@@ -133,6 +140,11 @@ namespace ASC.Web.Studio.UserControls.FirstTime
                 if (settings.Completed)
                 {
                     throw new Exception("Wizard passed.");
+                }
+
+                if (IsAmi && IncorrectAmiId(amiid))
+                {
+                    throw new Exception(Resource.EmailAndPasswordIncorrectAmiId);
                 }
 
                 if (tenant.OwnerId == Guid.Empty)
@@ -232,6 +244,37 @@ namespace ASC.Web.Studio.UserControls.FirstTime
             {
                 LogManager.GetLogger("ASC.Web.FirstTime").Error(err);
             }
+        }
+
+        private static string _amiId;
+
+        private static bool IncorrectAmiId(string customAmiId)
+        {
+            customAmiId = (customAmiId ?? "").Trim();
+            if (string.IsNullOrEmpty(customAmiId)) return true;
+
+            if (string.IsNullOrEmpty(_amiId))
+            {
+                var getAmiIdUrl = SetupInfo.AmiMetaUrl + "instance-id";
+                var request = (HttpWebRequest)WebRequest.Create(getAmiIdUrl);
+                try
+                {
+                    using (var response = request.GetResponse())
+                    using (var responseStream = response.GetResponseStream())
+                    using (var reader = new StreamReader(responseStream))
+                    {
+                        _amiId = reader.ReadToEnd();
+                    }
+
+                    LogManager.GetLogger("ASC.Web.FirstTime").Debug("Instance id: " + _amiId);
+                }
+                catch (Exception e)
+                {
+                    LogManager.GetLogger("ASC.Web.FirstTime").Error("Request AMI id", e);
+                }
+            }
+
+            return string.IsNullOrEmpty(_amiId) || _amiId != customAmiId;
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -27,10 +27,10 @@
 using System;
 using System.Security;
 using System.Web;
+using ASC.Common.Logging;
 using ASC.Core.Billing;
 using ASC.Web.Core.Utility;
 using ASC.Web.Core.Utility.Settings;
-using log4net;
 using Resources;
 using SecurityContext = ASC.Core.SecurityContext;
 
@@ -47,29 +47,34 @@ namespace ASC.Web.Studio.HttpHandlers
                 if (context.Request.Files.Count == 0) throw new Exception(Resource.ErrorEmptyUploadFileSelected);
 
                 var licenseFile = context.Request.Files[0];
-                LicenseReader.SaveLicenseTemp(licenseFile.InputStream);
+                var dueDate = LicenseReader.SaveLicenseTemp(licenseFile.InputStream);
 
-                result.Message = Resource.LicenseUploaded;
+                result.Message = dueDate >= DateTime.UtcNow.Date
+                                     ? Resource.LicenseUploaded
+                                     : string.Format(Resource.LicenseUploadedOverdue,
+                                                     "<span class='tariff-marked'>",
+                                                     "</span>",
+                                                     dueDate.Date.ToLongDateString());
                 result.Success = true;
             }
             catch (LicenseExpiredException ex)
             {
-                LogManager.GetLogger(typeof(LicenseReader)).Error("License upload", ex);
+                LogManager.GetLogger("ASC").Error("License upload", ex);
                 result.Message = Resource.LicenseErrorExpired;
             }
             catch (LicenseQuotaException ex)
             {
-                LogManager.GetLogger(typeof(LicenseReader)).Error("License upload", ex);
+                LogManager.GetLogger("ASC").Error("License upload", ex);
                 result.Message = Resource.LicenseErrorQuota;
             }
             catch (LicensePortalException ex)
             {
-                LogManager.GetLogger(typeof(LicenseReader)).Error("License upload", ex);
+                LogManager.GetLogger("ASC").Error("License upload", ex);
                 result.Message = Resource.LicenseErrorPortal;
             }
             catch (Exception ex)
             {
-                LogManager.GetLogger(typeof (LicenseReader)).Error("License upload", ex);
+                LogManager.GetLogger("ASC").Error("License upload", ex);
                 result.Message = Resource.LicenseError;
             }
 

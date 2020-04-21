@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -85,7 +85,7 @@ namespace ASC.Web.Talk.Addon
 
         public string StartURL
         {
-            get { return BaseVirtualPath + "/default.aspx"; }
+            get { return BaseVirtualPath + "/Default.aspx"; }
         }
 
         public string HelpURL
@@ -102,12 +102,12 @@ namespace ASC.Web.Talk.Addon
 
         public static string GetClientUrl()
         {
-            return VirtualPathUtility.ToAbsolute("~/addons/talk/jabberclient.aspx");
+            return VirtualPathUtility.ToAbsolute("~/addons/talk/JabberClient.aspx");
         }
 
         public static string GetTalkClientURL()
         {
-            return "javascript:window.ASC.Controls.JabberClient.open('" + VirtualPathUtility.ToAbsolute("~/addons/talk/jabberclient.aspx") + "')";
+            return "javascript:window.ASC.Controls.JabberClient.open('" + VirtualPathUtility.ToAbsolute("~/addons/talk/JabberClient.aspx") + "')";
         }
 
         public static string GetMessageStr()

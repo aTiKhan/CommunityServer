@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -70,7 +70,7 @@ namespace ASC.Web.Community.Forum
             sb.Append(" ForumContainer_PanelInfoID = '" + ForumContainer.GetInfoPanelClientID() + "'; ");
 
             Page.RegisterBodyScripts(ForumManager.BaseVirtualPath + "/js/forummaker.js")
-                .RegisterStyle(ForumManager.BaseVirtualPath + "/app_themes/default/style.css")
+                .RegisterStyle(ForumManager.BaseVirtualPath + "/App_Themes/default/style.css")
                 .RegisterInlineScript(sb.ToString());
 
             SearchText = "";

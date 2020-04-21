@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -118,15 +118,15 @@ namespace ASC.Web.Files
                                   "~/js/third-party/jquery/jquery.uri.js",
                                   "~/js/uploader/jquery.fileupload.js")
                        .AddSource(r => FilesLinkUtility.FilesBaseAbsolutePath + r,
-                                  "controls/accessrights/accessrights.js",
-                                  "controls/chunkuploaddialog/chunkuploadmanager.js",
-                                  "controls/convertfile/convertfile.js",
-                                  "controls/createmenu/createmenu.js",
-                                  "controls/emptyfolder/emptyfolder.js",
-                                  "controls/fileviewer/fileviewer.js",
-                                  "controls/thirdparty/thirdparty.js",
-                                  "controls/tree/treebuilder.js",
-                                  "controls/tree/tree.js"
+                                  "Controls/AccessRights/accessrights.js",
+                                  "Controls/ChunkUploadDialog/chunkuploadmanager.js",
+                                  "Controls/ConvertFile/convertfile.js",
+                                  "Controls/ConvertFile/confirmconvert.js",
+                                  "Controls/CreateMenu/createmenu.js",
+                                  "Controls/EmptyFolder/emptyfolder.js",
+                                  "Controls/ThirdParty/thirdparty.js",
+                                  "Controls/Tree/treebuilder.js",
+                                  "Controls/Tree/tree.js"
                        );
         }
 
@@ -136,18 +136,17 @@ namespace ASC.Web.Files
                    new StyleBundleData("files", "files")
                        .AddSource(PathProvider.GetFileStaticRelativePath, "common.css")
                        .AddSource(r => FilesLinkUtility.FilesBaseAbsolutePath + r,
-                                  "controls/accessrights/accessrights.css",
-                                  "controls/chunkuploaddialog/chunkuploaddialog.css",
-                                  "controls/contentlist/contentlist.css",
-                                  "controls/convertfile/convertfile.css",
-                                  "controls/emptyfolder/emptyfolder.css",
-                                  "controls/fileviewer/fileviewer.css",
-                                  "controls/maincontent/maincontent.css",
-                                  "controls/morefeatures/css/morefeatures.css",
-                                  "controls/thirdparty/thirdparty.css",
-                                  "controls/tree/treebuilder.css",
-                                  "controls/tree/tree.css"
-                       );
+                                  "Controls/AccessRights/accessrights.css",
+                                  "Controls/ChunkUploadDialog/chunkuploaddialog.css",
+                                  "Controls/ContentList/contentlist.css",
+                                  "Controls/ConvertFile/convertfile.css",
+                                  "Controls/ConvertFile/confirmconvert.css",
+                                  "Controls/EmptyFolder/emptyfolder.css",
+                                  "Controls/MainContent/maincontent.css",
+                                  "Controls/MoreFeatures/css/morefeatures.css",
+                                  "Controls/ThirdParty/thirdparty.css",
+                                  "Controls/Tree/treebuilder.css",
+                                  "Controls/Tree/tree.css");
         }
 
         private void LoadControls()
@@ -169,6 +168,11 @@ namespace ASC.Web.Files
             mainMenu.EnableThirdParty = enableThirdParty;
             mainMenu.Desktop = Desktop;
             CommonSideHolder.Controls.Add(mainMenu);
+
+            if (Request.SailfishApp())
+            {
+                CommonContainerHolder.Controls.Add(LoadControl(Files.Controls.Sailfish.Location));
+            }
 
             var mainContent = (MainContent)LoadControl(MainContent.Location);
             mainContent.TitlePage = FilesCommonResource.TitlePage;

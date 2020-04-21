@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -369,7 +369,7 @@ ASC.CRM.SmtpSender = (function () {
 
             jq("#emailsErrorsCount")
             .html(jq("<div></div>").addClass("red-text").html(mess))
-            .append(jq("<a></a>").attr("href", "settings.aspx?type=common").text(ASC.CRM.Resources.CRMJSResource.GoToSettings));
+            .append(jq("<a></a>").attr("href", "/management.aspx?type=10").text(ASC.CRM.Resources.CRMJSResource.GoToSettings));
         },
 
         abortMassSend: function () {
@@ -428,7 +428,7 @@ ASC.CRM.SmtpSender = (function () {
         },
         
         getItems: function () {
-            var s = localStorageManager.getItem("senderTargets") || "[]";
+            var s = localStorageManager.getItem("senderTargets") || [];
             localStorageManager.removeItem("senderTargets");
             return s;
         },

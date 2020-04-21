@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -57,7 +57,7 @@ namespace ASC.Web.Studio.Core.Notify
             {
                 ID = new Guid("{148B5E30-C81A-4ff8-B749-C46BAE340093}"),
                 Name = Resources.Resource.WhatsNewSubscriptionName,
-                NotifyAction = Constants.ActionSendWhatsNew,
+                NotifyAction = Actions.SendWhatsNew,
                 Single = true
             });
 
@@ -65,7 +65,7 @@ namespace ASC.Web.Studio.Core.Notify
             {
                 ID = new Guid("{A4FFC01F-BDB5-450e-88C4-03FED17D67C5}"),
                 Name = Resources.Resource.AdministratorNotifySenderTypeName,
-                NotifyAction = Constants.ActionSendWhatsNew,
+                NotifyAction = Actions.SendWhatsNew,
                 Single = false
             };
             
@@ -76,7 +76,7 @@ namespace ASC.Web.Studio.Core.Notify
 
         public ISubscriptionProvider SubscriptionProvider
         {
-            get { return StudioNotifyService.Instance.source.GetSubscriptionProvider(); }
+            get { return StudioNotifyHelper.SubscriptionProvider; }
         }
 
         #endregion

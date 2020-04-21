@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -23,11 +23,16 @@
  *
 */
 
+
 using System;
-using System.Runtime.Serialization;
-using ASC.Core;
-using ASC.Core.Common.Settings;
-using ASC.Projects.Engine;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Web;
+using ASC.Web.Core.Client;
+using ASC.Web.Core.Client.HttpHandlers;
+using ASC.Web.Projects.Classes;
 using ASC.Web.Projects.Resources;
 using ASC.Web.Studio.Utility;
 
@@ -40,75 +45,89 @@ namespace ASC.Web.Projects
         protected override void PageLoad()
         {
             Title = HeaderStringHelper.GetPageTitle(ProjectsCommonResource.CommonSettings);
+            Page.RegisterStyle(
+                PathProvider.GetFileStaticRelativePath("settings.less"),
+                "~/Products/Files/Controls/FileSelector/fileselector.css",
+                "~/Products/Files/Controls/ThirdParty/thirdparty.css",
+                "~/Products/Files/Controls/ContentList/contentlist.css",
+                "~/Products/Files/Controls/EmptyFolder/emptyfolder.css",
+                "~/Products/Files/Controls/Tree/tree.css")
+                .RegisterBodyScripts(
+                PathProvider.GetFileStaticRelativePath("settings.js"),
+                    "~/Products/Files/Controls/Tree/tree.js",
+                    "~/Products/Files/Controls/EmptyFolder/emptyfolder.js",
+                    "~/Products/Files/Controls/FileSelector/fileselector.js",
+                    "~/Products/Files/js/common.js",
+                    "~/Products/Files/js/templatemanager.js",
+                    "~/Products/Files/js/servicemanager.js",
+                    "~/Products/Files/js/ui.js",
+                    "~/Products/Files/js/eventhandler.js");
+
+            FolderSelectorHolder.Controls.Add(LoadControl(CommonLinkUtility.ToAbsolute("~/Products/Files/Controls/FileSelector/FileSelector.ascx")));
+
+            Page.RegisterClientScript(new ClientSettingsResources());
         }
     }
 
-    [Serializable]
-    [DataContract]
-    public class ProjectsCommonSettings : BaseSettings<ProjectsCommonSettings>
+    public class ClientSettingsResources : ClientScript
     {
-        [DataMember(Name = "EverebodyCanCreate")]
-        public bool EverebodyCanCreate { get; set; }
-
-        [DataMember(Name = "HideEntitiesInPausedProjects")]
-        public bool HideEntitiesInPausedProjects { get; set; }
-
-        [DataMember]
-        public StartModuleType StartModuleType { get; set; }
-
-        public override Guid ID
+        protected override string BaseNamespace
         {
-            get { return new Guid("{F833803D-0A84-4156-A73F-7680F522FE07}"); }
+            get { return "ASC.Projects.Master.Settings"; }
         }
 
-        public override ISettings GetDefault()
+        protected override IEnumerable<KeyValuePair<string, object>> GetClientVariables(HttpContext context)
         {
-            return new ProjectsCommonSettings
+            var icons = new[]
+                        {
+                            "/skins/default/images/svg/projects/timetrack.svg",
+                            "/skins/default/images/svg/projects/inbox.svg",
+                            "/skins/default/images/svg/projects/pause.svg",
+                            "/skins/default/images/svg/projects/milstones.svg",
+                            "/skins/default/images/svg/projects/check_tick.svg",
+                            "/skins/default/images/svg/projects/documents.svg",
+                            "/skins/default/images/svg/projects/bookmark.svg",
+                            "/skins/default/images/svg/projects/discussions.svg",
+                            "/skins/default/images/svg/projects/projects.svg",
+                            "/skins/default/images/svg/calendar/up.svg"
+                        }
+            .Select(r => HttpContext.Current.Server.MapPath(r))
+            .Select(r => File.ReadAllText(r))
+            .Select(r => Convert.ToBase64String(Encoding.UTF8.GetBytes(r)))
+            .ToList();
+
+            return new List<KeyValuePair<string, object>>(1)
             {
-                EverebodyCanCreate = false,
-                StartModuleType =  StartModuleType.Tasks,
-                HideEntitiesInPausedProjects = true
+                RegisterObject(
+                    new
+                    {
+                        icons,
+                        colors = new[]
+                        {
+                            "#f48454",
+                            "#ffb45e",
+                            "#ffd267",
+                            "#b7d269",
+                            "#6bbd72",
+                            "#77cf9a",
+                            "#6ac6dd",
+                            "#4682b6",
+                            "#6a9ad2",
+                            "#8a98d8",
+                            "#7e6eb2",
+                            "#b58fd6",
+                            "#d28cc8",
+                            "#e795c1",
+                            "#f2a9be",
+                            "#df7895"
+                        }
+                    })
             };
         }
-    }
 
-    public enum StartModuleType
-    {
-        Projects,
-        Tasks,
-        Discussions,
-        TimeTracking
-    }
-
-    public class StartModule
-    {
-        public StartModuleType StartModuleType { get; private set; }
-        public string Title { get; private set; }
-        public string Page { get; private set; }
-
-        public static StartModule ProjectsModule = new StartModule(StartModuleType.Projects, ProjectResource.Projects, "projects.aspx");
-        public static StartModule TaskModule = new StartModule(StartModuleType.Tasks, TaskResource.Tasks, "tasks.aspx");
-        public static StartModule DiscussionModule = new StartModule(StartModuleType.Discussions, MessageResource.Messages, "messages.aspx");
-        public static StartModule TimeTrackingModule = new StartModule(StartModuleType.TimeTracking, ProjectsCommonResource.TimeTracking, "timetracking.aspx");
-        
-
-        private StartModule(StartModuleType startModuleType, string title, string page)
+        protected override string GetCacheHash()
         {
-            StartModuleType = startModuleType;
-            Title = title;
-            Page = page;
-        }
-
-        public static StartModule GetInstance(StartModuleType startModuleType)
-        {
-            switch (startModuleType)
-            {
-                case StartModuleType.Projects: return ProjectsModule;
-                case StartModuleType.Tasks: return TaskModule;
-                case StartModuleType.Discussions: return DiscussionModule;
-                case StartModuleType.TimeTracking: return TimeTrackingModule;
-            }
-            return null;
+            return ClientSettings.ResetCacheKey;
         }
     }
 }

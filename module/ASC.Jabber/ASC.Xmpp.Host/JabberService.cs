@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -23,11 +23,12 @@
  *
 */
 
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel;
-
+using ASC.Common.Logging;
 using ASC.Core;
 using ASC.Core.Common.Notify.Jabber;
 using ASC.Core.Notify.Jabber;
@@ -44,8 +45,6 @@ using ASC.Xmpp.Server.Session;
 using ASC.Xmpp.Server.Storage;
 using ASC.Xmpp.Server.Streams;
 
-using log4net;
-
 using Stream = ASC.Xmpp.Core.protocol.Stream;
 
 namespace ASC.Xmpp.Host
@@ -54,7 +53,7 @@ namespace ASC.Xmpp.Host
         InstanceContextMode = InstanceContextMode.Single, AddressFilterMode = AddressFilterMode.Any)]
     public class JabberService : IJabberService
     {
-        private static readonly ILog _log = LogManager.GetLogger(typeof(JabberService));
+        private static readonly ILog _log = LogManager.GetLogger("ASC");
         private readonly XmppServer _xmppServer;
         private readonly SignalrServiceClient signalrServiceClient;
 
@@ -248,7 +247,7 @@ namespace ASC.Xmpp.Host
                         }
                     }
                     signalrServiceClient.SendOfflineMessages(userName, users, tenantId);
-                    _xmppServer.StorageManager.OfflineStorage.RemoveAllOfflineMessages(jid);
+                    //_xmppServer.StorageManager.OfflineStorage.RemoveAllOfflineMessages(jid);
                 }
             }
             catch (Exception e)

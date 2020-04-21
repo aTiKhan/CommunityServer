@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,6 +24,7 @@
 */
 
 
+using System.Linq;
 using ASC.Common.Caching;
 using ASC.Common.Data;
 using ASC.Common.Data.Sql;
@@ -70,6 +71,11 @@ namespace ASC.FederatedLogin
                     .Select("id").Where("uid", hashid).Where(!Exp.Eq("provider", string.Empty));
                 return db.ExecuteList(query).ConvertAll(x => (string)x[0]);
             }
+        }
+
+        public IEnumerable<LoginProfile> GetLinkedProfiles(string obj, string provider)
+        {
+            return GetLinkedProfiles(obj).Where(profile => profile.Provider.Equals(provider));
         }
 
         public IEnumerable<LoginProfile> GetLinkedProfiles(string obj)

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -57,6 +57,9 @@ window.TipsSettings = new function() {
         Teamlab.updateTipsSettings({ show: show }, {
             success: function() {
                 $updateTipsSettingsBtn.removeClass('on off').addClass(show ? 'on' : 'off');
+                if (show && window.sessionStorage) {
+                    window.sessionStorage.removeItem("tipsWasClosed");
+                }
             },
             error: function() {
                 toastr.error(ASC.Resources.Master.Resource.CommonJSErrorMsg);

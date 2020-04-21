@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -26,13 +26,12 @@
 
 using System;
 using System.Linq;
-using System.Threading;
+using System.Web;
 using System.Web.UI;
-using ASC.Web.Studio.Utility;
 using AjaxPro;
 using ASC.Core;
 using ASC.Web.Studio.Core;
-using System.Web;
+using ASC.Web.Studio.Utility;
 using Resources;
 
 namespace ASC.Web.Studio.UserControls.Management.VersionSettings
@@ -50,8 +49,8 @@ namespace ASC.Web.Studio.UserControls.Management.VersionSettings
 
             HelpLink = CommonLinkUtility.GetHelpLink();
 
-            Page.RegisterStyle("~/usercontrols/management/versionsettings/css/versionsettings.less")
-                .RegisterBodyScripts("~/usercontrols/Management/VersionSettings/js/script.js");
+            Page.RegisterStyle("~/UserControls/Management/VersionSettings/css/versionsettings.less")
+                .RegisterBodyScripts("~/UserControls/Management/VersionSettings/js/script.js");
         }
 
         [AjaxMethod(HttpSessionStateRequirement.ReadWrite)]
@@ -69,7 +68,6 @@ namespace ASC.Web.Studio.UserControls.Management.VersionSettings
                 try
                 {
                     CoreContext.TenantManager.SetTenantVersion(tenant, tenantVersion);
-                    Thread.Sleep(TimeSpan.FromSeconds(5));
                 }
                 catch (ArgumentException e)
                 {
@@ -80,7 +78,6 @@ namespace ASC.Web.Studio.UserControls.Management.VersionSettings
             catch (Exception e)
             {
                 return new { Status = 0, e.Message };
-
             }
         }
 

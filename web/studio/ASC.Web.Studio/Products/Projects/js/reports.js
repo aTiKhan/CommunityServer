@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,30 +24,91 @@
 */
 
 
+if (!Array.prototype.findIndex) {
+    Array.prototype.findIndex = function(predicate) {
+        if (this == null) {
+            throw new TypeError('Array.prototype.findIndex called on null or undefined');
+        }
+        if (typeof predicate !== 'function') {
+            throw new TypeError('predicate must be a function');
+        }
+        var list = Object(this);
+        var length = list.length >>> 0;
+        var thisArg = arguments[1];
+        var value;
+
+        for (var i = 0; i < length; i++) {
+            value = list[i];
+            if (predicate.call(thisArg, value, i, list)) {
+                return i;
+            }
+        }
+        return -1;
+    };
+}
+
+ASC.Projects.GeneratedReport = (function () {
+    var attachments,
+        teamlab,
+        loadingBanner;
+
+    function init() {
+        attachments = Attachments;
+        teamlab = Teamlab;
+        loadingBanner = LoadingBanner;
+
+        loadingBanner.displayLoading();
+
+        teamlab.getProjectsReports({
+            success: function (params, data) {
+                attachments.setCreateNewEntityFlag(true);
+                attachments.isLoaded = false;
+                attachments.init("reports");
+                attachments.loadFiles(data);
+
+                attachments.bind("deleteFile", function (ev, fileId) {
+                    loadingBanner.displayLoading();
+                    teamlab.removeProjectsReport(fileId,
+                    {
+                        success: function() {
+                            attachments.deleteFileFromLayout(fileId);
+                            loadingBanner.hideLoading();
+                        },
+                        error: function () {
+                            toastr.error(ASC.Resources.Master.Resource.CommonJSErrorMsg);
+                            loadingBanner.hideLoading();
+                        }
+                    });
+                });
+
+                loadingBanner.hideLoading();
+            }
+        });
+    }
+
+    return { init: init };
+}());
+
 ASC.Projects.ReportView = (function() {
     var tmplId = null,
         resources = ASC.Projects.Resources.ProjectsJSResource,
         teamlab,
-        reports;
+        reports,
+        progressDialog,
+        loadingBanner,
+        $generateBtn;
 
     var init = function () {
         teamlab = Teamlab;
         reports = ASC.Projects.Reports;
+        progressDialog = ASC.Projects.ReportGenerator;
+        loadingBanner = LoadingBanner;
 
         if (location.hash.indexOf("elementNotFound") > 0) {
             ASC.Projects.Common.displayInfoPanel(resources.ReportTmplNotFound, true);
         }
-
-        var params = location.href.split("?")[1];
-        var paramsCount = params.split("&").length;
-        if (paramsCount <= 1) {
-            var reportType = jq.getURLParam("reportType");
-            if (reportType == "5" || reportType == "8") {
-                jq("#ddlUser" + teamlab.profile.id).attr("selected", "selected");
-            }
-        }
         
-        
+        $generateBtn = jq("#generateReport");
         
         tmplId = jq.getURLParam("tmplId");
 
@@ -67,8 +128,9 @@ ASC.Projects.ReportView = (function() {
             reports.initFilterEvents();
         }
 
-        jq("#generateReport").click(function() {
-            reports.generateReportInNewWindow();
+        $generateBtn.click(function () {
+            if (jq(this).hasClass("disable")) return;
+            generateReport();
             return false;
         });
 
@@ -148,6 +210,13 @@ ASC.Projects.ReportView = (function() {
         });
     };
 
+    var generateReport = function () {
+        var generateReportFilters = ASC.Projects.Reports.generateReportFilters();
+        var url = ASC.Projects.Reports.generateReportUrl();
+
+        progressDialog.generate(url);
+    };
+
     var yellowFade = function(elem) {
         elem.css({ backgroundColor: '#F7F7F7' });
         elem.animate({ backgroundColor: '#F2F2F2' }, { queue: false, duration: 1000 });
@@ -219,65 +288,20 @@ ASC.Projects.ReportView = (function() {
     };
 })(jQuery);
 
-ASC.Projects.GeneratedReportView = (function () {
-    var reports;
-
-    var init = function () {
-        ASC.Projects.ReportView.init();
-        reports = ASC.Projects.Reports;
-
-        jq("div.studioTopNavigationPanel").remove();
-        jq("div.infoPanel").remove();
-        jq("#studioPageContent").css("padding-bottom", "0");
-
-        jq("#printReportButton").click(function() {
-            reports.printReport();
-            return false;
-        });
-        jq("#exportReportButton").click(function () {
-            var showPopupFlag = localStorageManager.getItem("showExportReportPopupFlag");
-            if (!showPopupFlag) {
-                StudioBlockUIManager.blockUI(jq('#exportPopup'), 500, 500, 0);
-            } else {
-                reports.exportToCsv();
-            }
-            return false;
-        });
-
-        jq("#okExportButton").click(function() {
-            jq.unblockUI();
-            var showPopupFlag = jq("#neverShowPopup").is(":checked");
-            if (showPopupFlag) {
-                localStorageManager.setItem("showExportReportPopupFlag", true);
-            }
-            reports.exportToCsv();
-        });
-
-        jq("#generateNewReport").click(function() {
-            var generateReportFilters = reports.generateReportFilters(),
-                reportUrl = reports.generateReportUrl(generateReportFilters);
-
-            location.href = reportUrl;
-        });
-    };
-    return {
-        init: init
-    };
-})(jQuery);
-
 ASC.Projects.Reports = (function () {
     var allProjectList,
-        allusers,
+        allusers = [],
         filter = {},
         defaultFilter,
-        defaultFilterTime,
+        defaultFilterDate,
+        defaultFilterInterval,
         $departmentReport,
         $projectReport,
         tmpl = {},
         basicAdvancedSelectorSettings = {
             onechosen: true,
             showSearch: true,
-            sortMethod: function() { return 0; }
+            sortMethod: function () { return 0; }
         },
         tagsFilter,
         projectsFilter,
@@ -286,13 +310,14 @@ ASC.Projects.Reports = (function () {
         departmentFilter,
         userFilter,
         paymentFilter,
-        taskStatusFilter;
+        taskStatusFilter,
+        periodFilterId;
 
     var FilterCombo = function (id, type, describe, filterItem, hidden) {
         this.id = id;
         this.describe = describe;
         this.type = type;
-        this.defaultFilter = type === 0 ? defaultFilter : defaultFilterTime;
+        this.defaultFilter = getDefaultFilter(type);
         this.defaultText = this.defaultFilter.title;
         this.hidden = hidden;
         this.filterItem = filterItem;
@@ -354,12 +379,40 @@ ASC.Projects.Reports = (function () {
             var selectedFilter = defFilter,
                 urlId = jq.getURLParam(urlParam, tmpl.hasOwnProperty("filter") ? "?" + tmpl.filter : undefined);
 
+            function parseDate(dateToParse) {
+                return new Date(parseInt(dateToParse.substring(0, 4), 10), parseInt(dateToParse.substring(4, 6), 10) - 1, parseInt(dateToParse.substring(6, 8), 10));
+            }
+
+            if (urlParam === "ftimeid") {
+                var from = jq.getURLParam("ffrom", tmpl.hasOwnProperty("filter") ? "?" + tmpl.filter : undefined);
+                var to = jq.getURLParam("fto", tmpl.hasOwnProperty("filter") ? "?" + tmpl.filter : undefined);
+
+                if (from && to) {
+                    var fromDate = parseDate(from);
+                    var toDate = parseDate(to);
+                    urlId = ((toDate - fromDate) / (1000 * 60 * 60 * 24)).toString(); //milliseconds to days
+                }
+            }
+
             if (urlId) {
                 var findedFilter = filterList.find(function (item) { return item.id === urlId; });
                 selectedFilter = findedFilter || defFilter;
             }
 
             return selectedFilter;
+        }
+
+        function getDefaultFilter(filterType) {
+            switch (filterType) {
+            case 0:
+                return defaultFilter;
+            case 1:
+                return defaultFilterDate;
+            case 2:
+                return defaultFilterInterval;
+            default:
+                return defaultFilter;
+            }
         }
     },
     FilterRadio = function (id, name, describe, value, checked) {
@@ -379,7 +432,7 @@ ASC.Projects.Reports = (function () {
         this.title = title;
     }
 
-    var mapAdvancedSelectorItem = function (item) { return item.id.toString() };
+    var mapAdvancedSelectorItem = function (item) { return item.id.toString(); };
 
     var onGetUsers = function (params, users) {
         userFilter.disable(allusers.map(mapAdvancedSelectorItem));
@@ -416,8 +469,9 @@ ASC.Projects.Reports = (function () {
             commonResource = resources.CommonResource,
             reportResource = resources.ReportResource;
 
-        defaultFilter = new AdvancedSelectorItem(-1, commonResource.All);
-        defaultFilterTime = new AdvancedSelectorItem(-1, reportResource.Any);
+        defaultFilter = new AdvancedSelectorItem("default", commonResource.All);
+        defaultFilterDate = new AdvancedSelectorItem(-1, reportResource.AnyDate);
+        defaultFilterInterval = new AdvancedSelectorItem(-1, reportResource.AnyInterval);
 
         if (template) {
             tmpl = template;
@@ -426,15 +480,16 @@ ASC.Projects.Reports = (function () {
         tagsFilter = new FilterCombo("Tags", 0, projectResource.Tags, { id: "tag", param: "fpt" });
         projectsFilter = new FilterCombo("Projects", 0, projectResource.Project, { id: "project", param: "fpid" }),
         periodFilter = new FilterCombo("UpcomingIntervals", 1, reportResource.ChooseNearestMilestonesTimePeriod, { id: "timeid", param: "ftimeid" }),
-        timeFilter = new FilterCombo("TimeIntervals", 1, reportResource.ChooseTimeInterval, { id: "reportTimeInterval", param: "ftime" }),
+        timeFilter = new FilterCombo("TimeIntervals", 2, reportResource.ChooseTimeInterval, { id: "reportTimeInterval", param: "ftime" }),
         departmentFilter = new FilterCombo("Departments", 0, resources.ViewByDepartments, { id: "departament", param: "fd" }),
         userFilter = new FilterCombo("Users", 0, resources.ViewByUsers, { id: "userId", param: "fu" }),
         paymentFilter = new FilterCombo("PaymentsStatuses", 0, reportResource.PaymentStatuses, { id: "paymentStatus", param: "fpays" }),
-        taskStatusFilter = new FilterCombo("TaskStatuses", 0, reportResource.ShowTasks, { id: "status", param: "fts" });
+        taskStatusFilter = new FilterCombo("TaskStatuses", 0, reportResource.ShowTasks, { id: "status", param: "ftss" });
 
         var departmentRadio = new FilterRadio("departmentReport", "reportType", resources.ViewByDepartments, 0),
         userRadio = new FilterRadio("byUsers", "type_rbl", resources.ViewByUsers, 0),
         taskRadio = new FilterRadio("byTasks", "type_rbl", reportResource.ViewByUserTasks, 1),
+        projectRadioVt = new FilterRadio("byProject", "type_rbl", reportResource.ViewByProjects, 2),
         projectRadio = new FilterRadio("projectReport", "reportType", reportResource.ViewByProjects, 1),
         projectClosedCheck = new FilterCheck("cbxViewClosedProjects", reportResource.ViewClosedProjects),
         taskRespCheck = new FilterCheck("cbxShowTasksWithoutResponsible", resources.TasksResource.ShowTasksWithoutResponsible);
@@ -464,7 +519,16 @@ ASC.Projects.Reports = (function () {
                 filters.combo = [departmentFilter, userFilter];
                 break;
             case "5":
-                filters.combo = [departmentFilter, userFilter, timeFilter];
+                if (jq.getURLParam("fv") == null) {
+                    tagsFilter.hidden = projectsFilter.hidden = true;
+                    departmentRadio.checked = 1;
+                } else {
+                    departmentFilter.hidden = true;
+                    projectRadio.checked = 1;
+                }
+
+                filters.combo = [departmentFilter, tagsFilter, projectsFilter, userFilter, timeFilter];
+                filters.radio = [departmentRadio, projectRadio];
                 break;
             case "6":
                 if (jq.getURLParam("fv") == null) {
@@ -487,7 +551,7 @@ ASC.Projects.Reports = (function () {
                 userRadio.checked = jq.getURLParam("fv") == null;
                 taskRadio.checked = !userRadio.checked;
                 filters.combo = [departmentFilter, userFilter, paymentFilter, timeFilter];
-                filters.radio = [userRadio, taskRadio];
+                filters.radio = [userRadio, taskRadio, projectRadioVt];
                 break;
             case "9":
                 taskRespCheck.checked = jq.getURLParam("nores");
@@ -557,17 +621,18 @@ ASC.Projects.Reports = (function () {
                 } else {
                     filter.reportTimeInterval = 1;
 
+                    periodFilterId = item.id;
                     var fromDate = new Date();
-                    filter.fromDate = Teamlab.serializeTimestamp(fromDate).split('T')[0].split('-').join('');
-                    fromDate.setDate(fromDate.getDate() + parseInt(item.id));
-                    filter.toDate = Teamlab.serializeTimestamp(fromDate).split('T')[0].split('-').join('');
+                    filter.fromDate = fromDate;
+                    fromDate.setDate(fromDate.getDate() + parseInt(periodFilterId));
+                    filter.toDate = fromDate;
                 }
             });
         }
 
         if (departmentFilter.isVisible()) {
             var firstDep = true,
-                deps = ASC.Resources.Master.ApiResponses_Groups.response.map(function(item) {
+                deps = window.GroupManager.getAllGroups().map(function (item) {
                     return new AdvancedSelectorItem(item.id, item.name);
                 });
             departmentFilter.init(deps, 0, function () {
@@ -602,11 +667,20 @@ ASC.Projects.Reports = (function () {
         }
 
         if (userFilter.isVisible()) {
-            allusers = ASC.Resources.Master.ApiResponses_ActiveProfiles.response.map(function (item) {
-                return new AdvancedSelectorItem(item.id, item.displayName);
-            });
+            var defaultFilterUser = 0;
+            var users = window.UserManager.getAllUsers(true);
 
-            userFilter.init(allusers, 0, function () {
+            for (var userId in users) {
+                if(!users.hasOwnProperty(userId)) continue;
+                var item = users[userId];
+                allusers.push(new AdvancedSelectorItem(item.id, item.displayName));
+            }
+
+            if (reportType === "5") {
+                defaultFilterUser = allusers.findIndex(function(r) { return r.id === Teamlab.profile.id; }) + 1;
+            }
+
+            userFilter.init(allusers, defaultFilterUser, function () {
                 changeResponsible(filter.userId);
             });
         }
@@ -633,7 +707,7 @@ ASC.Projects.Reports = (function () {
                 new AdvancedSelectorItem(0, reportResource.Other)
             ];
 
-            timeFilter.init(timeIntervals, 3, function(item) {
+            timeFilter.init(timeIntervals, 4, function(item) {
                 if (item.id == '0')
                     jq('#otherInterval').show();
                 else
@@ -642,12 +716,59 @@ ASC.Projects.Reports = (function () {
         }
 
         if (taskStatusFilter.isVisible()) {
-            var taskStatuses = [
-                new AdvancedSelectorItem(1, reportResource.ActiveTaskStatus),
-                new AdvancedSelectorItem(2, reportResource.ClosedTaskStatus)
-            ];
+            ASC.Projects.Common.initCustomStatuses(function () {
+                var customStatuses = ASC.Projects.Master.customStatuses;
 
-            taskStatusFilter.init(taskStatuses, 0);
+                function getSub(statusType) {
+                    if (!customStatuses) return;
+
+                    return customStatuses.filter(function (item) {
+                        return item.statusType === statusType;
+                    });
+                }
+
+                var openSub = getSub(1);
+                var closedSub = getSub(2);
+
+                var filterStatuses = [];
+
+                if (openSub) {
+                    if (openSub.length === 1) {
+                        filterStatuses.push(openSub[0]);
+                    } else if (openSub.length > 1) {
+                        filterStatuses = [{ id: "all-1", val: -1,  title: resources.ProjectsFilterResource.StatusAllOpenTask }].concat(openSub);
+                    }
+                } else {
+                    filterStatuses.push(
+                        {
+                            id: -1,
+                            title: resources.ProjectsFilterResource.StatusOpenTask
+                        }
+                    );
+                }
+
+                if (closedSub) {
+                    if (closedSub.length === 1) {
+                        filterStatuses.push(closedSub[0]);
+                    } else if (closedSub.length > 1) {
+                        filterStatuses.push({ id: "all-2", val: -2, title: resources.ProjectsFilterResource.StatusAllClosedTask });
+                        filterStatuses = filterStatuses.concat(closedSub);
+                    }
+                } else {
+                    filterStatuses.push(
+                        {
+                            id: 2,
+                            title: resources.ProjectsFilterResource.StatusClosedTask
+                        }
+                    );
+                }
+
+                filterStatuses = filterStatuses.map(function (item) {
+                    return new AdvancedSelectorItem(item.id, item.title, item.val);
+                });
+
+                taskStatusFilter.init(filterStatuses, 0);
+            });
         }
 
         jq("#reportFilters").removeClass("display-none");
@@ -775,7 +896,7 @@ ASC.Projects.Reports = (function () {
             }
         }
         if (filter.reportType == 8) {
-            filter.viewType = jq("#byUsers").is(':checked') ? 0 : 1;
+            filter.viewType = jq("#byUsers").is(':checked') ? 0 : jq("#byTasks").is(':checked') ? 1 : 2;
         }
 
         if ((filter.reportType == 5 || filter.reportType == 8) && filter.reportTimeInterval == '0') {
@@ -793,6 +914,12 @@ ASC.Projects.Reports = (function () {
             }
         }
 
+        if (filter.reportTimeInterval === 1) {
+            var fromDate = new Date();
+            filter.fromDate = Teamlab.serializeTimestamp(fromDate);
+            fromDate.setDate(fromDate.getDate() + parseInt(periodFilterId));
+            filter.toDate = Teamlab.serializeTimestamp(fromDate);
+        }
 
         if (filter.reportType == 11) {
             filter.noResponsible = true;
@@ -856,9 +983,9 @@ ASC.Projects.Reports = (function () {
     function addFilterToUrl(reportUrl, filterItem) {
         if (!filter[filterItem.id]) return reportUrl;
         return reportUrl + jq.format("&{0}={1}", filterItem.param, filter[filterItem.id]);
-    }
+    };
 
-    var generateReportInNewWindow = function() {
+    var generateReportInNewWindow = function () {
         var generateReportFilters = ASC.Projects.Reports.generateReportFilters();
         var url = ASC.Projects.Reports.generateReportUrl(generateReportFilters);
         window.open(url);

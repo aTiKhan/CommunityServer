@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -29,18 +29,19 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Text;
+using System.Threading;
 using System.Web;
+using System.Web.Configuration;
 using ASC.Core;
-using ASC.Security.Cryptography;
+using ASC.Files.Core;
 using ASC.Web.Core.Client;
 using ASC.Web.Core.Files;
 using ASC.Web.Core.Mobile;
+using ASC.Web.Core.Users;
 using ASC.Web.Core.Utility.Skins;
 using ASC.Web.Core.WhiteLabel;
 using ASC.Web.Files.Classes;
-using ASC.Web.Files.Core;
 using ASC.Web.Files.Resources;
 using ASC.Web.Files.Services.DocumentService;
 using ASC.Web.Files.ThirdPartyApp;
@@ -57,6 +58,8 @@ namespace ASC.Web.Files
 {
     public partial class DocEditor : MainPage
     {
+        private static readonly string ResetCacheKey = WebConfigurationManager.AppSettings["web.client.cache.resetkey.ds"];
+
         protected override bool MayNotAuth
         {
             get { return !string.IsNullOrEmpty(Request[FilesLinkUtility.DocShareKey]); }
@@ -109,6 +112,11 @@ namespace ASC.Web.Files
             get { return (Request[FilesLinkUtility.Action] ?? "").Equals("view", StringComparison.InvariantCultureIgnoreCase); }
         }
 
+        private int RequestVersion
+        {
+            get { return string.IsNullOrEmpty(Request[FilesLinkUtility.Version]) ? -1 : Convert.ToInt32(Request[FilesLinkUtility.Version]); }
+        }
+
         private bool RequestEmbedded
         {
             get
@@ -117,6 +125,11 @@ namespace ASC.Web.Files
                     (Request[FilesLinkUtility.Action] ?? "").Equals("embedded", StringComparison.InvariantCultureIgnoreCase)
                     && !string.IsNullOrEmpty(RequestShareLinkKey);
             }
+        }
+
+        private bool RequestHistoryClose
+        {
+            get { return (Request["history"] ?? "").Equals("close", StringComparison.InvariantCultureIgnoreCase); }
         }
 
         private bool _thirdPartyApp;
@@ -152,7 +165,7 @@ namespace ASC.Web.Files
             InitScript();
 
             Response.Cache.SetCacheability(HttpCacheability.NoCache);
-            DocServiceApiUrl += (DocServiceApiUrl.Contains("?") ? "&" : "?") + "ver=" + ClientSettings.ResetCacheKey;
+            DocServiceApiUrl += (DocServiceApiUrl.Contains("?") ? "&" : "?") + "ver=" + HttpUtility.UrlEncode(ClientSettings.ResetCacheKey + ResetCacheKey);
 
             if (_configuration != null && !string.IsNullOrEmpty(_configuration.DocumentType))
             {
@@ -175,8 +188,19 @@ namespace ASC.Web.Files
                     var app = ThirdPartySelector.GetAppByFileId(RequestFileId);
                     if (app == null)
                     {
-                        var ver = string.IsNullOrEmpty(Request[FilesLinkUtility.Version]) ? -1 : Convert.ToInt32(Request[FilesLinkUtility.Version]);
-                        file = DocumentServiceHelper.GetParams(RequestFileId, ver, RequestShareLinkKey, editPossible, !RequestView, true, out _configuration);
+                        file = DocumentServiceHelper.GetParams(RequestFileId, RequestVersion, RequestShareLinkKey, editPossible, !RequestView, true, out _configuration);
+                        if (_valideShareLink)
+                        {
+                            _configuration.Document.SharedLinkKey += RequestShareLinkKey;
+
+                            if (CoreContext.Configuration.Personal && !SecurityContext.IsAuthenticated)
+                            {
+                                var user = CoreContext.UserManager.GetUsers(file.CreateBy);
+                                var culture = CultureInfo.GetCultureInfo(user.CultureName);
+                                Thread.CurrentThread.CurrentCulture = culture;
+                                Thread.CurrentThread.CurrentUICulture = culture;
+                            }
+                        }
                     }
                     else
                     {
@@ -210,6 +234,7 @@ namespace ASC.Web.Files
                     _configuration.Document.Permissions.Edit = editPossible && !CoreContext.Configuration.Standalone;
                     _configuration.Document.Permissions.Rename = false;
                     _configuration.Document.Permissions.Review = false;
+                    _configuration.Document.Permissions.FillForms = false;
                     _configuration.Document.Permissions.ChangeHistory = false;
                     _editByUrl = true;
 
@@ -228,7 +253,7 @@ namespace ASC.Web.Files
             {
                 try
                 {
-                    file = FileConverter.ExecDuplicate(file, RequestShareLinkKey);
+                    file = FileConverter.ExecSync(file, RequestShareLinkKey);
                 }
                 catch (Exception ex)
                 {
@@ -238,7 +263,7 @@ namespace ASC.Web.Files
                     return;
                 }
 
-                var comment = "#message/" + HttpUtility.UrlEncode(FilesCommonResource.CopyForEdit);
+                var comment = "#message/" + HttpUtility.UrlEncode(string.Format(FilesCommonResource.ConvertForEdit, file.Title));
 
                 Response.Redirect(FilesLinkUtility.GetFileWebEditorUrl(file.ID) + comment);
                 return;
@@ -263,9 +288,15 @@ namespace ASC.Web.Files
             {
                 _configuration.Type = IsMobile ? Services.DocumentService.Configuration.EditorType.Mobile : Services.DocumentService.Configuration.EditorType.Desktop;
 
-                if (FileSharing.CanSetAccess(file))
+                if (FileSharing.CanSetAccess(file)
+                    && !(file.Encrypted
+                         && (!Request.DesktopApp()
+                             || CoreContext.Configuration.Personal)))
                 {
-                    _configuration.EditorConfig.SharingSettingsUrl = CommonLinkUtility.GetFullAbsolutePath(Share.Location + "?" + FilesLinkUtility.FileId + "=" + HttpUtility.UrlEncode(file.ID.ToString()));
+                    _configuration.EditorConfig.SharingSettingsUrl = CommonLinkUtility.GetFullAbsolutePath(
+                        Share.Location
+                        + "?" + FilesLinkUtility.FileId + "=" + HttpUtility.UrlEncode(file.ID.ToString())
+                        + (Request.DesktopApp() ? "&desktop=true" : string.Empty));
                 }
             }
 
@@ -276,6 +307,11 @@ namespace ASC.Web.Files
                 FileMarker.RemoveMarkAsNew(file);
             }
 
+            if (SecurityContext.IsAuthenticated)
+            {
+                _configuration.EditorConfig.SaveAsUrl = _configuration.EditorConfig.MergeFolderUrl = CommonLinkUtility.GetFullAbsolutePath(SaveAs.GetUrl);
+            }
+
             if (_configuration.EditorConfig.ModeWrite)
             {
                 _tabId = FileTracker.Add(file.ID);
@@ -284,8 +320,7 @@ namespace ASC.Web.Files
 
                 if (SecurityContext.IsAuthenticated)
                 {
-                    _configuration.EditorConfig.FileChoiceUrl = CommonLinkUtility.GetFullAbsolutePath(FileChoice.Location) + "?" + FileChoice.ParamFilterExt + "=xlsx&" + FileChoice.MailMergeParam + "=true";
-                    _configuration.EditorConfig.MergeFolderUrl = CommonLinkUtility.GetFullAbsolutePath(MailMerge.GetUrl);
+                    _configuration.EditorConfig.FileChoiceUrl = CommonLinkUtility.GetFullAbsolutePath(FileChoice.GetUrlForEditor);
                 }
             }
             else
@@ -296,14 +331,22 @@ namespace ASC.Web.Files
 
                 if (FileConverter.MustConvert(_configuration.Document.Info.File)) _editByUrl = true;
             }
+
+            var actionAnchor = Request[FilesLinkUtility.Anchor];
+            if (!string.IsNullOrEmpty(actionAnchor))
+            {
+                _configuration.EditorConfig.ActionLinkString = actionAnchor;
+            }
         }
 
         private void InitScript()
         {
             var inlineScript = new StringBuilder();
 
-            inlineScript.AppendFormat("\nASC.Files.Constants.URL_WCFSERVICE = \"{0}\";",
-                                      PathProvider.GetFileServicePath);
+            inlineScript.AppendFormat("\nASC.Files.Constants.URL_WCFSERVICE = \"{0}\";" +
+                                      "ASC.Files.Constants.DocsAPIundefined = \"{1}\";",
+                                      PathProvider.GetFileServicePath,
+                                      FilesCommonResource.DocsAPIundefined);
 
             if (!CoreContext.Configuration.Personal)
             {
@@ -316,11 +359,13 @@ namespace ASC.Web.Files
                     DocKeyForTrack = _docKeyForTrack,
                     EditByUrl = _editByUrl,
                     LinkToEdit = _linkToEdit,
+                    OpenHistory = RequestVersion != -1 && RequestView && !RequestHistoryClose && _configuration.Document.Info.File.Forcesave == ForcesaveType.None && !_configuration.Document.Info.File.Encrypted,
                     OpeninigDate = DateTime.UtcNow.ToString(CultureInfo.InvariantCulture),
                     ShareLinkParam = string.IsNullOrEmpty(RequestShareLinkKey) ? string.Empty : "&" + FilesLinkUtility.DocShareKey + "=" + RequestShareLinkKey,
                     ServerErrorMessage = ErrorMessage,
                     TabId = _tabId.ToString(),
                     ThirdPartyApp = _thirdPartyApp,
+                    CanGetUsers = SecurityContext.IsAuthenticated && !CoreContext.Configuration.Personal
                 };
 
             if (_configuration != null)
@@ -335,6 +380,14 @@ namespace ASC.Web.Files
                 {
                     _configuration.EditorConfig.CallbackUrl = DocumentServiceTracker.GetCallbackUrl(_configuration.Document.Info.File.ID.ToString());
                 }
+            }
+
+            if (Request.DesktopApp() && SecurityContext.IsAuthenticated)
+            {
+                var user = CoreContext.UserManager.GetUsers(SecurityContext.CurrentAccount.ID);
+
+                docServiceParams.DisplayName = DisplayUserSettings.GetFullUserName(user);
+                docServiceParams.Email = user.Email;
             }
 
             inlineScript.AppendFormat("\nASC.Files.Editor.docServiceParams = {0};",

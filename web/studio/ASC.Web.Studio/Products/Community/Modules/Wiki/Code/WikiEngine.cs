@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -37,6 +37,7 @@ using ASC.Core.Common.Notify;
 using ASC.Core.Tenants;
 using ASC.Core.Users;
 using ASC.Data.Storage;
+using ASC.ElasticSearch;
 using ASC.Notify.Patterns;
 using ASC.Notify.Recipients;
 using ASC.Web.Studio.Core;
@@ -47,6 +48,7 @@ using ASC.Web.UserControls.Wiki.Resources;
 using ASC.Web.UserControls.Wiki.UC;
 using File = ASC.Web.UserControls.Wiki.Data.File;
 using ASC.Web.Community.Product;
+using ASC.Web.Community.Search;
 using ASC.Web.Community.Wiki.Common;
 using ASC.Web.Studio.Core.Notify;
 using ASC.Web.Core.WhiteLabel;
@@ -488,6 +490,7 @@ namespace ASC.Web.UserControls.Wiki
             using (var dao = GetPageDao())
             {
                 var saved = dao.SavePage(page);
+                FactoryIndexer<WikiWrapper>.IndexAsync(page);
 
                 if (saved != null)
                 {
@@ -537,6 +540,8 @@ namespace ASC.Web.UserControls.Wiki
 
             toUpdate = SavePage(toUpdate);
             UpdateCategoriesByPageContent(toUpdate);
+
+            FactoryIndexer<WikiWrapper>.IndexAsync(toUpdate);
 
             return toUpdate;
         }

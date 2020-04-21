@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -27,7 +27,7 @@
 using System;
 using System.Collections.Generic;
 using ASC.Api.Attributes;
-using ASC.Mail.Aggregator;
+using ASC.Mail.Data.Contracts;
 
 namespace ASC.Api.Mail
 {
@@ -40,9 +40,9 @@ namespace ASC.Api.Mail
         /// <short>Get alerts list</short> 
         /// <category>Alerts</category>
         [Read(@"alert")]
-        public IList<MailBoxManager.MailAlert> GetAlerts()
+        public IList<MailAlertData> GetAlerts()
         {
-            return MailBoxManager.GetMailAlerts(TenantId, Username);
+            return MailEngineFactory.AlertEngine.GetAlerts();
         }
 
         /// <summary>
@@ -53,12 +53,16 @@ namespace ASC.Api.Mail
         /// <short>Delete alert by ID</short> 
         /// <category>Alerts</category>
         [Delete(@"alert/{id}")]
-        public Int64 DeleteAlert(Int64 id)
+        public long DeleteAlert(long id)
         {
             if(id < 0)
                 throw new ArgumentException(@"Invalid alert id. Id must be positive integer.", "id");
 
-            MailBoxManager.DeleteAlert(TenantId, Username, id);
+            var success = MailEngineFactory.AlertEngine.DeleteAlert(id);
+
+            if(!success)
+                throw new Exception("Delete failed");
+
             return id;
         }
     }

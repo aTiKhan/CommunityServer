@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -26,6 +26,7 @@
 
 using System;
 using System.Linq;
+using ASC.Core;
 using ASC.Web.Core;
 using ASC.Web.Core.Utility;
 using ASC.Web.People.Resources;
@@ -34,7 +35,7 @@ namespace ASC.Web.People.Core
 {
     public class PeopleProduct : Product
     {
-        internal const string ProductPath = "~/products/people/";
+        internal const string ProductPath = "~/Products/People/";
 
         private ProductContext _context;
 
@@ -57,12 +58,15 @@ namespace ASC.Web.People.Core
 
         public override string Description
         {
-            get { return PeopleResource.ProductDescription; }
-        }
+            get
+            {
+                var id = SecurityContext.CurrentAccount.ID;
 
-        public override string ExtendedDescription
-        {
-            get { return PeopleResource.ProductDescription; }
+                if (CoreContext.UserManager.IsUserInGroup(id, ASC.Core.Users.Constants.GroupAdmin.ID) || CoreContext.UserManager.IsUserInGroup(id, ID))
+                    return PeopleResource.ProductDescriptionEx;
+
+                return PeopleResource.ProductDescription;
+            }
         }
 
         public override Guid ProductID
@@ -77,7 +81,7 @@ namespace ASC.Web.People.Core
 
         public override string HelpURL
         {
-            get { return string.Concat(ProductPath, "help.aspx"); }
+            get { return string.Concat(ProductPath, "Help.aspx"); }
         }
 
         public static string GetStartURL()
@@ -94,10 +98,10 @@ namespace ASC.Web.People.Core
         {
             _context = new ProductContext
                 {
-                    MasterPageFile = "~/products/people/PeopleBaseTemplate.Master",
+                    MasterPageFile = "~/Products/People/PeopleBaseTemplate.Master",
                     DisabledIconFileName = "product_disabled_logo.png",
                     IconFileName = "product_logo.png",
-                    LargeIconFileName = "product_logolarge.png",
+                    LargeIconFileName = "product_logolarge.svg",
                     DefaultSortOrder = 50,
                     AdminOpportunities = () => PeopleResource.ProductAdminOpportunities.Split('|').ToList(),
                     UserOpportunities = () => PeopleResource.ProductUserOpportunities.Split('|').ToList()

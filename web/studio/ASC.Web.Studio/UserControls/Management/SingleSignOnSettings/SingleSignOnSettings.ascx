@@ -2,18 +2,18 @@
 <%@ Import Namespace="ASC.Data.Storage" %>
 <%@ Import Namespace="Resources" %>
 
-<link rel="stylesheet" type="text/css" href="<%= WebPath.GetPath("usercontrols/management/singlesignonsettings/css/singlesignonsettings.css") %>"/>
+<link rel="stylesheet" type="text/css" href="<%= WebPath.GetPath("UserControls/Management/SingleSignOnSettings/css/singlesignonsettings.css") %>"/>
 
 <div class="clearFix">
     <div class="sso-settings-main-container settings-block">
         <div class="header-base sso-settings-title"><%= Resource.SingleSignOnSettings %></div>
         <div class="clearFix">
-            <input type="radio" id="ssoSettingsEnable" name="ssoSettings" <% if (Settings.EnableSso) { %> checked <% } %>>
-            <label id="ssoSettingsEnableLabel" for="ssoSettingsEnable"><%= Resource.EnableUserButton %></label>
-        </div>
-        <div class="clearFix">
             <input type="radio" id="ssoSettingsDisable" name="ssoSettings" <% if (!Settings.EnableSso) { %> checked <% } %>>
             <label for="ssoSettingsDisable"><%= Resource.DisableUserButton %></label>
+        </div>
+        <div class="clearFix">
+            <input type="radio" id="ssoSettingsEnable" name="ssoSettings" <% if (Settings.EnableSso) { %> checked <% } %>>
+            <label id="ssoSettingsEnableLabel" for="ssoSettingsEnable"><%= Resource.EnableUserButton %></label>
         </div>
         <div class="sso-settings-container clearFix <% if (!Settings.EnableSso)
                                                        { %>sso-settings-disabled<% } %>">

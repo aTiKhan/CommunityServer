@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,9 +24,9 @@
 */
 
 
-using log4net;
 using System;
 using System.Collections.Generic;
+using ASC.Common.Logging;
 
 namespace ASC.Xmpp.Server.Gateway
 {
@@ -40,7 +40,7 @@ namespace ASC.Xmpp.Server.Gateway
 
         private readonly IDictionary<string, string> connectionListenerMap = new Dictionary<string, string>();
 
-        private readonly static ILog log = LogManager.GetLogger(typeof(XmppGateway));
+        private readonly static ILog log = LogManager.GetLogger("ASC");
 
 
         public void AddXmppListener(IXmppListener listener)

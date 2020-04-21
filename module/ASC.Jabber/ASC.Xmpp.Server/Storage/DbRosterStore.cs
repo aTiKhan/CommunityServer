@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -67,7 +67,7 @@ namespace ASC.Xmpp.Server.Storage
                 .AddColumn("name", DbType.String, 512)
                 .AddColumn(new SqlCreate.Column("subscription", DbType.Int32).NotNull(true).Default(0))
                 .AddColumn(new SqlCreate.Column("ask", DbType.Int32).NotNull(true).Default(0))
-                .AddColumn("groups", DbType.String, UInt16.MaxValue)
+                .AddColumn("`groups`", DbType.String, UInt16.MaxValue)
                 .PrimaryKey("jid", "item_jid");
             return new[] { t1 };
         }
@@ -116,7 +116,7 @@ namespace ASC.Xmpp.Server.Storage
                     .InColumnValue("name", item.Name)
                     .InColumnValue("subscription", (Int32)item.Subscribtion)
                     .InColumnValue("ask", (Int32)item.Ask)
-                    .InColumnValue("groups", string.Join(GroupSeparator, item.Groups.ToArray())));
+                    .InColumnValue("`groups`", string.Join(GroupSeparator, item.Groups.ToArray())));
 
                 lock (syncRoot)
                 {
@@ -159,7 +159,7 @@ namespace ASC.Xmpp.Server.Storage
         {
             var items = new Dictionary<Jid, UserRosterItemDic>();
 
-            ExecuteList(new SqlQuery("jabber_roster").Select("jid", "item_jid", "name", "subscription", "ask", "groups")).ForEach(r =>
+            ExecuteList(new SqlQuery("jabber_roster").Select("jid", "item_jid", "name", "subscription", "ask", "`groups`")).ForEach(r =>
                 {
                     var item = new UserRosterItem(new Jid((string)r[1]))
                     {

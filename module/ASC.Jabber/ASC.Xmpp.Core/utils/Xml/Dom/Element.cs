@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,8 +24,6 @@
 */
 
 
-#region using
-
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -34,10 +32,9 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Xml;
+using ASC.Common.Logging;
 using ASC.Xmpp.Core.protocol;
-using log4net;
 
-#endregion
 
 #if NET_2
 #endif
@@ -68,7 +65,7 @@ namespace ASC.Xmpp.Core.utils.Xml.Dom
         /// <summary>
         /// </summary>
         private readonly Text m_Value = new Text();
-        private static readonly ILog log = LogManager.GetLogger(typeof(Element));
+        private static readonly ILog log = LogManager.GetLogger("ASC");
         /// <summary>
         /// </summary>
         public Element()

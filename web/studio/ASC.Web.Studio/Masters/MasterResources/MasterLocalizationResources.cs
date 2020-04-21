@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -115,7 +115,12 @@ namespace ASC.Web.Studio.Masters.MasterResources
                             Resource.LdapSettingsSuccess,
                             Resource.Browser,
                             Resource.SsoUsersListLockTitle,
-                            Resource.SsoUserEditCanOnlyAdminTitle
+                            Resource.SsoUserEditCanOnlyAdminTitle,
+                            Resource.TfaAppShowBackupCodesNote,
+                            Resource.TfaAppShowBackupCodesDescription,
+                            Resource.PrintButton,
+                            Resource.RequestNewButton,
+                            Resource.Choose
                         },
 
                         DatePattern = dateTimeFormat.ShortDatePattern,
@@ -136,7 +141,12 @@ namespace ASC.Web.Studio.Masters.MasterResources
                         CurrentCulture = CultureInfo.CurrentCulture.Name,
                         Resource.FileSizePostfix,
                         Resource.AccessRightsAccessToProduct,
-                        Resource.AccessRightsDisabledProduct
+                        Resource.AccessRightsDisabledProduct,
+                        Resource.EmailAndPasswordIncorrectEmail,
+                        Resource.EmailIsAvailable,
+                        Resource.EmailOnDomainIsNotCreated,
+                        Resource.NoMailServerDomainsMsg,
+                        Resource.EmailAndPasswordCopiedToClipboard
                     })
             };
         }
@@ -172,6 +182,7 @@ namespace ASC.Web.Studio.Masters.MasterResources
                                 AccessRightsUsersFromList = CustomNamingPeople.Substitute<Resource>("AccessRightsUsersFromList"),
                                 AccessRightsEmptyUserList = CustomNamingPeople.Substitute<Resource>("AccessRightsEmptyUserList"),
                                 ChooseUser = CustomNamingPeople.Substitute<Resource>("ChooseUser"),
+                                ErrorEmailAlreadyExists = CustomNamingPeople.Substitute<Resource>("ErrorEmailAlreadyExists")
                             })
                    };
         }

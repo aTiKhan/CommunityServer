@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,24 +25,6 @@
 
 
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Web;
-using ASC.Common.Security.Authentication;
-using ASC.Common.Threading.Progress;
-using ASC.Common.Web;
-using ASC.Core;
-using ASC.CRM.Core;
-using ASC.CRM.Core.Dao;
-using ASC.Data.Storage;
-using ASC.Web.CRM.Services.NotifyService;
-using ASC.Web.Studio.Utility;
-using Newtonsoft.Json.Linq;
-using log4net;
-using LumenWorks.Framework.IO.Csv;
-using ASC.Web.CRM.Core.Enums;
 
 namespace LumenWorks.Framework.IO.Csv
 {

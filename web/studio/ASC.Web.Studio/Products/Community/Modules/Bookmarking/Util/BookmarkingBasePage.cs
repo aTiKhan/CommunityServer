@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -47,9 +47,9 @@ namespace ASC.Web.Community.Bookmarking.Util
         {
             BookmarkingBusinessConstants.CommunityProductID = CommunityProduct.ID;
 
-            Page.RegisterStyle("~/products/community/modules/bookmarking/app_themes/default/css/bookmarkingstyle.css")
-                .RegisterBodyScripts("~/products/community/modules/bookmarking/js/bookmarking.js",
-                "~/products/community/js/tagsautocompletebox.js");
+            Page.RegisterStyle("~/Products/Community/Modules/Bookmarking/App_Themes/default/css/bookmarkingstyle.css")
+                .RegisterBodyScripts("~/Products/Community/Modules/Bookmarking/js/bookmarking.js",
+                "~/Products/Community/js/tagsautocompletebox.js");
 
             ServiceHelper = BookmarkingServiceHelper.GetCurrentInstanse();
 

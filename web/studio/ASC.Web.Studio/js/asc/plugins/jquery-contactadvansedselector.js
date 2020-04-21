@@ -1,4 +1,29 @@
-﻿
+/*
+ *
+ * (c) Copyright Ascensio System Limited 2010-2020
+ *
+ * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
+ * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
+ * In accordance with Section 7(a) of the GNU GPL its Section 15 shall be amended to the effect that 
+ * Ascensio System SIA expressly excludes the warranty of non-infringement of any third-party rights.
+ *
+ * THIS PROGRAM IS DISTRIBUTED WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR
+ * FITNESS FOR A PARTICULAR PURPOSE. For more details, see GNU GPL at https://www.gnu.org/copyleft/gpl.html
+ *
+ * You can contact Ascensio System SIA by email at sales@onlyoffice.com
+ *
+ * The interactive user interfaces in modified source and object code versions of ONLYOFFICE must display 
+ * Appropriate Legal Notices, as required under Section 5 of the GNU GPL version 3.
+ *
+ * Pursuant to Section 7 § 3(b) of the GNU GPL you must retain the original ONLYOFFICE logo which contains 
+ * relevant author attributions when distributing the software. If the display of the logo in its graphic 
+ * form is not reasonably feasible for technical reasons, you must include the words "Powered by ONLYOFFICE" 
+ * in every copy of the program you distribute. 
+ * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
+ *
+*/
+
+
 (function ($) {
     var resources = ASC.Resources.Master.Resource, teamlab = Teamlab;
     var contactadvancedSelector = function (element, options) {
@@ -107,10 +132,11 @@
                             }
 
                             that.displayPartialList.call(that, params, data);
-                            for (var i = 0, ln = that.selectedItems.length; i < ln; i++) {
+                            var selectedItems = Object.keys(that.itemsSelectedIds);
+                            for (var i = 0, ln = selectedItems.length; i < ln; i++) {
                                 var $list = that.$itemsListSelector.find(".advanced-selector-list");
                                 data.forEach(function(el) {
-                                    if (el.id == $(that.selectedItems[i]).attr("data-id")) {
+                                    if (el.id == selectedItems[i]) {
                                         $list.find("li[data-id=" + el.id + "]").not(".selected").remove();
                                     }
                                 });
@@ -127,21 +153,33 @@
             function successCallback(params, data) {
                 if (that.options.withPhoneOnly) {
                     data = data.filter(function (el) {
-                        return el.commonData.some(
+                        return el.commonData && el.commonData.some(
                             function (elem) {
                                 return elem.infoType == 0;
-                            });
+                            }) || el.phone;
                     });
                 }
-                
+
+                if (that.selectedItems) {
+                    for (var i = 0; i < that.selectedItems.length; i++) {
+                        var si = that.selectedItems[i];
+                        if (!data.find(function (d) { return d.id == si.id; })) {
+                            data.push(si);
+                        }
+                    }
+                }
+
                 that.cache[""] = data;
 
                 that.rewriteObjectItem.call(that, data);
-                for (var i = 0, ln = that.selectedItems.length; i < ln; i++) {
+
+                var selectedItems = Object.keys(that.itemsSelectedIds);
+
+                for (var i = 0, ln = selectedItems.length; i < ln; i++) {
                     var $list = that.$itemsListSelector.find(".advanced-selector-list");
-                    $list.prepend(that.selectedItems[i]);
+                    //$list.prepend(that.selectedItems[i]);
                     data.forEach(function (el) {
-                        if (el.id == $(that.selectedItems[i]).attr("data-id")) {
+                        if (el.id == selectedItems[i]) {
                             $list.find("li[data-id=" + el.id + "]").not(".selected").remove();
                         }
                     });
@@ -238,6 +276,14 @@
             }
 
             function successCallback (params, data) {
+                if (that.options.withPhoneOnly) {
+                    data = data.filter(function (el) {
+                        return el.commonData && el.commonData.some(
+                            function (elem) {
+                                return elem.infoType == 0;
+                            }) || el.phone;
+                    });
+                }
 
                 if (params)
                     that.cache[params.__filter.prefix] = data;
@@ -251,8 +297,8 @@
                     that.displayPartialList.call(that, params, data);
 
                     var selectedItemsIds = [];
-                    that.selectedItems.forEach(function (item) {
-                        selectedItemsIds.push($(item).attr("data-id"));
+                    Object.keys(that.itemsSelectedIds).forEach(function (item) {
+                        selectedItemsIds.push(item);
                     });
                     
                     that.$itemsListSelector.find(".advanced-selector-list li").each(function () {

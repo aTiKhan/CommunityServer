@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,13 +24,16 @@
 */
 
 
-using System.Web;
-using AjaxPro;
-using ASC.Core;
-using Resources;
-using log4net;
 using System;
 using System.Web.UI;
+using System.Web;
+
+using ASC.Core;
+using Resources;
+
+using AjaxPro;
+using ASC.Common.Logging;
+
 
 namespace ASC.Web.Studio.UserControls.Management
 {
@@ -45,7 +48,7 @@ namespace ASC.Web.Studio.UserControls.Management
         protected void Page_Load(object sender, EventArgs e)
         {
             AjaxPro.Utility.RegisterTypeForAjax(GetType());
-            Page.RegisterBodyScripts("~/usercontrols/Management/PromoCode/promocode.js");
+            Page.RegisterBodyScripts("~/UserControls/Management/PromoCode/promocode.js");
         }
 
         [AjaxMethod]

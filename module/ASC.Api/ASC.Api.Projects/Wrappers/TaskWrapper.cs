@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -30,7 +30,6 @@ using System.Linq;
 using System.Runtime.Serialization;
 using ASC.Api.Employee;
 using ASC.Projects.Core.Domain;
-using ASC.Projects.Engine;
 using ASC.Specific;
 
 namespace ASC.Api.Projects.Wrappers
@@ -86,6 +85,9 @@ namespace ASC.Api.Projects.Wrappers
         [DataMember(Order = 54, EmitDefaultValue = false)]
         public SimpleMilestoneWrapper Milestone { get; set; }
 
+        [DataMember(Order = 55, EmitDefaultValue = false)]
+        public int? CustomTaskStatus { get; set; }
+
         private TaskWrapper()
         {
         }
@@ -102,6 +104,7 @@ namespace ASC.Api.Projects.Wrappers
                 Status = 1;
             }
 
+            CustomTaskStatus = task.CustomTaskStatus;
 
             Deadline = (task.Deadline == DateTime.MinValue ? null : new ApiDateTime(task.Deadline, TimeZoneInfo.Local));
             Priority = task.Priority;
@@ -130,7 +133,7 @@ namespace ASC.Api.Projects.Wrappers
 
             if (task.Security == null)
             {
-                ProjectSecurity.GetTaskSecurityInfo(task);
+                projectApiBase.ProjectSecurity.GetTaskSecurityInfo(task);
             }
 
             if (projectApiBase.Context.GetRequestValue("simple") != null)

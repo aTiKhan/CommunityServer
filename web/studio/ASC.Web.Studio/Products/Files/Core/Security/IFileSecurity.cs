@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -31,16 +31,20 @@ namespace ASC.Files.Core.Security
 {
     public interface IFileSecurity
     {
-        bool CanRead(FileEntry file, Guid userId);
+        bool CanRead(FileEntry entry, Guid userId);
 
-        bool CanReview(FileEntry file, Guid userId);
+        bool CanComment(FileEntry entry, Guid userId);
 
-        bool CanCreate(FileEntry file, Guid userId);
+        bool CanReview(FileEntry entry, Guid userId);
 
-        bool CanEdit(FileEntry file, Guid userId);
+        bool CanFillForms(FileEntry entry, Guid userId);
 
-        bool CanDelete(FileEntry file, Guid userId);
+        bool CanCreate(FileEntry entry, Guid userId);
 
-        IEnumerable<Guid> WhoCanRead(FileEntry fileEntry);
+        bool CanEdit(FileEntry entry, Guid userId);
+
+        bool CanDelete(FileEntry entry, Guid userId);
+
+        IEnumerable<Guid> WhoCanRead(FileEntry entry);
     }
 }

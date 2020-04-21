@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -36,6 +36,8 @@ using ASC.Projects.Engine;
 using ASC.Web.Studio.Utility;
 using System.Linq;
 using ASC.Core.Users;
+using ASC.Web.Projects.Core;
+using Autofac;
 
 namespace ASC.Feed.Aggregator.Modules.Projects
 {
@@ -80,7 +82,10 @@ namespace ASC.Feed.Aggregator.Modules.Projects
 
         public override bool VisibleFor(Feed feed, object data, Guid userId)
         {
-            return base.VisibleFor(feed, data, userId) && ProjectSecurity.CanGoToFeed((ParticipantFull)data, userId);
+            using (var scope = DIHelper.Resolve())
+            {
+                return base.VisibleFor(feed, data, userId) && scope.Resolve<ProjectSecurity>().CanGoToFeed((ParticipantFull)data, userId);
+            }
         }
 
         public override IEnumerable<Tuple<Feed, object>> GetFeeds(FeedFilter filter)

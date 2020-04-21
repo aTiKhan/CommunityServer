@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -30,16 +30,16 @@ window.tagsColorsPopup = (function($) {
     var panel;
     var cornerLeft = 14;
 
-    var init = function() {
+    function init() {
         panel = $('#tagsColorsPanel');
 
         panel.find('div[colorstyle]').bind('click', function() {
             var style = $(this).attr('colorstyle');
             callback(obj, style);
         });
-    };
+    }
 
-    var show = function(objParam, callbackFunc) {
+    function show(objParam, callbackFunc) {
         callback = callbackFunc;
         obj = objParam;
         var $obj = $(objParam);
@@ -53,12 +53,12 @@ window.tagsColorsPopup = (function($) {
                 hide();
             }
         });
-    };
+    }
 
-    var hide = function() {
+    function hide() {
         panel.hide();
         $('body').unbind("click.tagsColorsPopup");
-    };
+    }
 
     return {
         init: init,

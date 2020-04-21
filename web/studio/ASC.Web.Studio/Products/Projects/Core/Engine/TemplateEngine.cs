@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -36,6 +36,7 @@ namespace ASC.Projects.Engine
     public class TemplateEngine
     {
         public IDaoFactory DaoFactory { get; set; }
+        public ProjectSecurity ProjectSecurity { get; set; }
 
         public List<Template> GetAll()
         {
@@ -58,6 +59,13 @@ namespace ASC.Projects.Engine
             {
                 if (template.CreateBy == default(Guid)) template.CreateBy = SecurityContext.CurrentAccount.ID;
                 if (template.CreateOn == default(DateTime)) template.CreateOn = TenantUtil.DateTimeNow();
+            }
+            else
+            {
+                if (!ProjectSecurity.CanEditTemplate(template))
+                {
+                    ProjectSecurity.CreateSecurityException();
+                }
             }
 
             template.LastModifiedBy = SecurityContext.CurrentAccount.ID;

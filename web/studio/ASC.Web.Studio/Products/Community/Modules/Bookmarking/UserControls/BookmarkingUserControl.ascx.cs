@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -32,11 +32,13 @@ using System.Text;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
-using ASC.Web.Studio.UserControls.Common.ViewSwitcher;
-using AjaxPro;
+
+using ASC.Bookmarking;
 using ASC.Bookmarking.Business.Permissions;
 using ASC.Bookmarking.Common;
 using ASC.Bookmarking.Pojo;
+using ASC.Core;
+using ASC.Core.Users;
 using ASC.Web.Core.Utility.Skins;
 using ASC.Web.Studio.Controls.Common;
 using ASC.Web.Studio.Utility;
@@ -45,9 +47,11 @@ using ASC.Web.UserControls.Bookmarking.Common.Presentation;
 using ASC.Web.UserControls.Bookmarking.Common.Util;
 using ASC.Web.UserControls.Bookmarking.Resources;
 using ASC.Web.UserControls.Bookmarking.Util;
+using ASC.Web.Studio.UserControls.Common.ViewSwitcher;
+
 using HtmlAgilityPack;
-using log4net;
-using ASC.Bookmarking;
+using AjaxPro;
+using ASC.Common.Logging;
 
 namespace ASC.Web.UserControls.Bookmarking
 {
@@ -101,10 +105,13 @@ namespace ASC.Web.UserControls.Bookmarking
             if (Bookmarks == null || Bookmarks.Count == 0)
             {
                 var hidePanelsFlag = false;
+
+                var currentUser = CoreContext.UserManager.GetUsers(SecurityContext.CurrentAccount.ID);
+
                 var emptyScreenControl = new EmptyScreenControl
                     {
                         ImgSrc = WebImageSupplier.GetAbsoluteWebPath("bookmarks_icon.png", BookmarkingSettings.ModuleId),
-                        Describe = BookmarkingUCResource.EmptyScreenText
+                        Describe = currentUser.IsVisitor() ? BookmarkingUCResource.EmptyScreenTextVisitor : BookmarkingUCResource.EmptyScreenText
                     };
 
                 var displayMode = BookmarkingBusinessFactory.GetDisplayMode();

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -22,6 +22,7 @@
  * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
  *
 */
+
 
 if (typeof ASC === "undefined") {
     ASC = {};
@@ -130,6 +131,7 @@ ASC.CRM.Voip.PhoneView = (function($) {
         busy: 1,
         offline: 2
     }
+    var device;
 
     var callStatus = {
         outgoingStarted: 0,
@@ -169,13 +171,13 @@ ASC.CRM.Voip.PhoneView = (function($) {
             .on('reconnecting',
                 function() {
                     operatorStatusUpdated(operatorStatus.offline);
-                    Twilio.Device.destroy();
+                    device.destroy();
                 })
             .on('disconnected',
                 function() {
                     if (initiated) {
                         operatorStatusUpdated(operatorStatus.offline);
-                        Twilio.Device.destroy();
+                        device.destroy();
                     }
                 })
             .connect(function() {
@@ -188,7 +190,10 @@ ASC.CRM.Voip.PhoneView = (function($) {
             .on('status', operatorStatusUpdated)
             .on('miss', callMissed)
             .on('onlineAgents', onlineOperatorsUpdated)
-            .on('dequeue', incomingCallInitiated);
+            .on('dequeue', incomingCallInitiated)
+            .on('reload', function() {
+                 location.reload();
+            });
     }
 
     function onGetData(data) {
@@ -211,29 +216,27 @@ ASC.CRM.Voip.PhoneView = (function($) {
     function initTwilio(status) {
         Teamlab.getVoipToken(null,
         {
-            success: function(params, data) {
-                Twilio.Device.setup(data);
+            success: function (params, data) {
+                device = new Twilio.Device(data, { disableAudioContextSounds: true });
 
-                Twilio.Device.ready(function () {
-                    Twilio.Device.audio.incoming(false);
-                    Twilio.Device.audio.disconnect(true);
-                    Twilio.Device.incoming(function (connection) { incomingTwilioHandler(connection) });
-                    Twilio.Device.cancel(cancelTwilioHandler);
-
-                    Twilio.Device.error(function (error) {
-                        if (error && (error.code === 31201 || error.code === 31208)) {
-                            rejectCall();
-                        }
-                    });
-
-                    Twilio.Device.offline(function() {
-                        initiated = false;
-                        twilioConnection = null;
-                    });
-
+                device.on("ready", function () {
                     initiated = true;
 
                     pushOperatorStatus(status);
+                });
+
+                device.on("incoming", function (connection) { incomingTwilioHandler(connection) });
+                device.on("cancel", cancelTwilioHandler);
+
+                device.on("error", function (error) {
+                    if (error && (error.code === 31201 || error.code === 31208)) {
+                        rejectCall();
+                    }
+                });
+
+                device.on("offline", function () {
+                    initiated = false;
+                    twilioConnection = null;
                 });
             }
         });
@@ -383,8 +386,7 @@ ASC.CRM.Voip.PhoneView = (function($) {
         $selectContactBtn.contactadvancedSelector({
             inPopup: true,
             isTempLoad: true,
-            onechosen: true,
-            withPhoneOnly: true
+            onechosen: true
         });
     }
 
@@ -757,7 +759,7 @@ ASC.CRM.Voip.PhoneView = (function($) {
                 initTwilio(status);
             } else {
                 if (operator.status === operatorStatus.online && status === operatorStatus.offline) {
-                    Twilio.Device.destroy();
+                    device.destroy();
                 }
                 pushOperatorStatus(status);
             }
@@ -857,14 +859,18 @@ ASC.CRM.Voip.PhoneView = (function($) {
         selectedContact = contact;
         $selectedContact.text(contact.title).show();
 
-        var phone = contact.phone[0].data;
-        renderSelectedPhone(phone);
+        if (contact.phone && contact.phone.length) {
+            var phone = contact.phone[0].data;
+            renderSelectedPhone(phone);
 
-        var $items = jq.tmpl(contactPhoneSwitcherItemTmpl, contact.phone);
-        $contactPhoneSwitcherPanel.find('.dropdown-content').html($items);
+            var $items = jq.tmpl(contactPhoneSwitcherItemTmpl, contact.phone);
+            $contactPhoneSwitcherPanel.find('.dropdown-content').html($items);
+            $selectedContactPhoneSwitcherBtn.show();
+        } else {
+            setDefaultCountryData();
+        }
 
         $phoneClearBtn.show();
-        $selectedContactPhoneSwitcherBtn.show();
     }
 
     function renderSelectedPhone(phone) {
@@ -947,11 +953,7 @@ ASC.CRM.Voip.PhoneView = (function($) {
                 renderView();
             },
             error: function (params, errors) {
-                if (Array.isArray(errors) && errors.length) {
-                    toastr.error(errors[0]);
-                } else {
-                    showErrorMessage();
-                }
+                showErrorMessage();
                 $callBtn.removeClass('disable');
             }
         });
@@ -1266,8 +1268,7 @@ ASC.CRM.Voip.PhoneView = (function($) {
 
     function incomingTwilioHandler(connection) {
         twilioConnection = connection;
-        
-        connection.accept(function () {
+        connection.on("accept", function () {
             socket.emit('status', 1);
             callGoing();
             Teamlab.saveVoipCall({}, currentCall.id,
@@ -1276,13 +1277,13 @@ ASC.CRM.Voip.PhoneView = (function($) {
             },
             {
                 async: true,
-                success: function(params, call) {
+                success: function (params, call) {
                     currentCall = call;
                     renderView();
                 }
             });
         });
-        connection.disconnect(function () {
+        connection.on("disconnect", function () {
             if (!pause) {
                 socket.emit('status', 0);
             }

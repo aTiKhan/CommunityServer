@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -50,6 +50,8 @@ namespace ASC.Web.People
 
         protected bool DisplayPaymentsFirst { get; private set; }
 
+        protected string HelpLink { get; set; }
+
         public AllowedActions Actions;
 
         protected void Page_Load(object sender, EventArgs e)
@@ -83,6 +85,8 @@ namespace ASC.Web.People
                 userPwdChange.Controls.Add(LoadControl(PwdTool.Location));
             }
             Title = HeaderStringHelper.GetPageTitle(PeopleResource.ProductName);
+
+            HelpLink = CommonLinkUtility.GetHelpLink();
         }
     }
 }

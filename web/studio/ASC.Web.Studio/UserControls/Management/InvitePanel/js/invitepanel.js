@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -163,9 +163,16 @@ ASC.InvitePanel = (function () {
             link = encodeURIComponent(url),
             text = encodeURIComponent(jq.format(ASC.Resources.Master.Resource.ShareInviteLinkDscr, url));
 
-        linkPanel.find(".google").attr("href", ASC.Resources.Master.UrlShareGooglePlus.format(link));
-        linkPanel.find(".facebook").attr("href", ASC.Resources.Master.UrlShareFacebook.format(link, "", "", ""));
-        linkPanel.find(".twitter").attr("href", ASC.Resources.Master.UrlShareTwitter.format(text));
+        if (!!ASC.Resources.Master.UrlShareFacebook) {
+            linkPanel.find(".facebook").attr("href", ASC.Resources.Master.UrlShareFacebook.format(link, "", "", ""));
+        } else {
+            linkPanel.find(".facebook").remove();
+        }
+        if (!!ASC.Resources.Master.UrlShareTwitter) {
+            linkPanel.find(".twitter").attr("href", ASC.Resources.Master.UrlShareTwitter.format(text));
+        } else {
+            linkPanel.find(".twitter").remove();
+        }
     };
 
 

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -39,7 +39,7 @@ namespace ASC.Web.Studio
     {
         public static string Location
         {
-            get { return "~/paymentrequired.aspx"; }
+            get { return "~/PaymentRequired.aspx"; }
         }
 
         protected AdditionalWhiteLabelSettings Settings;
@@ -78,8 +78,8 @@ namespace ASC.Web.Studio
 
             Title = HeaderStringHelper.GetPageTitle(Resource.PaymentRequired);
 
-            Page.RegisterStyle("~/usercontrols/management/tariffsettings/css/tariff.less");
-            Page.RegisterStyle("~/usercontrols/management/tariffsettings/css/tariffstandalone.less");
+            Page.RegisterStyle("~/UserControls/Management/TariffSettings/css/tariff.less");
+            Page.RegisterStyle("~/UserControls/Management/TariffSettings/css/tariffstandalone.less");
 
             Settings = AdditionalWhiteLabelSettings.Instance;
         }

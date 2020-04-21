@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -332,7 +332,13 @@ jq(document).ready(function() {
 })
 
 function updateThumbnailAsync() {
-	setTimeout(function() { updateThumbnailSrc(); }, 100);
+    //setTimeout(function() { updateThumbnailSrc(); }, 100);
+    setTimeout(function () {
+        jq(".bookmarkingThumbnail").each(function() {
+            var th = jq(this);
+            th.attr("src", th.attr("data-url"));
+        });
+    }, 100);
 }
 
 function emptyUrlAlert(showFlag) {
@@ -373,7 +379,7 @@ function updateThumbnailSrc() {
 
 function updateThumbnails(url, thumbnailUrl) {
 	if (thumbnailUrl == null || '' == thumbnailUrl) {
-		thumbnailUrl = 'app_themes/default/images/noimageavailable.jpg';
+		thumbnailUrl = 'App_Themes/default/images/noimageavailable.jpg';
 	}
 	jq("img[alt='" + url + "']").each(function() {
 		jq(this).attr("src", thumbnailUrl);

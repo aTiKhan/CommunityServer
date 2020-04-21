@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -45,11 +45,15 @@ ASC.Projects.Common = (function () {
         master = baseObject.Master;
 
     var init = function () {
+        window.onpopstate = null;
+
         initMobileBanner();
         initApiData();
         bindCommonEvents();
         initPages();
         showEmptyScreen();
+
+        setTimeout(function() { window.onpopstate = init; }, 200);
     };
 
     function initMobileBanner() {
@@ -183,11 +187,8 @@ ASC.Projects.Common = (function () {
             case "projecttemplates.aspx":
                 cPage = baseObject.Templates;
                 break;
-            case "generatedreport.aspx":
-                cPage = baseObject.GeneratedReportView;
-                break;
             case "reports.aspx":
-                cPage = baseObject.ReportView;
+                cPage = jq.getURLParam("tmplId") || jq.getURLParam("reportType") ? baseObject.ReportView : baseObject.GeneratedReport;
                 break;
             case "contacts.aspx":
                 cPage = baseObject.Contacts;
@@ -197,6 +198,9 @@ ASC.Projects.Common = (function () {
                 break;
             case "ganttchart.aspx":
                 cPage = baseObject.GantChartPage;
+                break;
+            case "settings.aspx":
+                cPage = baseObject.SettingsManager;
                 break;
         }
 
@@ -252,6 +256,31 @@ ASC.Projects.Common = (function () {
 
             projectCache[project.id] = project;
         }));
+
+        function onRemoveProjects(params, projects) {
+            projectsForFilter = [];
+
+            function filterProject(project) {
+                return function(item) {
+                    return item.id !== project.id;
+                }
+            }
+
+            for (var i = 0; i < projects.length; i++) {
+                var project = projects[i];
+
+                master.Projects = master.Projects.filter(filterProject(project));
+
+                delete projectCache[project.id];
+            }
+        }
+
+
+        handlers.push(teamlab.bind(teamlab.events.removePrjProjects, onRemoveProjects));
+
+        handlers.push(teamlab.bind(teamlab.events.removePrjProject, function (params, project) {
+            onRemoveProjects(null, [project]);
+        }));
     };
     
     function showEmptyScreen() {
@@ -266,54 +295,51 @@ ASC.Projects.Common = (function () {
         function newBlock(image, title, ul) {
             return { image: image, title: title, ul: ul };
         }
-        function onGetPrjSecurityinfo(params, data) {
-            if (!data.canCreateProject) return;
-            var commonResource = baseObject.Resources.CommonResource;
 
-            var tmplObj = {
-                blocks: [
-                    newBlock("icon-tasks.png", commonResource.TasksModuleTitle,
-                        [
-                            commonResource.TasksModuleFirstLine,
-                            commonResource.TasksModuleSecondLine,
-                            commonResource.TasksModuleThirdLine
-                        ]),
-                    newBlock("icon-milestones.png", commonResource.MilestonesModuleTitle,
-                        [
-                            commonResource.MilestonesModuleFirstLine,
-                            commonResource.MilestonesModuleSecondLine,
-                            commonResource.MilestonesModuleThirdLine
-                        ]),
-                    newBlock("icon-document.png", commonResource.DocsModuleTitle,
-                        [
-                            commonResource.DocsModuleFirstLine,
-                            commonResource.DocsModuleSecondLine,
-                            commonResource.DocsModuleThirdLine
-                        ]),
-                    newBlock("icon-discussion.png", commonResource.DiscussionModuleTitle,
-                        [
-                            commonResource.DiscussionModuleFirstLine,
-                            commonResource.DiscussionModuleSecondLine,
-                            commonResource.DiscussionModuleThirdLine
-                        ]),
-                    newBlock("icon-report.png", commonResource.ReportsModuleTitle,
-                        [
-                            commonResource.ReportsModuleFirstLine,
-                            commonResource.ReportsModuleSecondLine,
-                            commonResource.ReportsModuleThirdLine
-                        ])
-                ]
-            };
-            jq.tmpl("projects_dashboard_empty_screen", tmplObj).appendTo("body");
-            var $emptyScreenContainer = jq("#projects_dashboard_empty_screen_container");
-            $emptyScreenContainer.on("click", ".close", function () {
-                $emptyScreenContainer.remove();
-            });
+        if (!master.CanCreateProject) return;
+        var commonResource = baseObject.Resources.CommonResource;
 
-            emptyScreenShowed = true;
+        var tmplObj = {
+            blocks: [
+                newBlock("icon-tasks.png", commonResource.TasksModuleTitle,
+                    [
+                        commonResource.TasksModuleFirstLine,
+                        commonResource.TasksModuleSecondLine,
+                        commonResource.TasksModuleThirdLine
+                    ]),
+                newBlock("icon-milestones.png", commonResource.MilestonesModuleTitle,
+                    [
+                        commonResource.MilestonesModuleFirstLine,
+                        commonResource.MilestonesModuleSecondLine,
+                        commonResource.MilestonesModuleThirdLine
+                    ]),
+                newBlock("icon-document.png", commonResource.DocsModuleTitle,
+                    [
+                        commonResource.DocsModuleFirstLine,
+                        commonResource.DocsModuleSecondLine,
+                        commonResource.DocsModuleThirdLine
+                    ]),
+                newBlock("icon-discussion.png", commonResource.DiscussionModuleTitle,
+                    [
+                        commonResource.DiscussionModuleFirstLine,
+                        commonResource.DiscussionModuleSecondLine,
+                        commonResource.DiscussionModuleThirdLine
+                    ]),
+                newBlock("icon-report.png", commonResource.ReportsModuleTitle,
+                    [
+                        commonResource.ReportsModuleFirstLine,
+                        commonResource.ReportsModuleSecondLine,
+                        commonResource.ReportsModuleThirdLine
+                    ])
+            ]
         };
+        jq.tmpl("projects_dashboard_empty_screen", tmplObj).appendTo("body");
+        var $emptyScreenContainer = jq("#projects_dashboard_empty_screen_container");
+        $emptyScreenContainer.on("click", ".close", function () {
+            $emptyScreenContainer.remove();
+        });
 
-        teamlab.getPrjSecurityinfo({}, { success: onGetPrjSecurityinfo });
+        emptyScreenShowed = true;
     }
 
     var removeBlockedUsersFromTeam = function (team) {
@@ -342,8 +368,8 @@ ASC.Projects.Common = (function () {
             height = 614;
         }
         
-        if (jqbrowser.chrome) {
-            height = 658;
+        if (navigator.userAgent.indexOf("OPR/") > 0) {
+            height = 738;
         }
 
         var params = "width=" + width + ",height=" + height + ",resizable=yes";
@@ -501,13 +527,25 @@ ASC.Projects.Common = (function () {
 
     function getProjectById(projectId) {
         for (var i = 0, max = master.Projects.length; i < max; i++) {
-            if (master.Projects[i].id == projectId) {
-                return master.Projects[i];
+            var prj = master.Projects[i];
+            if (prj.id == projectId) {
+                return prj;
             }
         }
 
         return undefined;
-    };
+    }
+
+    function getMilestoneById(milestoneId) {
+        for (var i = 0, max = master.Milestones.length; i < max; i++) {
+            var ms = master.Milestones[i];
+            if (ms.id == milestoneId) {
+                return ms;
+            }
+        }
+
+        return undefined;
+    }
 
     function getProjectByIdFromCache(projectId) {
         return projectCache[projectId];
@@ -615,20 +653,71 @@ ASC.Projects.Common = (function () {
 
         var $self = jq(this);
         var href = $self.attr("href");
-        ASC.Projects.Common.UpLink = location.href;
+        goToHrefWithoutReload(href);
+
+        return false;
+    }
+
+    function goToHrefWithoutReload(href) {
         history.pushState({ href: href }, { href: href }, href);
-        ASC.Controls.AnchorController.historyCheck();
 
         var prjid = jq.getURLParam("prjID");
-        teamlab.getPrjTeam({}, prjid, function (params, team) {
-            master.TeamWithBlockedUsers = team;
-            master.Team = removeBlockedUsersFromTeam(team);
+        if (prjid) {
+            teamlab.getPrjTeam({}, prjid,
+                function(params, team) {
+                    master.TeamWithBlockedUsers = team;
+                    master.Team = removeBlockedUsersFromTeam(team);
+                    baseObject.Base.clearTables();
+                    jq("#filterContainer").hide();
+                    init();
+                });
+        } else {
             baseObject.Base.clearTables();
             jq("#filterContainer").hide();
             init();
-        });
-
+        }
         return false;
+    }
+
+    function initCustomStatuses(callBack) {
+        if (master.customStatuses) {
+            callBack();
+            return;
+        }
+
+        teamlab.getPrjStatuses({
+            success: function (params, data) {
+                master.customStatuses = data.sort(function (a, b) {
+                    if (a.statusType < b.statusType) {
+                        return -1;
+                    } else if (a.statusType > b.statusType) {
+                        return 1;
+                    }
+
+                    if (a.order < b.order) {
+                        return -1;
+                    } else if (a.order > b.order) {
+                        return 1;
+                    }
+
+                    return 0;
+                });
+
+                callBack();
+            },
+            error: function () {
+
+            }
+        });
+    }
+
+    function setHash(newHash) {
+        var basePath = location.hash === "" ? location.href : location.href.substring(0, location.href.indexOf("#"));
+        if (newHash.indexOf("#") !== 0) {
+            newHash = "#" + newHash;
+        }
+        var newPath = basePath + newHash;
+        history.replaceState({ href: newPath }, { href: newPath }, newPath);
     }
 
     return {
@@ -652,15 +741,18 @@ ASC.Projects.Common = (function () {
         filterParamsForListTasks: { sortBy: "deadline", sortOrder: "ascending" },
         
         goToWithoutReload: goToWithoutReload,
+        goToHrefWithoutReload: goToHrefWithoutReload,
         getPossibleTypeLink: getPossibleTypeLink,
         getProjectsForFilter: getProjectsForFilter,
         getProjectById: getProjectById,
+        getMilestoneById: getMilestoneById,
         getProjectByIdFromCache: getProjectByIdFromCache,
         changeTaskCountInProjectsCache: changeTaskCountInProjectsCache,
         changeMilestoneCountInProjectsCache: changeMilestoneCountInProjectsCache,
 
         baseInit: init,
         
+        initCustomStatuses: initCustomStatuses,
         linkTypeEnum: linkTypeEnum,
         milestoneSort: milestoneSort,
 
@@ -669,10 +761,49 @@ ASC.Projects.Common = (function () {
 
         showTimer: showTimer,
 
+        setHash: setHash,
+
         userInProjectTeam: userInProjectTeam
     };
 
 })();
+
+ASC.Projects.ReportGenerator = (function() {
+    var resources = ASC.Projects.Resources.ProjectsJSResource,
+        teamlab,
+        progressDialog,
+        isInit = false;
+
+    function init() {
+        if (isInit) return;
+        isInit = true;
+
+        progressDialog = ProgressDialog;
+        teamlab = Teamlab;
+
+        progressDialog.init(
+            {
+                header: resources.ReportBuilding,
+                footer: resources.ReportBuildingInfo.format("<a class='link underline' href='/products/files/'>", "</a>"),
+                progress: resources.ReportBuildingProgress
+            },
+            jq("#studioPageContent .mainPageContent"),
+            {
+                terminate: teamlab.terminateProjectsReport,
+                status: teamlab.getProjectsReportStatus,
+                generate: teamlab.generateProjectsReport
+            });
+    }
+
+    function generate(uri) {
+        init();
+        progressDialog.generate({ uri: uri });
+    }
+
+    return {
+        generate: generate
+    }
+}());
 
 jq(document).ready(function () {
     ASC.Projects.Common.baseInit();

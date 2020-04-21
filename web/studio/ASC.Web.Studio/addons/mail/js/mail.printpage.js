@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -22,6 +22,7 @@
  * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
  *
 */
+
 
 window.printPage = (function($) {
     var conversationId;
@@ -72,10 +73,19 @@ window.printPage = (function($) {
     function getMessage(id, cb) {
         return serviceManager.getMessage(id, false, {}, {
             success: function (params, message) {
+
+                //set up images
+                var loadImages = false;
+                var showImages = showImagesIds.indexOf(message.id.toString()) != -1;
+                var senderAddress = ASC.Mail.Utility.ParseAddress(message.from).email;
+                if (trustedAddresses.isTrusted(senderAddress) || showImages) {
+                    loadImages = true;
+                }
+
                 var res = ASC.Mail.Sanitizer.Sanitize(message.htmlBody, {
                     urlProxyHandler: ASC.Mail.Constants.PROXY_HTTP_URL,
                     needProxyHttp: ASC.Mail.Constants.NEED_PROXY_HTTP_URL,
-                    loadImages: false
+                    loadImages: loadImages
                 });
 
                 message.htmlBody = res.html;
@@ -97,10 +107,19 @@ window.printPage = (function($) {
 
                 for (var i = 0, n = messages.length; i < n; i++) {
                     var message = messages[i];
+
+                    //set up images
+                    var loadImages = false;
+                    var showImages = showImagesIds.indexOf(message.id.toString()) != -1;
+                    var senderAddress = ASC.Mail.Utility.ParseAddress(message.from).email;
+                    if (trustedAddresses.isTrusted(senderAddress) || showImages) {
+                        loadImages = true;
+                    }
+
                     var res = ASC.Mail.Sanitizer.Sanitize(message.htmlBody, {
                         urlProxyHandler: ASC.Mail.Constants.PROXY_HTTP_URL,
                         needProxyHttp: ASC.Mail.Constants.NEED_PROXY_HTTP_URL,
-                        loadImages: false
+                        loadImages: loadImages
                     });
 
                     message.htmlBody = res.html;
@@ -145,19 +164,6 @@ window.printPage = (function($) {
             $lastEl.remove();
         }
 
-        //set up links
-        $body.find('a').attr('target', '_blank');
-
-        //set up images
-        var showImages = showImagesIds.indexOf(message.id.toString()) != -1;
-        var senderAddress = ASC.Mail.Utility.ParseAddress(message.from).email;
-        if (trustedAddresses.isTrusted(senderAddress) || showImages) {
-            $body.find('img[tl_disabled_src]').each(function() {
-                var $el = $(this);
-                $el.attr('src', $el.attr('tl_disabled_src'));
-            });
-        }
-        
         //set up quotes
         var showQuotes = showQuotesIds.indexOf(message.id.toString()) != -1;
         if (!showQuotes) {
@@ -176,7 +182,7 @@ window.printPage = (function($) {
     }
 
     function hideLoader() {
-        $('.loader-page').remove();
+        $('#firstLoader').remove();
     }
 
     function showErrorMessage() {

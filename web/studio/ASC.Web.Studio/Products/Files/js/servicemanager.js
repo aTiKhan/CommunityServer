@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -409,6 +409,7 @@ window.ASC.Files.ServiceManager = (function () {
         GetFolderItems: "getfolderitems",
         GetItems: "getitems",
         GetFolderItemsTree: "getfolderitemstree",
+        GetMediaFile: "getmediafile",
 
         SetAceLink: "setacelink",
         GetSharedInfo: "getsharedinfo",
@@ -416,6 +417,10 @@ window.ASC.Files.ServiceManager = (function () {
         SetAceObject: "setaceobject",
         UnSubscribeMe: "unsubscribeme",
         GetShortenLink: "getshortenlink",
+        GetPresignedUri: "getpresigneduri",
+
+        GetUsers: "getusers",
+        SendEditorNotify: "sendeditornotify",
 
         MarkAsRead: "markasread",
         GetNews: "getnews",
@@ -451,10 +456,12 @@ window.ASC.Files.ServiceManager = (function () {
         SendDocuSign: "senddocusign",
 
         UpdateIfExist: "updateifexist",
+        Forcesave: "forcesave",
+        StoreForcesave: "storeforcesave",
+
         GetHelpCenter: "gethelpcenter",
         ChangeDeleteConfrim: "changedeleteconfrim",
 
-        StoreOriginalFiles: "storeoriginalfiles",
         ConvertCurrentFile: "convertcurrentfile",
         ChunkUploadCheckConversion: "chunkuploadcheckconversion",
         ChunkUploadGetFileFromServer: "chunkuploadgetfilefromserver",
@@ -484,7 +491,7 @@ window.ASC.Files.ServiceManager = (function () {
 
     var getFolderItems = function (eventType, params, data) {
         params.showLoading = params.append != true;
-        request("post", "xml", eventType, params, data, "folders?parentId=" + encodeURIComponent(params.folderId) + "&from=" + params.from + "&count=" + params.count + "&filter=" + params.filter + "&subjectID=" + params.subject + "&search=" + encodeURIComponent(params.text));
+        request("post", "xml", eventType, params, data, "folders?parentId=" + encodeURIComponent(params.folderId) + "&from=" + params.from + "&count=" + params.count + "&filter=" + params.filter + "&subjectGroup=" + !!params.subjectGroup + "&subjectID=" + params.subjectId + "&withSubfolders=" + !!params.withSubfolders + "&searchInContent=" + !!params.searchInContent + "&search=" + encodeURIComponent(params.search));
     };
 
     var getTreeSubFolders = function (eventType, params) {
@@ -500,12 +507,12 @@ window.ASC.Files.ServiceManager = (function () {
     };
 
     var getItems = function (eventType, params, data) {
-        request("post", "json", eventType, params, data, "folders-intries?filter=" + params.filter + "&subjectID=" + params.subject + "&search=" + encodeURIComponent(params.text));
+        request("post", "json", eventType, params, data, "folders-entries?filter=" + params.filter + "&subjectGroup=" + !!params.subjectGroup + "&subjectID=" + params.subjectId + "&search=" + encodeURIComponent(params.search));
     };
 
     var getFile = function (eventType, params) {
         params.ajaxsync = true;
-        request("get", "xml", eventType, params, "folders-files-getversion?fileId=" + encodeURIComponent(params.fileId) + "&version=" + (params.version || -1));
+        request("get", params.dataType || "xml", eventType, params, "folders-files-getversion?fileId=" + encodeURIComponent(params.fileId) + "&version=" + (params.version || -1));
     };
 
     var getFileHistory = function (eventType, params) {
@@ -525,7 +532,11 @@ window.ASC.Files.ServiceManager = (function () {
     };
 
     var getSiblingsImage = function (eventType, params, data) {
-        request("post", "json", eventType, params, data, "folders-files-siblings?fileId=" + encodeURIComponent(params.fileId) + "&filter=" + params.filter + "&subjectID=" + params.subjectId + "&search=" + encodeURIComponent(params.search));
+        request("post", "json", eventType, params, data, "folders-files-siblings?fileId=" + encodeURIComponent(params.fileId) + "&parentId=" + encodeURIComponent(params.folderId || "") + "&filter=" + params.filter + "&subjectGroup=" + !!params.subjectGroup + "&subjectID=" + params.subjectId + "&withSubfolders=" + !!params.withSubfolders + "&searchInContent=" + !!params.searchInContent + "&search=" + encodeURIComponent(params.search));
+    };
+
+    var getPresignedUri = function (eventType, params) {
+        request("get", "json", eventType, params, "presigned?fileId=" + encodeURIComponent(params.fileId));
     };
 
     var renameFolder = function (eventType, params) {
@@ -602,16 +613,28 @@ window.ASC.Files.ServiceManager = (function () {
         request("get", "json", eventType, params, "shorten?fileId=" + encodeURIComponent(params.fileId));
     };
 
+    var getUsers = function (eventType, params) {
+        request("get", "json", eventType, params, "sharedusers?fileId=" + encodeURIComponent(params.fileId));
+    };
+
+    var sendEditorNotify = function (eventType, params, data) {
+        request("post", "json", eventType, params, data, "sendeditornotify?fileId=" + encodeURIComponent(params.fileId));
+    };
+
     var checkConversion = function (eventType, params, data) {
         request("post", "json", eventType, params, data, "checkconversion");
     };
 
-    var storeOriginalFiles = function (eventType, params) {
-        request("get", "json", eventType, params, "storeoriginal?set=" + params.value);
-    };
-
     var updateIfExist = function (eventType, params) {
         request("get", "json", eventType, params, "updateifexist?set=" + params.value);
+    };
+
+    var forcesave = function (eventType, params) {
+        request("get", "json", eventType, params, "forcesave?set=" + params.value);
+    };
+
+    var storeForcesave = function (eventType, params) {
+        request("get", "json", eventType, params, "storeforcesave?set=" + params.value);
     };
 
     var changeDeleteConfrim = function (eventType, params) {
@@ -706,6 +729,7 @@ window.ASC.Files.ServiceManager = (function () {
         updateComment: updateComment,
         completeVersion: completeVersion,
         getSiblingsImage: getSiblingsImage,
+        getPresignedUri: getPresignedUri,
 
         renameFolder: renameFolder,
         renameFile: renameFile,
@@ -731,9 +755,13 @@ window.ASC.Files.ServiceManager = (function () {
         unSubscribeMe: unSubscribeMe,
         getShortenLink: getShortenLink,
 
+        getUsers: getUsers,
+        sendEditorNotify: sendEditorNotify,
+
         checkConversion: checkConversion,
-        storeOriginalFiles: storeOriginalFiles,
         updateIfExist: updateIfExist,
+        forcesave: forcesave,
+        storeForcesave: storeForcesave,
         changeDeleteConfrim: changeDeleteConfrim,
 
         getThirdParty: getThirdParty,

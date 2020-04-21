@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -28,8 +28,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using ASC.Common.Logging;
 using ASC.Core;
-using ASC.Data.Backup.Logging;
 using ASC.Data.Backup.Tasks;
 using CommandLine;
 
@@ -60,7 +60,7 @@ namespace ASC.Data.Backup.Console
 
             if (!string.IsNullOrWhiteSpace(options.Restore))
             {
-                var webconfig = ToAbsolute(options.WebConfigPath ?? Path.Combine("..", "..", "WebStudio", "web.config"));
+                var webconfig = ToAbsolute(options.WebConfigPath ?? Path.Combine("..", "..", "WebStudio", "Web.config"));
                 var backupfile = ToAbsolute(options.Restore);
                 var backuper = new BackupManager(backupfile, webconfig);
                 backuper.ProgressChanged += (s, e) =>
@@ -83,10 +83,10 @@ namespace ASC.Data.Backup.Console
                 options.WebConfigPath = ToAbsolute(options.WebConfigPath);
                 options.BackupDirectory = ToAbsolute(options.BackupDirectory);
 
-                var log = LogFactory.Create();
+                var log = LogManager.GetLogger("ASC");
                 if (!Path.HasExtension(options.WebConfigPath))
                 {
-                    options.WebConfigPath = Path.Combine(options.WebConfigPath, "web.config");
+                    options.WebConfigPath = Path.Combine(options.WebConfigPath, "Web.config");
                 }
                 if (!File.Exists(options.WebConfigPath))
                 {
@@ -102,7 +102,7 @@ namespace ASC.Data.Backup.Console
                 {
                     var backupFileName = string.Format("{0}-{1:yyyyMMddHHmmss}.zip", tenant.TenantAlias, DateTime.UtcNow);
                     var backupFilePath = Path.Combine(options.BackupDirectory, backupFileName);
-                    var task = new BackupPortalTask(log, tenant.TenantId, options.WebConfigPath, backupFilePath);
+                    var task = new BackupPortalTask(log, tenant.TenantId, options.WebConfigPath, backupFilePath, 100);
                     task.RunJob();
                 }
             }

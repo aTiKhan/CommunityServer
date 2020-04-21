@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -39,10 +39,8 @@ namespace ASC.Web.Studio.ThirdParty
     {
         public static string Location
         {
-            get { return CommonLinkUtility.ToAbsolute("~/thirdparty/google.aspx"); }
+            get { return CommonLinkUtility.ToAbsolute("~/ThirdParty/Google.aspx"); }
         }
-
-        private const string Source = "googledrive";
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -61,20 +59,17 @@ namespace ASC.Web.Studio.ThirdParty
                 var code = Request["code"];
                 if (string.IsNullOrEmpty(code))
                 {
-                    OAuth20TokenHelper.RequestCode(HttpContext.Current,
-                                                   GoogleLoginProvider.GoogleOauthCodeUrl,
-                                                   GoogleLoginProvider.GoogleOAuth20ClientId,
-                                                   GoogleLoginProvider.GoogleOAuth20RedirectUrl,
-                                                   GoogleLoginProvider.GoogleScopeDrive,
-                                                   new Dictionary<string, string>
-                                                   {
-                                                       { "access_type", "offline" },
-                                                       { "approval_prompt", "force" }
-                                                   });
+                    OAuth20TokenHelper.RequestCode<GoogleLoginProvider>(HttpContext.Current,
+                                                                        GoogleLoginProvider.GoogleScopeDrive,
+                                                                        new Dictionary<string, string>
+                                                                            {
+                                                                                { "access_type", "offline" },
+                                                                                { "prompt", "consent" }
+                                                                            });
                 }
                 else
                 {
-                    Master.SubmitToken(code, Source);
+                    Master.SubmitCode(code);
                 }
             }
             catch (ThreadAbortException)
@@ -82,7 +77,7 @@ namespace ASC.Web.Studio.ThirdParty
             }
             catch (Exception ex)
             {
-                Master.SubmitError(ex.Message, Source);
+                Master.SubmitError(ex.Message);
             }
         }
     }

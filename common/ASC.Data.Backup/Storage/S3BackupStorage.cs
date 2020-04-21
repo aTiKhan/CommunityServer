@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -26,12 +26,14 @@
 
 using System;
 using System.IO;
+
+using ASC.Common.Logging;
+
 using Amazon;
 using Amazon.S3;
 using Amazon.S3.Model;
-using System.Net;
-using ASC.Data.Backup.Logging;
 using Amazon.S3.Transfer;
+
 
 namespace ASC.Data.Backup.Storage
 {
@@ -42,7 +44,7 @@ namespace ASC.Data.Backup.Storage
         private readonly string bucket;
         private readonly string region;
 
-        private readonly ILog log = LogFactory.Create("ASC.Backup.Service");
+        private readonly ILog log = LogManager.GetLogger("ASC.Backup.Service");
 
         public S3BackupStorage(string accessKeyId, string secretAccessKey, string bucket, string region)
         {

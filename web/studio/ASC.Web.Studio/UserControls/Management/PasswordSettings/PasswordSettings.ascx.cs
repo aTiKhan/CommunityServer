@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -55,8 +55,8 @@ namespace ASC.Web.Studio.UserControls.Management
 
             AjaxPro.Utility.RegisterTypeForAjax(GetType());
 
-            Page.RegisterBodyScripts("~/usercontrols/management/PasswordSettings/js/PasswordSettings.js")
-                .RegisterStyle("~/usercontrols/management/passwordsettings/css/passwordsettings.less");
+            Page.RegisterBodyScripts("~/UserControls/Management/PasswordSettings/js/passwordsettings.js")
+                .RegisterStyle("~/UserControls/Management/PasswordSettings/css/passwordsettings.less");
 
             HelpLink = CommonLinkUtility.GetHelpLink();
         }

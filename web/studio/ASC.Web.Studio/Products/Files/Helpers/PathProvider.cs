@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -29,7 +29,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Web;
-using ASC.Data.Storage.S3;
 using ASC.Files.Core;
 using ASC.Security.Cryptography;
 using ASC.Web.Core.Files;
@@ -42,17 +41,17 @@ namespace ASC.Web.Files.Classes
 {
     public static class PathProvider
     {
-        public static readonly String ProjectVirtualPath = "~/products/projects/tmdocs.aspx";
+        public static readonly String ProjectVirtualPath = "~/Products/Projects/TMDocs.aspx";
 
-        public static readonly String TemplatePath = "/products/files/templates/";
+        public static readonly String TemplatePath = "/Products/Files/Templates/";
 
         public static readonly String StartURL = FilesLinkUtility.FilesBaseVirtualPath;
 
-        public static readonly String GetFileServicePath = CommonLinkUtility.ToAbsolute("~/products/files/services/wcfservice/service.svc/");
+        public static readonly String GetFileServicePath = CommonLinkUtility.ToAbsolute("~/Products/Files/Services/WCFService/service.svc/");
 
         public static string GetImagePath(string imgFileName)
         {
-            return WebImageSupplier.GetAbsoluteWebPath(imgFileName, Configuration.ProductEntryPoint.ID).ToLower();
+            return WebImageSupplier.GetAbsoluteWebPath(imgFileName, Configuration.ProductEntryPoint.ID);
         }
 
         public static string GetFileStaticRelativePath(string fileName)
@@ -61,11 +60,11 @@ namespace ASC.Web.Files.Classes
             switch (ext)
             {
                 case ".js": //Attention: Only for ResourceBundleControl
-                    return VirtualPathUtility.ToAbsolute("~/products/files/js/" + fileName);
+                    return VirtualPathUtility.ToAbsolute("~/Products/Files/js/" + fileName);
                 case ".ascx":
-                    return CommonLinkUtility.ToAbsolute("~/products/files/controls/" + fileName).ToLowerInvariant();
+                    return CommonLinkUtility.ToAbsolute("~/Products/Files/Controls/" + fileName);
                 case ".css": //Attention: Only for ResourceBundleControl
-                    return VirtualPathUtility.ToAbsolute("~/products/files/app_themes/default/" + fileName);
+                    return VirtualPathUtility.ToAbsolute("~/Products/Files/App_Themes/default/" + fileName);
             }
 
             return fileName;
@@ -73,7 +72,7 @@ namespace ASC.Web.Files.Classes
 
         public static String GetFileControlPath(String fileName)
         {
-            return CommonLinkUtility.ToAbsolute("~/products/files/controls/" + fileName).ToLowerInvariant();
+            return CommonLinkUtility.ToAbsolute("~/Products/Files/Controls/" + fileName);
         }
 
         public static string GetFolderUrl(Folder folder, int projectID = 0)
@@ -112,7 +111,7 @@ namespace ASC.Web.Files.Classes
             }
         }
 
-        public static string GetFileStreamUrl(File file)
+        public static string GetFileStreamUrl(File file, string doc = null, bool lastVersion = false)
         {
             if (file == null) throw new ArgumentNullException("file", FilesCommonResource.ErrorMassage_FileNotFound);
 
@@ -121,13 +120,22 @@ namespace ASC.Web.Files.Classes
             var query = uriBuilder.Query;
             query += FilesLinkUtility.Action + "=stream&";
             query += FilesLinkUtility.FileId + "=" + HttpUtility.UrlEncode(file.ID.ToString()) + "&";
-            query += FilesLinkUtility.Version + "=" + file.Version + "&";
-            query += FilesLinkUtility.AuthKey + "=" + EmailValidationKeyProvider.GetEmailKey(file.ID + file.Version.ToString(CultureInfo.InvariantCulture));
+            var version = 0;
+            if (!lastVersion)
+            {
+                version = file.Version;
+                query += FilesLinkUtility.Version + "=" + file.Version + "&";
+            }
+            query += FilesLinkUtility.AuthKey + "=" + EmailValidationKeyProvider.GetEmailKey(file.ID.ToString() + version);
+            if (!string.IsNullOrEmpty(doc))
+            {
+                query += "&" + FilesLinkUtility.DocShareKey + "=" + HttpUtility.UrlEncode(doc);
+            }
 
             return uriBuilder.Uri + "?" + query;
         }
 
-        public static string GetFileChangesUrl(File file)
+        public static string GetFileChangesUrl(File file, string doc = null)
         {
             if (file == null) throw new ArgumentNullException("file", FilesCommonResource.ErrorMassage_FileNotFound);
 
@@ -137,6 +145,10 @@ namespace ASC.Web.Files.Classes
             query += FilesLinkUtility.FileId + "=" + HttpUtility.UrlEncode(file.ID.ToString()) + "&";
             query += FilesLinkUtility.Version + "=" + file.Version + "&";
             query += FilesLinkUtility.AuthKey + "=" + EmailValidationKeyProvider.GetEmailKey(file.ID + file.Version.ToString(CultureInfo.InvariantCulture));
+            if (!string.IsNullOrEmpty(doc))
+            {
+                query += "&" + FilesLinkUtility.DocShareKey + "=" + HttpUtility.UrlEncode(doc);
+            }
 
             return uriBuilder.Uri + "?" + query;
         }
@@ -161,6 +173,16 @@ namespace ASC.Web.Files.Classes
             query += FilesLinkUtility.Action + "=tmp&";
             query += FilesLinkUtility.FileTitle + "=" + HttpUtility.UrlEncode(fileName) + "&";
             query += FilesLinkUtility.AuthKey + "=" + EmailValidationKeyProvider.GetEmailKey(fileName);
+
+            return uriBuilder.Uri + "?" + query;
+        }
+
+        public static string GetEmptyFileUrl(string extension)
+        {
+            var uriBuilder = new UriBuilder(CommonLinkUtility.GetFullAbsolutePath(FilesLinkUtility.FileHandlerPath));
+            var query = uriBuilder.Query;
+            query += FilesLinkUtility.Action + "=empty&";
+            query += FilesLinkUtility.FileTitle + "=" + HttpUtility.UrlEncode(extension);
 
             return uriBuilder.Uri + "?" + query;
         }

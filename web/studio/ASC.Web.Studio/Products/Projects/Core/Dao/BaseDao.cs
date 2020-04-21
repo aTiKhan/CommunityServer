@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -31,7 +31,7 @@ using ASC.Core;
 
 namespace ASC.Projects.Data
 {
-    abstract class BaseDao
+    public abstract class BaseDao
     {
         protected static readonly string CommentsTable = "projects_comments";
         protected static readonly string FollowingProjectTable = "projects_following_project_participant";
@@ -40,7 +40,8 @@ namespace ASC.Projects.Data
         protected static readonly string ProjectsTable = "projects_projects";
         protected static readonly string ParticipantTable = "projects_project_participant";
         protected static readonly string ProjectTagTable = "projects_project_tag";
-        protected static readonly string ReportTable = "projects_report_template";
+        protected static readonly string ReportTemplateTable = "projects_report_template";
+        protected static readonly string ReportTable = "projects_reports";
         protected static readonly string SubtasksTable = "projects_subtasks";
         protected static readonly string TagsTable = "projects_tags";
         protected static readonly string TasksTable = "projects_tasks";
@@ -49,6 +50,7 @@ namespace ASC.Projects.Data
         protected static readonly string TimeTrackingTable = "projects_time_tracking";
         protected static readonly string TasksLinksTable = "projects_tasks_links";
         protected static readonly string TasksOrderTable = "projects_tasks_order";
+        protected static readonly string StatusTable = "projects_status";
 
         protected int Tenant { get; private set; }
 

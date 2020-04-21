@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -145,7 +145,7 @@ namespace ASC.Web.Community.Wiki
                 var emptyScreenControl = new EmptyScreenControl
                     {
                         ID = "wikiListPagesEmpty",
-                        ImgSrc = WebImageSupplier.GetAbsoluteWebPath("WikiLogo150.png", WikiManager.ModuleId),
+                        ImgSrc = WebImageSupplier.GetAbsoluteWebPath("wikilogo150.png", WikiManager.ModuleId),
                         Header = emptyScreenCaption,
                         Describe = emptyScreenText,
                         CssClass = "display-none"
@@ -176,7 +176,7 @@ namespace ASC.Web.Community.Wiki
                 var emptyScreenControl = new EmptyScreenControl
                     {
                         ID = "wikiListPagesByLetterEmpty",
-                        ImgSrc = WebImageSupplier.GetAbsoluteWebPath("WikiLogo150.png", WikiManager.ModuleId),
+                        ImgSrc = WebImageSupplier.GetAbsoluteWebPath("wikilogo150.png", WikiManager.ModuleId),
                         Header = WikiResource.EmptyScreenWikiIndexCaption,
                         Describe = WikiResource.EmptyScreenWikiIndexText,
                         CssClass = "display-none"

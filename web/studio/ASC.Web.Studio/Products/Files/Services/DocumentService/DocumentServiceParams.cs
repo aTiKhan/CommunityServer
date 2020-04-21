@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -34,11 +34,17 @@ namespace ASC.Web.Files.Services.DocumentService
     [DataContract(Name = "docServiceParams", Namespace = "")]
     public class DocumentServiceParams
     {
+        [DataMember(Name = "displayName")]
+        public string DisplayName;
+
         [DataMember(Name = "docKeyForTrack")]
         public string DocKeyForTrack;
 
         [DataMember(Name = "editByUrl")]
         public bool EditByUrl;
+
+        [DataMember(Name = "email")]
+        public string Email;
 
         [DataMember(Name = "fileId", EmitDefaultValue = false)]
         public string FileId;
@@ -51,6 +57,9 @@ namespace ASC.Web.Files.Services.DocumentService
 
         [DataMember(Name = "linkToEdit")]
         public string LinkToEdit;
+
+        [DataMember(Name = "openHistory", EmitDefaultValue = false)]
+        public bool OpenHistory;
 
         [DataMember(Name = "openinigDate")]
         public string OpeninigDate;
@@ -66,6 +75,9 @@ namespace ASC.Web.Files.Services.DocumentService
 
         [DataMember(Name = "thirdPartyApp")]
         public bool ThirdPartyApp;
+
+        [DataMember(Name = "canGetUsers")]
+        public bool CanGetUsers;
 
 
         public static string Serialize(DocumentServiceParams docServiceParams)

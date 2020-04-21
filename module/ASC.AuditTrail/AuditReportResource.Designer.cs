@@ -1375,6 +1375,15 @@ namespace ASC.AuditTrail {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Forcesave settings Updated.
+        /// </summary>
+        public static string DocumentsForcesave {
+            get {
+                return ResourceManager.GetString("DocumentsForcesave", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Documents.
         /// </summary>
         public static string DocumentsModule {
@@ -1384,7 +1393,7 @@ namespace ASC.AuditTrail {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to  Overwriting Settings Updated.
+        ///   Looks up a localized string similar to Overwriting Settings Updated.
         /// </summary>
         public static string DocumentsOverwritingSettingsUpdated {
             get {
@@ -1407,6 +1416,15 @@ namespace ASC.AuditTrail {
         public static string DocumentsSettingsModule {
             get {
                 return ResourceManager.GetString("DocumentsSettingsModule", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Store forcesave settings Updated.
+        /// </summary>
+        public static string DocumentsStoreForcesave {
+            get {
+                return ResourceManager.GetString("DocumentsStoreForcesave", resourceCulture);
             }
         }
         
@@ -2149,6 +2167,15 @@ namespace ASC.AuditTrail {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Login Fail. Too many attempts.
+        /// </summary>
+        public static string LoginFailBruteForce {
+            get {
+                return ResourceManager.GetString("LoginFailBruteForce", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Login Fail. Profile Disabled.
         /// </summary>
         public static string LoginFailDisabledProfile {
@@ -2172,6 +2199,15 @@ namespace ASC.AuditTrail {
         public static string LoginFailIpSecurity {
             get {
                 return ResourceManager.GetString("LoginFailIpSecurity", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Login Fail. Recaptcha is invalid.
+        /// </summary>
+        public static string LoginFailRecaptcha {
+            get {
+                return ResourceManager.GetString("LoginFailRecaptcha", resourceCulture);
             }
         }
         
@@ -2212,6 +2248,15 @@ namespace ASC.AuditTrail {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed Login via API &amp; authenticator application.
+        /// </summary>
+        public static string LoginFailViaApiTfa {
+            get {
+                return ResourceManager.GetString("LoginFailViaApiTfa", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Login via SMS failed.
         /// </summary>
         public static string LoginFailViaSms {
@@ -2226,6 +2271,15 @@ namespace ASC.AuditTrail {
         public static string LoginFailViaSSO {
             get {
                 return ResourceManager.GetString("LoginFailViaSSO", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Login via authenticator application Failed.
+        /// </summary>
+        public static string LoginFailViaTfaApp {
+            get {
+                return ResourceManager.GetString("LoginFailViaTfaApp", resourceCulture);
             }
         }
         
@@ -2266,6 +2320,15 @@ namespace ASC.AuditTrail {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Login Via Social Application Success.
+        /// </summary>
+        public static string LoginSuccessSocialApp {
+            get {
+                return ResourceManager.GetString("LoginSuccessSocialApp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Successful Login via API.
         /// </summary>
         public static string LoginSuccessViaApi {
@@ -2280,6 +2343,15 @@ namespace ASC.AuditTrail {
         public static string LoginSuccessViaApiSms {
             get {
                 return ResourceManager.GetString("LoginSuccessViaApiSms", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Successful Login via API &amp; authenticator application.
+        /// </summary>
+        public static string LoginSuccessViaApiTfa {
+            get {
+                return ResourceManager.GetString("LoginSuccessViaApiTfa", resourceCulture);
             }
         }
         
@@ -2307,6 +2379,15 @@ namespace ASC.AuditTrail {
         public static string LoginSuccessViaSSO {
             get {
                 return ResourceManager.GetString("LoginSuccessViaSSO", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Successful Login via authenticator application.
+        /// </summary>
+        public static string LoginSuccesViaTfaApp {
+            get {
+                return ResourceManager.GetString("LoginSuccesViaTfaApp", resourceCulture);
             }
         }
         
@@ -3760,6 +3841,33 @@ namespace ASC.AuditTrail {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Two-factor Authentication Settings Updated: Two-factor auth was disabled.
+        /// </summary>
+        public static string TwoFactorAuthenticationSettingsDisabled {
+            get {
+                return ResourceManager.GetString("TwoFactorAuthenticationSettingsDisabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Two-factor Authentication Settings Updated: SMS confirmation was enabled.
+        /// </summary>
+        public static string TwoFactorAuthenticationSettingsEnabledBySms {
+            get {
+                return ResourceManager.GetString("TwoFactorAuthenticationSettingsEnabledBySms", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Two-factor Authentication Settings Updated: Authentication app was enabled.
+        /// </summary>
+        public static string TwoFactorAuthenticationSettingsEnabledByTfaApp {
+            get {
+                return ResourceManager.GetString("TwoFactorAuthenticationSettingsEnabledByTfaApp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Two-factor Authentication Settings Updated.
         /// </summary>
         public static string TwoFactorAuthenticationSettingsUpdated {
@@ -4012,6 +4120,24 @@ namespace ASC.AuditTrail {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Authenticator application disconnected: {0}.
+        /// </summary>
+        public static string UserTfaDisconnected {
+            get {
+                return ResourceManager.GetString("UserTfaDisconnected", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to New backup codes for the authentication app are created.
+        /// </summary>
+        public static string UserTfaGenerateCodes {
+            get {
+                return ResourceManager.GetString("UserTfaGenerateCodes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Social Account Unlinked. Provider: {0}.
         /// </summary>
         public static string UserUnlinkedSocialAccount {
@@ -4035,6 +4161,15 @@ namespace ASC.AuditTrail {
         public static string UserUpdatedAvatarThumbnails {
             get {
                 return ResourceManager.GetString("UserUpdatedAvatarThumbnails", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Email Updated.
+        /// </summary>
+        public static string UserUpdatedEmail {
+            get {
+                return ResourceManager.GetString("UserUpdatedEmail", resourceCulture);
             }
         }
         

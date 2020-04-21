@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -47,12 +47,13 @@ namespace ASC.Web.People
 
         protected bool RemoveData { get; private set; }
 
+        protected bool DeleteProfile { get; private set; }
+
         protected bool IsAdmin()
         {
-            return CoreContext.UserManager.GetUsers(SecurityContext.CurrentAccount.ID).IsAdmin() ||
-                WebItemSecurity.IsProductAdministrator(WebItemManager.PeopleProductID, SecurityContext.CurrentAccount.ID);
+            return WebItemSecurity.IsProductAdministrator(WebItemManager.PeopleProductID, SecurityContext.CurrentAccount.ID);
         }
-        
+
         protected void Page_Load(object sender, EventArgs e)
         {
             var username = Request["user"];
@@ -71,13 +72,15 @@ namespace ASC.Web.People
 
             RemoveData = string.Equals(Request["remove"], bool.TrueString, StringComparison.InvariantCultureIgnoreCase);
 
+            DeleteProfile = string.Equals(Request["delete"], bool.TrueString, StringComparison.InvariantCultureIgnoreCase);
+
             PageTitle = UserInfo.DisplayUserName(false) + " - " + (RemoveData ? PeopleResource.RemovingData : PeopleResource.ReassignmentData);
 
             Title = HeaderStringHelper.GetPageTitle(PageTitle);
 
             PageTitle = HttpUtility.HtmlEncode(PageTitle);
 
-            HelpLink = CommonLinkUtility.GetHelpLink().TrimEnd('/');
+            HelpLink = CommonLinkUtility.GetHelpLink();
 
             ProfileLink = CommonLinkUtility.GetUserProfile(UserInfo.ID);
 

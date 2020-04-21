@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -52,5 +52,7 @@ namespace ASC.Files.Core
         [EnumMember] ArchiveOnly = 10,
 
         [EnumMember] ByExtension = 11,
+
+        [EnumMember] MediaOnly = 12,
     }
 }

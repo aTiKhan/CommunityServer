@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -27,7 +27,6 @@
 using System;
 using System.Web;
 using ASC.Core;
-using ASC.Core.Users;
 using ASC.Web.Core;
 
 namespace ASC.Web.Mail.Controls
@@ -37,17 +36,17 @@ namespace ASC.Web.Mail.Controls
         public static string Location { get { return "~/addons/mail/Controls/BlankModal/BlankModal.ascx"; } }
         protected void Page_Load(object sender, EventArgs e)
         {
-            Page.RegisterBodyScripts("~/addons/mail/controls/blankmodal/js/blankmodal.js");
+            Page.RegisterBodyScripts("~/addons/mail/Controls/BlankModal/js/blankmodal.js");
         }
 
         public bool IsAdmin()
         {
-            return CoreContext.UserManager.IsUserInGroup(SecurityContext.CurrentAccount.ID, Constants.GroupAdmin.ID);
+            return WebItemSecurity.IsProductAdministrator(WebItemManager.MailProductID, SecurityContext.CurrentAccount.ID);
         }
 
         public bool IsCrmAvailable()
         {
-            return WebItemSecurity.IsAvailableForUser(WebItemManager.CRMProductID.ToString(), SecurityContext.CurrentAccount.ID);
+            return WebItemSecurity.IsAvailableForMe(WebItemManager.CRMProductID);
         }
     }
 }

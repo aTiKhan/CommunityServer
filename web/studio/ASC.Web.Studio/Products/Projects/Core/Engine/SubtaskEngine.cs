@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -30,10 +30,11 @@ using System.Linq;
 
 using ASC.Core;
 using ASC.Core.Tenants;
-
+using ASC.ElasticSearch;
 using ASC.Projects.Core.DataInterfaces;
 using ASC.Projects.Core.Domain;
 using ASC.Projects.Core.Services.NotifyService;
+using ASC.Web.Projects.Core.Search;
 
 namespace ASC.Projects.Engine
 {
@@ -169,6 +170,8 @@ namespace ASC.Projects.Engine
             {
                 Subscribe(task, sender);
             }
+
+            FactoryIndexer<SubtasksWrapper>.IndexAsync(subtask);
 
             return subtask;
         }

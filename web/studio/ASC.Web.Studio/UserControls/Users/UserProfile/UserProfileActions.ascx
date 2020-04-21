@@ -1,4 +1,5 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeBehind="UserProfileActions.ascx.cs" Inherits="ASC.Web.Studio.UserControls.Users.UserProfileActions" %>
+<%@ Import Namespace="ASC.ActiveDirectory.Base.Settings" %>
 <%@ Import Namespace="ASC.Core" %>
 <%@ Import Namespace="ASC.Web.Core.Mobile" %>
 <%@ Import Namespace="ASC.Web.Studio.Core.Users" %>
@@ -53,7 +54,7 @@
             </a>
         </li>
         <% }
-       if (Actions.AllowEdit && ProfileHelper.UserInfo.ActivationStatus != EmployeeActivationStatus.Activated && !ProfileHelper.UserInfo.IsLDAP() && !ProfileHelper.UserInfo.IsSSO())
+       if (Actions.AllowEdit && ProfileHelper.UserInfo.ActivationStatus != EmployeeActivationStatus.Activated && !ProfileHelper.UserInfo.IsSSO())
            { %>
         <li class="email-activate <%= (ProfileHelper.UserInfo.Status != EmployeeStatus.Terminated) ? "" :  "display-none"%>">
             <a title="<%= Resource.ActivateEmailAgain %>"
@@ -62,12 +63,12 @@
             </a>
         </li>
         <% }
-           if (Actions.AllowEdit && !MobileDetector.IsMobile)
+       if (Actions.AllowEdit && !MobileDetector.IsMobile && (!ProfileHelper.UserInfo.IsLDAP() || (ProfileHelper.UserInfo.IsLDAP() && ProfileHelper.UserInfo.HasAvatar())))
            { %>
-        <li class="edit-photo <%= UserHasAvatar ? "" : "display-none" %>">
+        <li class="edit-photo">
             <a class="dropdown-item"
-                title="<%= Resource.EditThumbnailPhoto %>">
-                <%= Resource.EditThumbnailPhoto %>
+                title="<%= Resource.EditPhoto %>">
+                <%= Resource.EditPhoto %>
             </a> 
         </li>
         <% }

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -39,9 +39,9 @@ using ASC.Core.Notify.Jabber;
 using ASC.CRM.Core;
 using ASC.CRM.Core.Dao;
 using ASC.CRM.Core.Entities;
+using ASC.ElasticSearch;
 using ASC.Feed.Aggregator.Config;
 using ASC.Feed.Data;
-using ASC.FullTextIndex;
 using ASC.HealthCheck.Classes;
 using ASC.HealthCheck.Resources;
 using ASC.Notify.Messages;
@@ -454,12 +454,9 @@ namespace ASC.HealthCheck.Models
         {
             try
             {
-                using (var service = new TextIndexServiceClient())
-                {
-                    return service.CheckState()
-                        ? HealthCheckResource.FullTextIndexServiceWorksCorrectMsg
-                        : HealthCheckResource.FullTextIndexServiceWorksIncorrectMsg;
-                }
+                return FactoryIndexer.CheckState()
+                    ? HealthCheckResource.FullTextIndexServiceWorksCorrectMsg
+                    : HealthCheckResource.FullTextIndexServiceWorksIncorrectMsg;
             }
             catch (Exception ex)
             {

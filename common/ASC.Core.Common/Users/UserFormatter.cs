@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -27,6 +27,7 @@
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Text.RegularExpressions;
 using System.Threading;
 
 namespace ASC.Core.Users
@@ -141,6 +142,13 @@ namespace ASC.Core.Users
             }
             var format = formats[DisplayUserNameFormat.Default];
             return format.IndexOf("{0}") < format.IndexOf("{1}") ? DisplayUserNameFormat.FirstLast : DisplayUserNameFormat.LastFirst;
+        }
+
+        public static Regex UserNameRegex = new Regex(ConfigurationManager.AppSettings["core.username.regex"] ?? "");
+
+        public static bool IsValidUserName(string firstName, string lastName)
+        {
+            return UserNameRegex.IsMatch(firstName + lastName);
         }
     }
 }

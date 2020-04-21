@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -27,7 +27,6 @@
 using System.Runtime.Serialization;
 using ASC.Api.Employee;
 using ASC.Projects.Core.Domain;
-using ASC.Projects.Engine;
 
 namespace ASC.Api.Projects.Wrappers
 {
@@ -52,14 +51,19 @@ namespace ASC.Api.Projects.Wrappers
         [DataMember]
         public bool IsAdministrator { get; set; }
 
-        public ParticipantWrapper(Participant participant) : base(participant.UserInfo)
+        [DataMember]
+        public bool IsRemovedFromTeam { get; set; }
+
+        public ParticipantWrapper(ProjectApiBase projectApiBase, Participant participant)
+            : base(participant.UserInfo)
         {
             CanReadFiles = participant.CanReadFiles;
             CanReadMilestones = participant.CanReadMilestones;
             CanReadMessages = participant.CanReadMessages;
             CanReadTasks = participant.CanReadTasks;
             CanReadContacts = participant.CanReadContacts;
-            IsAdministrator = ProjectSecurity.IsAdministrator(participant.ID);
+            IsAdministrator = projectApiBase.ProjectSecurity.IsAdministrator(participant.ID);
+            IsRemovedFromTeam = participant.IsRemovedFromTeam;
         }
     }
 }

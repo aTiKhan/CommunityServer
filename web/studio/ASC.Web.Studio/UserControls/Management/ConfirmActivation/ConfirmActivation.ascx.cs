@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -64,8 +64,8 @@ namespace ASC.Web.Studio.UserControls.Management
         protected void Page_Load(object sender, EventArgs e)
         {
             AjaxPro.Utility.RegisterTypeForAjax(typeof(ConfirmActivation));
-            Page.RegisterBodyScripts("~/usercontrols/management/confirmactivation/js/confirmactivation.js")
-                .RegisterStyle("~/usercontrols/management/ConfirmActivation/css/confirmactivation.less");
+            Page.RegisterBodyScripts("~/UserControls/Management/ConfirmActivation/js/confirmactivation.js")
+                .RegisterStyle("~/UserControls/Management/ConfirmActivation/css/confirmactivation.less");
             Page.Title = HeaderStringHelper.GetPageTitle(Resource.Authorization);
             ButtonEmailAndPasswordOK.Text = Resource.EmailAndPasswordOK;
             btChangeEmail.Text = Resource.ChangeEmail;
@@ -86,6 +86,8 @@ namespace ASC.Web.Studio.UserControls.Management
                     User = CoreContext.UserManager.GetUsers(SecurityContext.CurrentAccount.ID);
                     User.Email = email;
                     CoreContext.UserManager.SaveUserInfo(User);
+                    MessageService.Send(Request, MessageAction.UserUpdatedEmail);
+
                     ActivateMail(User);
                     const string successParam = "email_change=success";
                     if(User.IsVisitor())
@@ -139,7 +141,7 @@ namespace ASC.Web.Studio.UserControls.Management
 
         private void ActivateMail(UserInfo user)
         {
-            if (user.ActivationStatus == EmployeeActivationStatus.Activated) return;
+            if (user.ActivationStatus.HasFlag(EmployeeActivationStatus.Activated)) return;
 
             user.ActivationStatus = EmployeeActivationStatus.Activated;
             CoreContext.UserManager.SaveUserInfo(user);

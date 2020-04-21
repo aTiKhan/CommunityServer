@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -30,24 +30,28 @@ using System.Linq;
 
 using ASC.Core;
 using ASC.Core.Tenants;
+using ASC.ElasticSearch;
 using ASC.Projects.Core.DataInterfaces;
 using ASC.Projects.Core.Domain;
 using ASC.Projects.Core.Services.NotifyService;
+using ASC.Web.Projects;
+using ASC.Web.Projects.Core.Search;
 
 namespace ASC.Projects.Engine
 {
     public class TaskEngine : ProjectEntityEngine
     {
         public IDaoFactory DaoFactory { get; set; }
-        public SubtaskEngine SubtaskEngine { get; set; }
+        public EngineFactory EngineFactory { get; set; }
+        public SubtaskEngine SubtaskEngine { get { return EngineFactory.SubtaskEngine; } }
+        public StatusEngine StatusEngine { get { return EngineFactory.StatusEngine; } }
 
         private readonly Func<Task, bool> canReadDelegate;
 
-        public TaskEngine(bool disableNotifications, SubtaskEngine subtaskEngine)
+        public TaskEngine(bool disableNotifications)
             : base(NotifyConstants.Event_NewCommentForTask, disableNotifications)
         {
             canReadDelegate = CanRead;
-            SubtaskEngine = subtaskEngine;
         }
 
         #region Get Tasks
@@ -72,7 +76,7 @@ namespace ASC.Projects.Engine
             var isAdmin = ProjectSecurity.IsAdministrator(SecurityContext.CurrentAccount.ID);
             var anyOne = ProjectSecurity.IsPrivateDisabled;
             var count = DaoFactory.TaskDao.GetByFilterCount(filter, isAdmin, anyOne);
-            
+
             var filterLimit = filter.Max;
             var filterOffset = filter.Offset;
 
@@ -134,12 +138,12 @@ namespace ASC.Projects.Engine
             return new TaskFilterOperationResult(taskList, count);
         }
 
-        public  TaskFilterCountOperationResult GetByFilterCount(TaskFilter filter)
+        public TaskFilterCountOperationResult GetByFilterCount(TaskFilter filter)
         {
             return DaoFactory.TaskDao.GetByFilterCount(filter, ProjectSecurity.CurrentUserAdministrator, ProjectSecurity.IsPrivateDisabled);
         }
 
-        public  Dictionary<Guid, int> GetByFilterCountForReport(TaskFilter filter)
+        public List<Tuple<Guid, int, int>> GetByFilterCountForReport(TaskFilter filter)
         {
             return DaoFactory.TaskDao.GetByFilterCountForReport(filter, ProjectSecurity.CurrentUserAdministrator, ProjectSecurity.IsPrivateDisabled);
         }
@@ -185,7 +189,7 @@ namespace ASC.Projects.Engine
 
             if (!checkSecurity)
                 return task;
-            
+
             return CanRead(task) ? task : null;
         }
 
@@ -202,7 +206,7 @@ namespace ASC.Projects.Engine
             return DaoFactory.TaskDao.IsExists(id);
         }
 
-        private static bool CanRead(Task task)
+        private bool CanRead(Task task)
         {
             return ProjectSecurity.CanRead(task);
         }
@@ -215,20 +219,6 @@ namespace ASC.Projects.Engine
         {
             if (task == null) throw new ArgumentNullException("task");
             if (task.Project == null) throw new Exception("task.Project");
-
-            // check guests responsibles
-            foreach (var responsible in task.Responsibles)
-            {
-                if (ProjectSecurity.IsVisitor(responsible))
-                {
-                    ProjectSecurity.CreateGuestSecurityException();
-                }
-
-                if (!ProjectSecurity.IsInTeam(task.Project, responsible))
-                {
-                    ProjectSecurity.CreateSecurityException();
-                }
-            }
 
             var milestone = task.Milestone != 0 ? DaoFactory.MilestoneDao.GetById(task.Milestone) : null;
             var milestoneResponsible = milestone != null ? milestone.Responsible : Guid.Empty;
@@ -248,6 +238,19 @@ namespace ASC.Projects.Engine
 
             if (isNew)
             {
+                foreach (var responsible in task.Responsibles)
+                {
+                    if (ProjectSecurity.IsVisitor(responsible))
+                    {
+                        ProjectSecurity.CreateGuestSecurityException();
+                    }
+
+                    if (!ProjectSecurity.IsInTeam(task.Project, responsible))
+                    {
+                        ProjectSecurity.CreateSecurityException();
+                    }
+                }
+
                 if (task.CreateBy == default(Guid)) task.CreateBy = SecurityContext.CurrentAccount.ID;
                 if (task.CreateOn == default(DateTime)) task.CreateOn = TenantUtil.DateTimeNow();
 
@@ -259,13 +262,26 @@ namespace ASC.Projects.Engine
             }
             else
             {
-                var oldTask = DaoFactory.TaskDao.GetById(new [] {task.ID}).FirstOrDefault();
+                var oldTask = DaoFactory.TaskDao.GetById(new[] { task.ID }).FirstOrDefault();
 
                 if (oldTask == null) throw new ArgumentNullException("task");
                 ProjectSecurity.DemandEdit(oldTask);
 
                 var newResponsibles = task.Responsibles.Distinct().ToList();
                 var oldResponsibles = oldTask.Responsibles.Distinct().ToList();
+
+                foreach (var responsible in newResponsibles.Except(oldResponsibles))
+                {
+                    if (ProjectSecurity.IsVisitor(responsible))
+                    {
+                        ProjectSecurity.CreateGuestSecurityException();
+                    }
+
+                    if (!ProjectSecurity.IsInTeam(task.Project, responsible))
+                    {
+                        ProjectSecurity.CreateSecurityException();
+                    }
+                }
 
                 removeResponsibles.AddRange(oldResponsibles.Where(p => !newResponsibles.Contains(p)));
                 inviteToResponsibles.AddRange(newResponsibles.Where(participant => !oldResponsibles.Contains(participant)));
@@ -275,6 +291,8 @@ namespace ASC.Projects.Engine
 
                 task = DaoFactory.TaskDao.Update(task);
             }
+
+            FactoryIndexer<TasksWrapper>.IndexAsync(task);
 
             if (attachedFileIds != null && attachedFileIds.Any())
             {
@@ -300,7 +318,7 @@ namespace ASC.Projects.Engine
             return task;
         }
 
-        public Task ChangeStatus(Task task, TaskStatus newStatus)
+        public Task ChangeStatus(Task task, CustomTaskStatus newStatus)
         {
             ProjectSecurity.DemandEdit(task);
 
@@ -308,23 +326,38 @@ namespace ASC.Projects.Engine
             if (task.Project == null) throw new Exception("Project can't be null.");
             if (task.Project.Status == ProjectStatus.Closed) throw new Exception(EngineResource.ProjectClosedError);
 
-            if (task.Status == newStatus) return task;
+            if (task.Status == newStatus.StatusType && task.CustomTaskStatus == newStatus.Id) return task;
+
+            var status = StatusEngine.Get().FirstOrDefault(r => r.Id == newStatus.Id);
+            var cannotChange =
+                status != null &&
+                status.Available.HasValue && !status.Available.Value &&
+                task.CreateBy != SecurityContext.CurrentAccount.ID &&
+                task.Project.Responsible != SecurityContext.CurrentAccount.ID &&
+                !ProjectSecurity.CurrentUserAdministrator;
+
+            if (cannotChange)
+            {
+                ProjectSecurity.CreateSecurityException();
+            }
+
 
             var senders = GetSubscribers(task);
 
-            if (newStatus == TaskStatus.Closed && !DisableNotifications && senders.Count != 0)
+            if (newStatus.StatusType == TaskStatus.Closed && !DisableNotifications && senders.Count != 0)
                 NotifyClient.Instance.SendAboutTaskClosing(senders, task);
 
-            if (newStatus == TaskStatus.Open && !DisableNotifications && senders.Count != 0)
+            if (newStatus.StatusType == TaskStatus.Open && !DisableNotifications && senders.Count != 0)
                 NotifyClient.Instance.SendAboutTaskResumed(senders, task);
 
-            task.Status = newStatus;
+            task.Status = newStatus.StatusType;
+            task.CustomTaskStatus = newStatus.Id < 0 ? null : (int?)newStatus.Id;
             task.LastModifiedBy = SecurityContext.CurrentAccount.ID;
             task.LastModifiedOn = TenantUtil.DateTimeNow();
             task.StatusChangedOn = TenantUtil.DateTimeNow();
 
             //subtask
-            if (newStatus == TaskStatus.Closed)
+            if (newStatus.StatusType == TaskStatus.Closed)
             {
                 if (!task.Responsibles.Any())
                     task.Responsibles.Add(SecurityContext.CurrentAccount.ID);
@@ -332,7 +365,7 @@ namespace ASC.Projects.Engine
                 DaoFactory.SubtaskDao.CloseAllSubtasks(task);
                 foreach (var subTask in task.SubTasks)
                 {
-                   subTask.Status = TaskStatus.Closed; 
+                    subTask.Status = TaskStatus.Closed;
                 }
             }
 
@@ -431,7 +464,7 @@ namespace ASC.Projects.Engine
             //Don't send anything if notifications are disabled
             if (DisableNotifications || task.Responsibles == null || !task.Responsibles.Any()) return;
 
-            NotifyClient.Instance.SendReminderAboutTask(task.Responsibles.Distinct(), task);
+            NotifyClient.Instance.SendReminderAboutTask(task.Responsibles.Where(r => !r.Equals(SecurityContext.CurrentAccount.ID)).Distinct(), task);
         }
 
 
@@ -450,6 +483,8 @@ namespace ASC.Projects.Engine
             }
 
             UnSubscribeAll(task);
+
+            FactoryIndexer<TasksWrapper>.DeleteAsync(task);
         }
 
         #endregion
@@ -498,10 +533,10 @@ namespace ASC.Projects.Engine
                 throw new Exception("it is impossible to create a link between one and the same task");
             }
 
-/*            if (parentTask.Status == TaskStatus.Closed || dependentTask.Status == TaskStatus.Closed)
-            {
-                throw new Exception("Such link don't be created. Task closed.");
-            }*/
+            /*            if (parentTask.Status == TaskStatus.Closed || dependentTask.Status == TaskStatus.Closed)
+                        {
+                            throw new Exception("Such link don't be created. Task closed.");
+                        }*/
 
             if (parentTask.Milestone != dependentTask.Milestone)
             {

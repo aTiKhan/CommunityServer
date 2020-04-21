@@ -1,4 +1,5 @@
 ﻿<%@ Control Language="C#" AutoEventWireup="true" CodeBehind="Authorize.ascx.cs" Inherits="ASC.Web.Studio.UserControls.Common.Authorize" %>
+<%@ Import Namespace="ASC.Web.Core.Utility" %>
 <%@ Import Namespace="ASC.Web.Core.Utility.Settings" %>
 <%@ Import Namespace="ASC.Web.Studio.Core" %>
 <%@ Import Namespace="ASC.Web.Studio.UserControls.Users.UserProfile" %>
@@ -28,7 +29,7 @@
 
     <%--password--%>
     <div class="auth-form_password">
-        <input type="password" id="pwd" class="pwdLoginTextbox <%= IsPasswordInvalid ? "error" : ""%>" name="pwd" maxlength="64" placeholder="<%= Resource.Password %>" />
+        <input type="password" id="pwd" class="pwdLoginTextbox <%= IsPasswordInvalid ? "error" : ""%>" name="pwd" maxlength="<%= PasswordSettings.MaxLength %>" placeholder="<%= Resource.Password %>" />
     </div>
     <%--buttons--%>
     <div class="auth-form_submenu clearFix">
@@ -36,7 +37,7 @@
             <span class="link gray underline float-right" onclick="PasswordTool.ShowPwdReminderDialog()">
                 <%= Resource.ForgotPassword %>
             </span>
-            <% if (EnableSession) { %>
+            <% if (EnableSession && !Request.DesktopApp()) { %>
             <div>
                 <input type="checkbox" id="remember" name="remember" checked />
                 <label for="remember">
@@ -54,16 +55,21 @@
             <a id="loginButton" class="button blue big signIn" onclick="jQuery('#authMessage').hide(); jQuery('.pwdLoginTextbox').removeClass('error'); Authorize.Login(); return false;">
                 <%= Resource.LoginButton %>
             </a>
-            <% if (AccountLinkControl.IsNotEmpty)
-               { %>
-            <div id="social" class="social_nets clearFix" style="display: <%= SetupInfo.ThirdPartyAuthEnabled ? "block" : "none" %>">
-                <span><%= Resource.LoginWithAccount %></span>
-                <div class="float-right">
-                    <asp:PlaceHolder ID="signInPlaceholder" runat="server" />
-                </div>
-            </div>
-            <% } %>
         </div>
+        <% if (RecaptchaEnable && ShowRecaptcha)
+           { %>
+        <div id="recaptchaHiddenContainer" class="captchaContainer g-recaptcha"
+            data-sitekey="<%= SetupInfo.RecaptchaPublicKey %>"
+            data-hl="<%= Culture %>">&nbsp;
+        </div>
+        <% } %>
         <div id="authMessage" class="auth-form_message"><%= ErrorMessage + LoginMessage %></div>
+        <% if (AccountLinkControl.IsNotEmpty && SetupInfo.ThirdPartyAuthEnabled)
+            { %>
+        <div id="social">
+            <div><%= Resource.LoginWithAccount %></div>
+            <asp:PlaceHolder ID="signInPlaceholder" runat="server" />
+        </div>
+        <% } %>
     </div>
 </div>

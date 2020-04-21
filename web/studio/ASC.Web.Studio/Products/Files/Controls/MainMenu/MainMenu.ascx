@@ -2,9 +2,11 @@
 <%@ Assembly Name="ASC.Web.Files" %>
 <%@ Control Language="C#" AutoEventWireup="true" CodeBehind="MainMenu.ascx.cs" Inherits="ASC.Web.Files.Controls.MainMenu" %>
 <%@ Import Namespace="ASC.Core" %>
+<%@ Import Namespace="ASC.Web.Core.Mobile" %>
 <%@ Import Namespace="ASC.Web.Files.Classes" %>
 <%@ Import Namespace="ASC.Web.Files.Helpers" %>
 <%@ Import Namespace="ASC.Web.Files.Resources" %>
+<%@ Import Namespace="ASC.Data.Storage" %>
 
 <% if (!Global.IsOutsider)
    { %>
@@ -13,10 +15,20 @@
         <span class="main-button-text"><%= FilesUCResource.ButtonCreate %></span>
         <span class="white-combobox">&nbsp;</span>
     </li>
-    <li id="buttonUpload" class="menu-upload-button disable not-ready" title="<%= FilesUCResource.ButtonUpload %>">
-        <span class="menu-upload-icon">&nbsp;</span>
+    <li id="menuUploadActionsButton" class="menu-upload-button menu-gray-button disable" title="<%= FilesUCResource.ButtonUpload %>">
+        <span class="menu-upload-icon btn_other-actions"><svg class="upload-svg"><use base="<%= WebPath.GetPath("/")%>" href="/skins/default/images/svg/documents-icons.svg#documentsIconsupload"></use></svg></span>
     </li>
 </ul>
+
+<div id="uploadActions" class="studio-action-panel">
+    <ul class="dropdown-content">
+        <li><a id="buttonUpload" class="dropdown-item disable not-ready"><%= FilesUCResource.ButtonUploadFiles %></a></li>
+        <% if (!MobileDetector.IsMobile)
+           { %>
+            <li><a id="buttonFolderUpload" class="dropdown-item disable not-ready"><%= FilesUCResource.ButtonUploadFolder %></a></li>
+        <% } %>
+    </ul>
+</div>
 <% } %>
 
 <asp:PlaceHolder runat="server" ID="ControlHolder"></asp:PlaceHolder>
@@ -32,7 +44,7 @@
         <div class="category-wrapper">
             <span class="expander"></span>
             <a href="#setting" class="menu-item-label outer-text text-overflow" title="<%= FilesUCResource.SideCaptionSettings %>">
-                <span class="menu-item-icon settings"></span>
+                <span class="menu-item-icon settings"><svg class="menu-item-svg"><use base="<%= WebPath.GetPath("/")%>" href="/skins/default/images/svg/documents-icons.svg#documentsIconssettings"></use></svg></span>
                 <span class="menu-item-label inner-text"><%= FilesUCResource.SideCaptionSettings %></span>
             </a>
         </div>
@@ -73,6 +85,13 @@
 <div class="tree-thirdparty">
     <span class="account-connect header-base medium gray-text link dotted"><%= FilesUCResource.AddAccount %></span>
 
+<% if (ThirdpartyConfiguration.SupportGoogleDriveInclusion
+       || ThirdpartyConfiguration.SupportBoxInclusion
+       || ThirdpartyConfiguration.SupportDropboxInclusion
+       || ThirdpartyConfiguration.SupportOneDriveInclusion
+       || ThirdpartyConfiguration.SupportNextcloudInclusion
+       )
+   { %>
     <ul class="tree-thirdparty-list clearFix">
         <% if (ThirdpartyConfiguration.SupportGoogleDriveInclusion)
            { %>
@@ -90,14 +109,15 @@
            { %>
         <li class="add-account-button OneDrive" data-provider="OneDrive" title="<%= FilesUCResource.ButtonAddSkyDrive %>"></li>
         <% } %>
-        <% if (ThirdpartyConfiguration.SupportWebDavInclusion)
+        <% if (ThirdpartyConfiguration.SupportNextcloudInclusion)
            { %>
         <li class="add-account-button Nextcloud" data-provider="WebDav" title="<%= FilesUCResource.ButtonAddNextcloud %>"></li>
         <% } %>
-        <% if (ThirdpartyConfiguration.SupportInclusion)
+        <% if (ThirdpartyConfiguration.ThirdPartyProviders.Count() > 1)
            { %>
-        <li class="account-connect add-account-button WebDav" title="<%= FilesUCResource.AddAccount %>"></li>
+        <li class="account-connect add-account-button WebDav" title="<%= FilesUCResource.AddAccount %>">...</li>
         <% } %>
     </ul>
+    <% } %>
 </div>
 <% } %>

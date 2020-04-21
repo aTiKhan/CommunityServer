@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -49,7 +49,8 @@ namespace ASC.Web.UserControls.Wiki.UC
         NoChanges,
         SectionUpdate,
         FileSizeExceeded,
-        Error
+        Error,
+        PageTextIsEmpty
     }
 
     public partial class EditPage : BaseUserControl
@@ -203,7 +204,6 @@ namespace ASC.Web.UserControls.Wiki.UC
             get { return ViewState["mainPath"] == null ? string.Empty : ViewState["mainPath"].ToString().ToLower(); }
             set { ViewState["mainPath"] = value; }
         }
-        protected bool _mobileVer = false;
         private void SetWikiFCKEditorValue(string pageName, string pageBody)
         {
             Wiki_FCKEditor.Value = IsWysiwygDefault ? RenderPageContent(pageName, pageBody) : pageBody;
@@ -212,20 +212,6 @@ namespace ASC.Web.UserControls.Wiki.UC
         protected void Page_Load(object sender, EventArgs e)
         {
             if (Page.IsPostBack) return;
-
-            _mobileVer = MobileDetector.IsMobile;
-
-
-            //fix for IE 10
-            var browser = HttpContext.Current.Request.Browser.Browser;
-
-            var userAgent = Context.Request.Headers["User-Agent"];
-            var regExp = new Regex("MSIE 10.0", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
-            var regExpIe11 = new Regex("(?=.*Trident.*rv:11.0).+", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.Singleline);
-            if (browser == "IE" && regExp.Match(userAgent).Success || regExpIe11.Match(userAgent).Success)
-            {
-                _mobileVer = true;
-            }
 
             Wiki_FCKEditor.BasePath = VirtualPathUtility.ToAbsolute(BaseFCKRelPath);
             Wiki_FCKEditor.ToolbarSet = "WikiPanel";
@@ -354,6 +340,12 @@ namespace ASC.Web.UserControls.Wiki.UC
                                      ? Wiki_FCKEditor.Value
                                      : HtmlWikiUtil.SetWikiSectionBySectionNumber(page.Body, PageSection, Wiki_FCKEditor.Value);
 
+                if (string.IsNullOrEmpty(pageResult))
+                {
+                    SetWikiFCKEditorValue(page.PageName, Wiki_FCKEditor.Value);
+                    return SaveResult.PageTextIsEmpty;
+                }
+
                 if (pageResult.Equals(page.Body))
                 {
                     SetWikiFCKEditorValue(page.PageName, Wiki_FCKEditor.Value);
@@ -461,9 +453,9 @@ namespace ASC.Web.UserControls.Wiki.UC
             //    script += string.Format(linkCssFormat, MainCssFile);
             //}
 
-            script += string.Format(linkCssFormat, VirtualPathUtility.ToAbsolute("~/products/community/modules/wiki/content/main.css"));
+            script += string.Format(linkCssFormat, VirtualPathUtility.ToAbsolute("~/Products/Community/Modules/Wiki/content/main.css"));
 
-            script += string.Format(scriptFormat, VirtualPathUtility.ToAbsolute("~/products/community/modules/wiki/scripts/editpage.js"));
+            script += string.Format(scriptFormat, VirtualPathUtility.ToAbsolute("~/Products/Community/Modules/Wiki/scripts/editpage.js"));
 
             script += "\";";
 

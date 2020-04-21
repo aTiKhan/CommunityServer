@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -69,7 +69,7 @@ namespace ASC.Web.Core.Client.Bundling
         public static void AddBundle(Bundle bundle)
         {
             BundleTable.Bundles.Add(bundle);
-            if (DiscTransform.SuccessInitialized)
+            if (DiscTransform.SuccessInitialized || StaticUploader.CanUpload())
             {
                 bundle.GenerateBundleResponse(new BundleContext(new HttpContextWrapper(HttpContext.Current), BundleTable.Bundles, bundle.Path));
             }
@@ -187,9 +187,16 @@ namespace ASC.Web.Core.Client.Bundling
                 {
                     if (CoreContext.Configuration.Standalone)
                     {
-                        Transforms.Add(new DiscTransform());
-                        CdnPath = DiscTransform.GetUri(Path, ContentType);
-                    }                
+                        if (DiscTransform.SuccessInitialized)
+                        {
+                            Transforms.Add(new DiscTransform());
+                            CdnPath = DiscTransform.GetUri(Path, ContentType);
+                        }
+                        else
+                        {
+                            Transforms.Add(new StorageTransform());
+                        }
+                    }
                 }
 
             }

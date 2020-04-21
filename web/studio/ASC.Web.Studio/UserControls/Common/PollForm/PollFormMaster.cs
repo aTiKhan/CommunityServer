@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -148,8 +148,8 @@ namespace ASC.Web.Studio.UserControls.Common.PollForm
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-            Page.RegisterBodyScripts("~/usercontrols/common/pollform/js/pollform.js")
-                .RegisterStyle("~/usercontrols/common/pollform/css/style.css");
+            Page.RegisterBodyScripts("~/UserControls/Common/PollForm/js/pollform.js")
+                .RegisterStyle("~/UserControls/Common/PollForm/css/style.css");
         }
 
         protected override void OnInit(EventArgs e)

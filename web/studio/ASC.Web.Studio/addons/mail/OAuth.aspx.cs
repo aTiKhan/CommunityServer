@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2015
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -59,16 +59,13 @@ namespace ASC.Web.Mail
                 var code = Request["code"];
                 if (string.IsNullOrEmpty(code))
                 {
-                    OAuth20TokenHelper.RequestCode(HttpContext.Current,
-                                                   GoogleLoginProvider.GoogleOauthCodeUrl,
-                                                   GoogleLoginProvider.GoogleOAuth20ClientId,
-                                                   GoogleLoginProvider.GoogleOAuth20RedirectUrl,
-                                                   string.Concat(GoogleLoginProvider.GoogleScopeMail, " ", GoogleLoginProvider.GoogleScopeProfile),
-                                                   new Dictionary<string, string>
-                                                   {
-                                                       { "access_type", "offline" },
-                                                       { "approval_prompt", "force" }
-                                                   });
+                    OAuth20TokenHelper.RequestCode<GoogleLoginProvider>(HttpContext.Current,
+                                                                        string.Concat(GoogleLoginProvider.GoogleScopeMail, " ", GoogleLoginProvider.Instance.Scopes),
+                                                                        new Dictionary<string, string>
+                                                                            {
+                                                                                { "access_type", "offline" },
+                                                                                { "prompt", "consent" }
+                                                                            });
                 }
                 else
                 {

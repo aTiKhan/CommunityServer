@@ -547,7 +547,13 @@
     <value>Documents</value>
   </data>
   <data name="DocumentsOverwritingSettingsUpdated" xml:space="preserve">
-    <value> Overwriting Settings Updated</value>
+    <value>Overwriting Settings Updated</value>
+  </data>
+  <data name="DocumentsForcesave" xml:space="preserve">
+    <value>Forcesave settings Updated</value>
+  </data>
+  <data name="DocumentsStoreForcesave" xml:space="preserve">
+    <value>Store forcesave settings Updated</value>
   </data>
   <data name="DocumentsProduct" xml:space="preserve">
     <value>Documents</value>
@@ -801,6 +807,9 @@
   <data name="LoginFail" xml:space="preserve">
     <value>Login Fail</value>
   </data>
+  <data name="LoginFailBruteForce" xml:space="preserve">
+    <value>Login Fail. Too many attempts</value>
+  </data>
   <data name="LoginFailDisabledProfile" xml:space="preserve">
     <value>Login Fail. Profile Disabled</value>
   </data>
@@ -809,6 +818,9 @@
   </data>
   <data name="LoginFailIpSecurity" xml:space="preserve">
     <value>IP Security: Login Failed</value>
+  </data>
+  <data name="LoginFailRecaptcha" xml:space="preserve">
+    <value>Login Fail. Recaptcha is invalid</value>
   </data>
   <data name="LoginFailSocialAccountNotFound" xml:space="preserve">
     <value>Login Fail. Associated Social Account Not Found</value>
@@ -819,8 +831,14 @@
   <data name="LoginFailViaApiSms" xml:space="preserve">
     <value>Failed Login via API &amp; SMS Code</value>
   </data>
+  <data name="LoginFailViaApiTfa" xml:space="preserve">
+    <value>Failed Login via API &amp; authenticator application</value>
+  </data>
   <data name="LoginFailViaApiSocialAccount" xml:space="preserve">
     <value>Login via API &amp; Social Media Failed</value>
+  </data>
+  <data name="LoginFailViaTfaApp" xml:space="preserve">
+    <value>Login via authenticator application Failed</value>
   </data>
   <data name="LoginFailViaSms" xml:space="preserve">
     <value>Login via SMS failed</value>
@@ -846,6 +864,9 @@
   <data name="LoginSuccessViaApiSms" xml:space="preserve">
     <value>Successful Login via API &amp; SMS Code</value>
   </data>
+  <data name="LoginSuccessViaApiTfa" xml:space="preserve">
+    <value>Successful Login via API &amp; authenticator application</value>
+  </data>
   <data name="LoginSuccessViaSms" xml:space="preserve">
     <value>Login via SMS successful</value>
   </data>
@@ -854,6 +875,9 @@
   </data>
   <data name="LoginSuccessViaSSO" xml:space="preserve">
     <value>Successful Login via SSO</value>
+  </data>
+  <data name="LoginSuccesViaTfaApp" xml:space="preserve">
+    <value>Successful Login via authenticator application</value>
   </data>
   <data name="Logout" xml:space="preserve">
     <value>Logout</value>
@@ -1380,6 +1404,12 @@
   <data name="UserLinkedSocialAccount" xml:space="preserve">
     <value>Social Account Linked. Provider: {0}</value>
   </data>
+  <data name="UserTfaGenerateCodes" xml:space="preserve">
+    <value>New backup codes for the authentication app are created</value>
+  </data>
+  <data name="UserTfaDisconnected" xml:space="preserve">
+    <value>Authenticator application disconnected: {0}</value>
+  </data>
   <data name="UsersDeleted" xml:space="preserve">
     <value>Users Deleted: {0}</value>
   </data>
@@ -1415,6 +1445,9 @@
   </data>
   <data name="UserUpdatedAvatarThumbnails" xml:space="preserve">
     <value>Users [{0}]. Avatar Thumbnails Updated</value>
+  </data>
+  <data name="UserUpdatedEmail" xml:space="preserve">
+    <value>Email Updated</value>
   </data>
   <data name="UserUpdatedLanguage" xml:space="preserve">
     <value>Language Updated</value>
@@ -1454,5 +1487,17 @@
   </data>
   <data name="AuditSettingsUpdated" xml:space="preserve">
     <value>Audit Lifetime Settings Updated</value>
+  </data>
+  <data name="LoginSuccessSocialApp" xml:space="preserve">
+    <value>Login Via Social Application Success</value>
+  </data>
+  <data name="TwoFactorAuthenticationSettingsDisabled" xml:space="preserve">
+    <value>Two-factor Authentication Settings Updated: Two-factor auth was disabled</value>
+  </data>
+  <data name="TwoFactorAuthenticationSettingsEnabledBySms" xml:space="preserve">
+    <value>Two-factor Authentication Settings Updated: SMS confirmation was enabled</value>
+  </data>
+  <data name="TwoFactorAuthenticationSettingsEnabledByTfaApp" xml:space="preserve">
+    <value>Two-factor Authentication Settings Updated: Authentication app was enabled</value>
   </data>
 </root>

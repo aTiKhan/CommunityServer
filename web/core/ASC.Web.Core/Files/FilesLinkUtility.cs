@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -37,7 +37,7 @@ namespace ASC.Web.Core.Files
 {
     public static class FilesLinkUtility
     {
-        public const string FilesBaseVirtualPath = "~/products/files/";
+        public const string FilesBaseVirtualPath = "~/Products/Files/";
         public const string EditorPage = "doceditor.aspx";
         private static readonly string FilesUploaderURL = WebConfigurationManager.AppSettings["files.uploader.url"] ?? "~";
 
@@ -57,6 +57,7 @@ namespace ASC.Web.Core.Files
         public const string FolderUrl = "folderurl";
         public const string OutType = "outputtype";
         public const string AuthKey = "stream_auth";
+        public const string Anchor = "anchor";
 
         public static string FileHandlerPath
         {
@@ -196,6 +197,23 @@ namespace ASC.Web.Core.Files
             }
         }
 
+        public static string DocServiceHealthcheckUrl
+        {
+            get
+            {
+                var url = GetUrlSetting("healthcheck");
+                if (string.IsNullOrEmpty(url))
+                {
+                    url = DocServiceUrlInternal;
+                    if (!string.IsNullOrEmpty(url))
+                    {
+                        url += "healthcheck";
+                    }
+                }
+                return url;
+            }
+        }
+
         public static string DocServicePortalUrl
         {
             get { return GetUrlSetting("portal"); }
@@ -232,7 +250,7 @@ namespace ASC.Web.Core.Files
                    + (string.IsNullOrEmpty(convertToExtension) ? string.Empty : "&" + OutType + "=" + convertToExtension);
         }
 
-        public static string GetFileWebImageViewUrl(object fileId)
+        public static string GetFileWebMediaViewUrl(object fileId)
         {
             return FilesBaseAbsolutePath + "#preview/" + HttpUtility.UrlEncode(fileId.ToString());
         }
@@ -295,8 +313,8 @@ namespace ASC.Web.Core.Files
 
         public static string GetFileWebPreviewUrl(string fileTitle, object fileId)
         {
-            if (FileUtility.CanImageView(fileTitle))
-                return GetFileWebImageViewUrl(fileId);
+            if (FileUtility.CanImageView(fileTitle) || FileUtility.CanMediaView(fileTitle))
+                return GetFileWebMediaViewUrl(fileId);
 
             if (FileUtility.CanWebView(fileTitle))
             {
@@ -308,20 +326,26 @@ namespace ASC.Web.Core.Files
             return GetFileDownloadUrl(fileId);
         }
 
-        public static string GetFileRedirectPreviewUrl(object enrtyId, bool isFile)
+        public static string FileRedirectPreviewUrlString
         {
-            return FileHandlerPath + "?" + Action + "=redirect&" + (isFile ? FileId : FolderId) + "=" + HttpUtility.UrlEncode(enrtyId.ToString());
+            get { return FileHandlerPath + "?" + Action + "=redirect"; }
         }
 
-        public static string GetInitiateUploadSessionUrl(object folderId, object fileId, string fileName, long contentLength)
+        public static string GetFileRedirectPreviewUrl(object enrtyId, bool isFile)
         {
-            var queryString = string.Format("?initiate=true&{0}={1}&fileSize={2}&tid={3}&userid={4}&culture={5}",
+            return FileRedirectPreviewUrlString + "&" + (isFile ? FileId : FolderId) + "=" + HttpUtility.UrlEncode(enrtyId.ToString());
+        }
+
+        public static string GetInitiateUploadSessionUrl(object folderId, object fileId, string fileName, long contentLength, bool encrypted)
+        {
+            var queryString = string.Format("?initiate=true&{0}={1}&fileSize={2}&tid={3}&userid={4}&culture={5}&encrypted={6}",
                                             FileTitle,
                                             HttpUtility.UrlEncode(fileName),
                                             contentLength,
                                             TenantProvider.CurrentTenantID,
                                             HttpUtility.UrlEncode(InstanceCrypto.Encrypt(SecurityContext.CurrentAccount.ID.ToString())),
-                                            Thread.CurrentThread.CurrentUICulture.Name);
+                                            Thread.CurrentThread.CurrentUICulture.Name,
+                                            encrypted.ToString().ToLower());
 
             if (fileId != null)
                 queryString = queryString + "&" + FileId + "=" + HttpUtility.UrlEncode(fileId.ToString());

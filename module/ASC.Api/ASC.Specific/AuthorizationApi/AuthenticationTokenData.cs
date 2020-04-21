@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -34,23 +34,31 @@ namespace ASC.Specific.AuthorizationApi
         [DataMember(Order = 1)]
         public string Token { get; set; }
 
-        [DataMember(Order = 2)]
+        [DataMember(Order = 2, EmitDefaultValue = false)]
         public ApiDateTime Expires { get; set; }
 
-        [DataMember(Order = 3)]
+        [DataMember(Order = 3, EmitDefaultValue = false)]
         public bool Sms { get; set; }
 
-        [DataMember(Order = 4)]
+        [DataMember(Order = 4, EmitDefaultValue = false)]
         public string PhoneNoise { get; set; }
+
+        [DataMember(Order = 5, EmitDefaultValue = false)]
+        public bool Tfa { get; set; }
+
+        [DataMember(Order = 6, EmitDefaultValue = false)]
+        public string TfaKey { get; set; }
 
         public static AuthenticationTokenData GetSample()
         {
             return new AuthenticationTokenData
                 {
                     Expires = ApiDateTime.GetSample(),
-                    Token = "sdjhfskjdhkqy739459234",
+                    Token = "abcde12345",
                     Sms = false,
-                    PhoneNoise = string.Empty
+                    PhoneNoise = null,
+                    Tfa = false,
+                    TfaKey = null
                 };
         }
     }

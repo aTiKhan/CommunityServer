@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,7 +24,6 @@
 */
 
 
-using log4net;
 using log4net.Util;
 using System;
 using System.IO;
@@ -56,7 +55,7 @@ namespace ASC.Common.Logging
                 }
                 else
                 {
-                    var repo = LogManager.GetRepository();
+                    var repo = log4net.LogManager.GetRepository();
                     if (repo != null)
                     {
                         var realKey = Option;

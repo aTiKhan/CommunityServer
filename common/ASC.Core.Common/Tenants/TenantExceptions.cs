@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -34,9 +34,19 @@ namespace ASC.Core.Tenants
     [Serializable]
     public class TenantTooShortException : Exception
     {
+        public int MinLength = 0;
+        public int MaxLength = 0;
+
         public TenantTooShortException(string message)
             : base(message)
         {
+        }
+
+        public TenantTooShortException(string message, int minLength, int maxLength)
+            : base(message)
+        {
+            MinLength = minLength;
+            MaxLength = maxLength;
         }
 
         protected TenantTooShortException(SerializationInfo info, StreamingContext context)

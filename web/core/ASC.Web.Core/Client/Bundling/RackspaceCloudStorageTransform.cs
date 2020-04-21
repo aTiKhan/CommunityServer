@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -23,14 +23,7 @@
  *
 */
 
-#region Import
 
-using ASC.Common.Web;
-using ASC.Data.Storage.Configuration;
-using ASC.Data.Storage.RackspaceCloud;
-using log4net;
-using net.openstack.Core.Domain;
-using net.openstack.Providers.Rackspace;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -39,11 +32,15 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Web.Configuration;
 using System.Web.Optimization;
 
-#endregion
+using ASC.Common.Web;
+using ASC.Common.Logging;
+using ASC.Data.Storage.Configuration;
+using ASC.Data.Storage.RackspaceCloud;
+using net.openstack.Core.Domain;
+using net.openstack.Providers.Rackspace;
 
 namespace ASC.Web.Core.Client.Bundling
 {

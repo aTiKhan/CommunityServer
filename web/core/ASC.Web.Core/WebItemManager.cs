@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -31,9 +31,9 @@ using System.Linq;
 using System.Reflection;
 using System.Web;
 using System.Web.Configuration;
+using ASC.Common.Logging;
 using ASC.Web.Core.Utility;
 using ASC.Web.Core.WebZones;
-using log4net;
 
 namespace ASC.Web.Core
 {
@@ -101,6 +101,11 @@ namespace ASC.Web.Core
         public static Guid VoipModuleID
         {
             get { return new Guid("{46CFA73A-F320-46CF-8D5B-CD82E1D67F26}"); }
+        }
+
+        public static Guid SampleProductID
+        {
+            get { return new Guid("{314B5C27-631B-4C6C-8B11-C6400491ABEF}"); }
         }
 
         public static WebItemManager Instance { get; private set; }

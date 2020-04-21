@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,7 +25,6 @@
 
 
 using System;
-using System.Collections.Generic;
 
 namespace ASC.Core.Billing
 {
@@ -38,55 +37,13 @@ namespace ASC.Core.Billing
             set;
         }
 
-        public string ProductName
-        {
-            get;
-            set;
-        }
-
-        public DateTime StartDate
-        {
-            get;
-            set;
-        }
-
         public DateTime EndDate
         {
             get;
             set;
         }
 
-        public DateTime PaymentDate
-        {
-            get;
-            set;
-        }
-
-        public string CustomerId
-        {
-            get;
-            set;
-        }
-
-        public string PaymentRef
-        {
-            get;
-            set;
-        }
-
-        public bool SAAS
-        {
-            get;
-            set;
-        }
-
         public bool Autorenewal
-        {
-            get;
-            set;
-        }
-
-        public IDictionary<string, string> Options
         {
             get;
             set;

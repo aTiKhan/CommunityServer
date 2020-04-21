@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -118,7 +118,7 @@ namespace ASC.Web.Core
 
         public static bool IsDisabled(this IWebItem item, Guid userID)
         {
-            return item != null && (!WebItemSecurity.IsAvailableForUser(item.ID.ToString("N"), userID) || !item.Visible);
+            return item != null && (!WebItemSecurity.IsAvailableForUser(item.ID, userID) || !item.Visible);
         }
 
         public static bool IsSubItem(this IWebItem item)

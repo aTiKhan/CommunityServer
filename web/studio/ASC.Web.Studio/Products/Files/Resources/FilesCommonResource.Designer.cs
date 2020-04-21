@@ -79,6 +79,24 @@ namespace ASC.Web.Files.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Comment.
+        /// </summary>
+        public static string AceStatusEnum_Comment {
+            get {
+                return ResourceManager.GetString("AceStatusEnum_Comment", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Form Filling.
+        /// </summary>
+        public static string AceStatusEnum_FillForms {
+            get {
+                return ResourceManager.GetString("AceStatusEnum_FillForms", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Read Only.
         /// </summary>
         public static string AceStatusEnum_Read {
@@ -147,15 +165,6 @@ namespace ASC.Web.Files.Resources {
         public static string AppButtonConvert {
             get {
                 return ResourceManager.GetString("AppButtonConvert", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to CREATE FILE.
-        /// </summary>
-        public static string AppButtonCreate {
-            get {
-                return ResourceManager.GetString("AppButtonCreate", resourceCulture);
             }
         }
         
@@ -286,6 +295,15 @@ namespace ASC.Web.Files.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Autosaved.
+        /// </summary>
+        public static string CommentAutosave {
+            get {
+                return ResourceManager.GetString("CommentAutosave", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Changed owner.
         /// </summary>
         public static string CommentChangeOwner {
@@ -336,6 +354,33 @@ namespace ASC.Web.Files.Resources {
         public static string CommentEdit {
             get {
                 return ResourceManager.GetString("CommentEdit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Edited with encrypt.
+        /// </summary>
+        public static string CommentEditEncrypt {
+            get {
+                return ResourceManager.GetString("CommentEditEncrypt", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Encrypted.
+        /// </summary>
+        public static string CommentEncrypted {
+            get {
+                return ResourceManager.GetString("CommentEncrypted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Saved.
+        /// </summary>
+        public static string CommentForcesave {
+            get {
+                return ResourceManager.GetString("CommentForcesave", resourceCulture);
             }
         }
         
@@ -394,20 +439,20 @@ namespace ASC.Web.Files.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The document converted to {0} to allow its editing.
+        /// </summary>
+        public static string ConvertForEdit {
+            get {
+                return ResourceManager.GetString("ConvertForEdit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Convert into.
         /// </summary>
         public static string ConvertTo {
             get {
                 return ResourceManager.GetString("ConvertTo", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to The document converted copy has been created to allow its editing.
-        /// </summary>
-        public static string CopyForEdit {
-            get {
-                return ResourceManager.GetString("CopyForEdit", resourceCulture);
             }
         }
         
@@ -426,6 +471,15 @@ namespace ASC.Web.Files.Resources {
         public static string Department {
             get {
                 return ResourceManager.GetString("Department", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Document Service is not available. Please contact support.
+        /// </summary>
+        public static string DocsAPIundefined {
+            get {
+                return ResourceManager.GetString("DocsAPIundefined", resourceCulture);
             }
         }
         
@@ -489,6 +543,15 @@ namespace ASC.Web.Files.Resources {
         public static string DocuSignStatusVoided {
             get {
                 return ResourceManager.GetString("DocuSignStatusVoided", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Notify when mentioned in document.
+        /// </summary>
+        public static string EditorMentions {
+            get {
+                return ResourceManager.GetString("EditorMentions", resourceCulture);
             }
         }
         
@@ -718,6 +781,15 @@ namespace ASC.Web.Files.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The operation was canceled.
+        /// </summary>
+        public static string ErrorMassage_OperationCanceledException {
+            get {
+                return ResourceManager.GetString("ErrorMassage_OperationCanceledException", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Author of the save is unknown.
         /// </summary>
         public static string ErrorMassage_SaveAnonymous {
@@ -822,6 +894,24 @@ namespace ASC.Web.Files.Resources {
         public static string ErrorMassage_SecurityException_EditFileTwice {
             get {
                 return ResourceManager.GetString("ErrorMassage_SecurityException_EditFileTwice", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You don&apos;t have enough permission to move the file.
+        /// </summary>
+        public static string ErrorMassage_SecurityException_MoveFile {
+            get {
+                return ResourceManager.GetString("ErrorMassage_SecurityException_MoveFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You don&apos;t have enough permission to move the folder.
+        /// </summary>
+        public static string ErrorMassage_SecurityException_MoveFolder {
+            get {
+                return ResourceManager.GetString("ErrorMassage_SecurityException_MoveFolder", resourceCulture);
             }
         }
         
@@ -1006,6 +1096,15 @@ namespace ASC.Web.Files.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Search by contents of documents.
+        /// </summary>
+        public static string IndexTitle {
+            get {
+                return ResourceManager.GetString("IndexTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to new.
         /// </summary>
         public static string IsNew {
@@ -1092,6 +1191,15 @@ namespace ASC.Web.Files.Resources {
         public static string ProductDescriptionEx {
             get {
                 return ResourceManager.GetString("ProductDescriptionEx", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Create, edit, save and share documents. Connect your Google Drive, Dropbox and Box accounts and have all documents in one place..
+        /// </summary>
+        public static string ProductDescriptionShort {
+            get {
+                return ResourceManager.GetString("ProductDescriptionShort", resourceCulture);
             }
         }
         

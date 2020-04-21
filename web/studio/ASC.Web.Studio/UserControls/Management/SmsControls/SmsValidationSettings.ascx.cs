@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -28,8 +28,9 @@ using System;
 using System.Web;
 using System.Web.UI;
 using AjaxPro;
-using ASC.Web.Studio.Core;
+using ASC.Web.Core.Sms;
 using ASC.Web.Studio.Core.SMS;
+using ASC.Web.Studio.Core.TFA;
 using ASC.Web.Studio.Utility;
 
 namespace ASC.Web.Studio.UserControls.Management
@@ -40,20 +41,19 @@ namespace ASC.Web.Studio.UserControls.Management
     {
         public const string Location = "~/UserControls/Management/SmsControls/SmsValidationSettings.ascx";
 
-        protected bool IsEnableSmsValidation
-        {
-            get { return SetupInfo.IsVisibleSettings<StudioSmsNotificationSettings>(); }
-        }
-
         protected bool SmsEnable;
+
+        protected bool TfaAppEnable;
+
         protected string HelpLink { get; set; }
 
         protected void Page_Load(object sender, EventArgs e)
         {
             AjaxPro.Utility.RegisterTypeForAjax(GetType());
-            Page.RegisterBodyScripts("~/usercontrols/Management/SmsControls/js/SmsValidation.js");
+            Page.RegisterBodyScripts("~/UserControls/Management/SmsControls/js/smsvalidation.js");
 
             SmsEnable = StudioSmsNotificationSettings.IsVisibleSettings && SmsProviderManager.Enabled();
+            TfaAppEnable = TfaAppAuthSettings.IsVisibleSettings;
 
             HelpLink = CommonLinkUtility.GetHelpLink();
         }

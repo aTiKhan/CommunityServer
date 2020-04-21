@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,14 +24,14 @@
 */
 
 
-using ASC.Web.Core.Files;
-using ASC.Web.Studio.Controls.Common;
-using ASC.Web.Studio.Utility;
-using Resources;
 using System;
 using System.Linq;
 using System.Web;
 using System.Web.UI;
+using ASC.Web.Core.Files;
+using ASC.Web.Studio.Controls.Common;
+using ASC.Web.Studio.Utility;
+using Resources;
 
 namespace ASC.Web.Studio.UserControls.Common.Attachments
 {
@@ -42,13 +42,9 @@ namespace ASC.Web.Studio.UserControls.Common.Attachments
             get { return "~/UserControls/Common/Attachments/Attachments.ascx"; }
         }
 
-        public bool PortalDocUploaderVisible { get; set; }
-
         public string MenuNewDocument { get; set; }
 
         public string MenuUploadFile { get; set; }
-
-        public string MenuProjectDocuments { get; set; }
 
         public string ModuleName { get; set; }
 
@@ -70,11 +66,9 @@ namespace ASC.Web.Studio.UserControls.Common.Attachments
 
         public Attachments()
         {
-            PortalDocUploaderVisible = true;
             EmptyScreenVisible = true;
             MenuNewDocument = UserControlsCommonResource.NewFile;
             MenuUploadFile = UserControlsCommonResource.UploadFile;
-            MenuProjectDocuments = UserControlsCommonResource.AttachOfProjectDocuments;
 
             EntityType = "";
             ModuleName = "";
@@ -83,8 +77,8 @@ namespace ASC.Web.Studio.UserControls.Common.Attachments
 
         private void InitScripts()
         {
-            Page.RegisterStyle("~/usercontrols/common/attachments/css/attachments.less")
-                .RegisterBodyScripts("~/usercontrols/common/attachments/js/attachments.js");
+            Page.RegisterStyle("~/UserControls/Common/Attachments/css/attachments.less")
+                .RegisterBodyScripts("~/UserControls/Common/Attachments/js/attachments.js");
         }
 
         private void CreateEmptyPanel()
@@ -92,14 +86,10 @@ namespace ASC.Web.Studio.UserControls.Common.Attachments
             var buttons = "<a id='uploadFirstFile' class='baseLinkAction'>" + MenuUploadFile + "</a><br/>" +
                           "<a id='createFirstDocument' class='baseLinkAction'>" + MenuNewDocument + "</a>" +
                           "<span class='sort-down-black newDocComb'></span>";
-            if (ModuleName != "crm")
-            {
-                buttons += "<br/><a id='attachProjDocuments' class='baseLinkAction'>" + MenuProjectDocuments + "</a>";
-            }
 
             var emptyParticipantScreenControl = new EmptyScreenControl
                 {
-                    ImgSrc = VirtualPathUtility.ToAbsolute("~/UserControls/Common/Attachments/Images/documents-logo.png"),
+                    ImgSrc = VirtualPathUtility.ToAbsolute("~/UserControls/Common/Attachments/images/documents-logo.png"),
                     Header = UserControlsCommonResource.EmptyListDocumentsHead,
                     Describe = String.Format(FileUtility.ExtsWebEdited.Any() ? UserControlsCommonResource.EmptyListDocumentsDescr.HtmlEncode() : UserControlsCommonResource.EmptyListDocumentsDescrPoor.HtmlEncode(),
                                              //create
@@ -115,26 +105,18 @@ namespace ASC.Web.Studio.UserControls.Common.Attachments
             _phEmptyDocView.Controls.Add(emptyParticipantScreenControl);
         }
 
-        private void InitProjectDocumentsPopup()
+        private void InitViewers()
         {
-            _phDocUploader.Controls.Add(LoadControl(ProjectDocumentsPopup.ProjectDocumentsPopup.Location));
+            MediaViewersPlaceHolder.Controls.Add(LoadControl(Common.MediaPlayer.Location));
         }
 
         protected void Page_Load(object sender, EventArgs e)
         {
             InitScripts();
+            InitViewers();
 
             if (EmptyScreenVisible)
                 CreateEmptyPanel();
-
-            if (ModuleName != "crm")
-            {
-                InitProjectDocumentsPopup();
-            }
-            else
-            {
-                PortalDocUploaderVisible = false;
-            }
 
             HelpLink = CommonLinkUtility.GetHelpLink();
         }

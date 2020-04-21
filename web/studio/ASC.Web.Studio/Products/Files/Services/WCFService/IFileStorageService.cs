@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -49,11 +49,11 @@ namespace ASC.Web.Files.Services.WCFService
 
         Folder FolderRename(String folderId, String title);
 
-        DataWrapper GetFolderItems(String parentId, int from, int count, FilterType filter, OrderBy orderBy, String subjectID, String searchText);
+        DataWrapper GetFolderItems(String parentId, int from, int count, FilterType filter, bool subjectGroup, String subjectID, String searchText, bool searchInContent, bool withSubfolders, OrderBy orderBy);
 
-        object GetFolderItemsXml(String parentId, int from, int count, FilterType filter, OrderBy orderBy, String subjectID, String searchText);
+        object GetFolderItemsXml(String parentId, int from, int count, FilterType filter, bool subjectGroup, String subjectID, String searchText, bool searchInContent, bool withSubfolders, OrderBy orderBy);
 
-        ItemList<FileEntry> GetItems(ItemList<String> items, FilterType filter, String subjectID, String searchText);
+        ItemList<FileEntry> GetItems(ItemList<String> items, FilterType filter, bool subjectGroup, String subjectID, String searchText);
 
         ItemDictionary<String, String> MoveOrCopyFilesCheck(ItemList<String> items, String destFolderId);
 
@@ -83,13 +83,15 @@ namespace ASC.Web.Files.Services.WCFService
 
         ItemList<File> GetFileHistory(String fileId);
 
-        KeyValuePair<String, ItemList<File>> GetSiblingsFile(String fileId, FilterType filter, OrderBy orderBy, String subjectID, String searchText);
+        ItemList<File> GetSiblingsFile(String fileId, String folderId, FilterType filter, bool subjectGroup, String subjectID, String searchText, bool searchInContent, bool withSubfolders, OrderBy orderBy);
 
         KeyValuePair<bool, String> TrackEditFile(String fileId, Guid tabId, String docKeyForTrack, String doc, bool isFinish);
 
         ItemDictionary<String, String> CheckEditing(ItemList<String> filesId);
 
-        File SaveEditing(String fileId, string fileExtension, string fileuri, Stream stream, String doc);
+        File SaveEditing(String fileId, string fileExtension, string fileuri, Stream stream, String doc, bool forcesave);
+
+        File UpdateFileStream(String fileId, Stream stream, bool encrypted);
 
         string StartEdit(String fileId, bool editingAlone, String doc);
 
@@ -102,6 +104,8 @@ namespace ASC.Web.Files.Services.WCFService
         EditHistoryData GetEditDiffUrl(String fileId, int version, String doc = null);
 
         ItemList<EditHistory> RestoreVersion(String fileId, int version, String url, String doc = null);
+
+        Web.Core.Files.DocumentService.FileLink GetPresignedUri(String fileId);
 
         #endregion
 
@@ -121,7 +125,13 @@ namespace ASC.Web.Files.Services.WCFService
 
         bool StoreOriginal(bool store);
 
+        bool HideConfirmConvert(bool isForSave);
+
         bool UpdateIfExist(bool update);
+
+        bool Forcesave(bool value);
+
+        bool StoreForcesave(bool value);
 
         bool ChangeDeleteConfrim(bool update);
 
@@ -144,6 +154,10 @@ namespace ASC.Web.Files.Services.WCFService
         object GetNewItems(String folderId);
 
         bool SetAceLink(String fileId, FileShare share);
+
+        ItemList<MentionWrapper> SharedUsers(String fileId);
+
+        ItemList<AceShortWrapper> SendEditorNotify(String fileId, MentionMessageWrapper mentionMessage);
 
         #endregion
 

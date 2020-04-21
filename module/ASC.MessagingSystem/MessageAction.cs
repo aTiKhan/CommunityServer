@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -36,9 +36,12 @@ namespace ASC.MessagingSystem
         LoginSuccessViaSocialAccount = 1001,
         LoginSuccessViaSms = 1007,
         LoginSuccessViaApi = 1010,
+        LoginSuccessViaSocialApp = 1011,
         LoginSuccessViaApiSms = 1012,
+        LoginSuccessViaApiTfa = 1024,
         LoginSuccessViaApiSocialAccount = 1019,
         LoginSuccessViaSSO = 1015,
+        LoginSuccesViaTfaApp = 1021,
         LoginFailViaSSO = 1018,
         LoginFailInvalidCombination = 1002,
         LoginFailSocialAccountNotFound = 1003,
@@ -47,8 +50,12 @@ namespace ASC.MessagingSystem
         LoginFailViaSms = 1008,
         LoginFailViaApi = 1013,
         LoginFailViaApiSms = 1014,
+        LoginFailViaApiTfa = 1025,
         LoginFailViaApiSocialAccount = 1020,
+        LoginFailViaTfaApp = 1022,
         LoginFailIpSecurity = 1009,
+        LoginFailBruteForce = 1023,
+        LoginFailRecaptcha = 1026,  // last login
         Logout = 1006,
 
         SessionStarted = 1016,
@@ -344,11 +351,15 @@ namespace ASC.MessagingSystem
         UserLinkedSocialAccount = 4011,
         UserUnlinkedSocialAccount = 4012,
 
+        UserConnectedTfaApp = 4032,
+        UserDisconnectedTfaApp = 4033,
+
         UserSentActivationInstructions = 4013,
         UserSentEmailChangeInstructions = 4014,
         UserSentPasswordChangeInstructions = 4015,
         UserSentDeleteInstructions = 4016,
 
+        UserUpdatedEmail = 5047,
         UserUpdatedPassword = 4017,
         UserDeleted = 4018,
 
@@ -415,13 +426,15 @@ namespace ASC.MessagingSystem
 
         DocumentsThirdPartySettingsUpdated = 5031,
         DocumentsOverwritingSettingsUpdated = 5032,
+        DocumentsForcesave = 5049, // last
+        DocumentsStoreForcesave = 5048,
         DocumentsUploadingFormatsSettingsUpdated = 5033,
 
         FileConverted = 5035,
 
         FileChangeOwner = 5043,
 
-        DocumentSignComplete = 5046, // last
+        DocumentSignComplete = 5046,
         DocumentSendToSign = 5045,
 
         #endregion
@@ -433,7 +446,7 @@ namespace ASC.MessagingSystem
         DnsSettingsUpdated = 6002,
         TrustedMailDomainSettingsUpdated = 6003,
         PasswordStrengthSettingsUpdated = 6004,
-        TwoFactorAuthenticationSettingsUpdated = 6005,
+        TwoFactorAuthenticationSettingsUpdated = 6005, // deprecated - use 6036-6038 instead
         AdministratorMessageSettingsUpdated = 6006,
         DefaultStartPageSettingsUpdated = 6007,
 
@@ -479,6 +492,10 @@ namespace ASC.MessagingSystem
         CustomNavigationSettingsUpdated = 6034,
 
         AuditSettingsUpdated = 6035,
+
+        TwoFactorAuthenticationDisabled = 6036,
+        TwoFactorAuthenticationEnabledBySms = 6037,
+        TwoFactorAuthenticationEnabledByTfaApp = 6038,
 
         DocumentServiceLocationSetting = 5037,
         AuthorizationKeysSetting = 5038,

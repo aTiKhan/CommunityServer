@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -198,6 +198,15 @@ namespace ASC.AuditTrail.Mappers
                             }
                     },
                     {
+                        MessageAction.UserUpdatedEmail, new MessageMaps
+                            {
+                                ActionTypeTextResourceName = "UpdateActionType",
+                                ActionTextResourceName = "UserUpdatedEmail",
+                                ProductResourceName = "PeopleProduct",
+                                ModuleResourceName = "UsersModule"
+                            }
+                    },
+                    {
                         MessageAction.UserUpdatedPassword, new MessageMaps
                             {
                                 ActionTypeTextResourceName = "UpdateActionType",
@@ -319,6 +328,24 @@ namespace ASC.AuditTrail.Mappers
                             {
                                 ActionTypeTextResourceName = "DeleteActionType",
                                 ActionTextResourceName = "UserDataRemoving",
+                                ProductResourceName = "PeopleProduct",
+                                ModuleResourceName = "UsersModule"
+                            }
+                    },
+                    {
+                        MessageAction.UserConnectedTfaApp, new MessageMaps
+                            {
+                                ActionTypeTextResourceName = "LinkActionType",
+                                ActionTextResourceName = "UserTfaGenerateCodes",
+                                ProductResourceName = "PeopleProduct",
+                                ModuleResourceName = "UsersModule"
+                            }
+                    },
+                    {
+                        MessageAction.UserDisconnectedTfaApp, new MessageMaps
+                            {
+                                ActionTypeTextResourceName = "DeleteActionType",
+                                ActionTextResourceName = "UserTfaDisconnected",
                                 ProductResourceName = "PeopleProduct",
                                 ModuleResourceName = "UsersModule"
                             }

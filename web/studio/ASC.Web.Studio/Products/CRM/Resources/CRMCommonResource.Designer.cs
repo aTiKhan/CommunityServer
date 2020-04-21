@@ -1069,6 +1069,15 @@ namespace ASC.Web.CRM.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Qatari Riyal.
+        /// </summary>
+        public static string Currency_QatariRiyal {
+            get {
+                return ResourceManager.GetString("Currency_QatariRiyal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Romanian Leu.
         /// </summary>
         public static string Currency_RomanianLeu {
@@ -1092,6 +1101,15 @@ namespace ASC.Web.CRM.Resources {
         public static string Currency_SaudiRiyal {
             get {
                 return ResourceManager.GetString("Currency_SaudiRiyal", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Serbian Dinar.
+        /// </summary>
+        public static string Currency_SerbianDinar {
+            get {
+                return ResourceManager.GetString("Currency_SerbianDinar", resourceCulture);
             }
         }
         
@@ -1155,6 +1173,15 @@ namespace ASC.Web.CRM.Resources {
         public static string Currency_TrinidadAndTobagoDollar {
             get {
                 return ResourceManager.GetString("Currency_TrinidadAndTobagoDollar", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Tunisian Dinar.
+        /// </summary>
+        public static string Currency_TunisianDinar {
+            get {
+                return ResourceManager.GetString("Currency_TunisianDinar", resourceCulture);
             }
         }
         
@@ -1623,6 +1650,33 @@ namespace ASC.Web.CRM.Resources {
         public static string ExportCurrentListToCsvFile {
             get {
                 return ResourceManager.GetString("ExportCurrentListToCsvFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Export data.
+        /// </summary>
+        public static string ExportData {
+            get {
+                return ResourceManager.GetString("ExportData", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to All exported files you can always see, download, edit, or delete them in {0}Documents/My Documents{1}.
+        /// </summary>
+        public static string ExportDataInfo {
+            get {
+                return ResourceManager.GetString("ExportDataInfo", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Export data ({0}% complete).
+        /// </summary>
+        public static string ExportDataProgress {
+            get {
+                return ResourceManager.GetString("ExportDataProgress", resourceCulture);
             }
         }
         
@@ -2289,15 +2343,6 @@ namespace ASC.Web.CRM.Resources {
         public static string OnTop {
             get {
                 return ResourceManager.GetString("OnTop", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to Open current list in DocEditor.
-        /// </summary>
-        public static string OpenCurrentListInTheEditor {
-            get {
-                return ResourceManager.GetString("OpenCurrentListInTheEditor", resourceCulture);
             }
         }
         
@@ -3001,6 +3046,15 @@ namespace ASC.Web.CRM.Resources {
         public static string VoIPSettings {
             get {
                 return ResourceManager.GetString("VoIPSettings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Whole CRM module.
+        /// </summary>
+        public static string WholeCRMModule {
+            get {
+                return ResourceManager.GetString("WholeCRMModule", resourceCulture);
             }
         }
         

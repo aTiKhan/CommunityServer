@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -126,6 +126,7 @@ ASC.Controls.MailReader = function () {
         Teamlab.bind(Teamlab.events.setDefaultAccount, updateFoldersAndUpdateMailboxes);
         Teamlab.bind(Teamlab.events.sendMailMessage, updateFolders);
         Teamlab.bind(Teamlab.events.saveMailMessage, updateFolders);
+        Teamlab.bind(Teamlab.events.saveMailTemplate, updateFolders);
         Teamlab.bind(Teamlab.events.moveMailConversations, updateFolders);
         Teamlab.bind(Teamlab.events.restoreMailConversations, updateFolders);
         Teamlab.bind(Teamlab.events.removeMailConversations, updateFolders);

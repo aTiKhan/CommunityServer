@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -22,6 +22,8 @@
  * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
  *
 */
+
+
 var defineBodyMediaClass = function () {
     var $body = jq("body"),
                list = [
@@ -70,6 +72,10 @@ var defineBodyMediaClass = function () {
 
         width = jq("#studioPageContent").width() - jq(".mainPageTableSidePanel").width() + 240;
 
+    if ($body.hasClass("sailfish")) {
+        return;
+    }
+
 
     for (var i = 0, n = list.length; i < n; i++) {
         if (width >= list[i].min && (list[i].max == 0 || width < list[i].max)) {
@@ -109,8 +115,8 @@ var defineBodyMediaClass = function () {
             isme: ASC.Resources.Master.ApiResponsesMyProfile
         },
         portaldatetime: {
-            utcoffsettotalminutes: ASC.Resources.Master.TimezoneOffsetMinutes,
-            displayname: ASC.Resources.Master.TimezoneDisplayName
+            utcoffsettotalminutes: ASC.Resources.Master.CurrentTenantTimeZone.UtcOffset,
+            displayname: ASC.Resources.Master.CurrentTenantTimeZone.DisplayName
         },
         names: {
             months: ASC.Resources.Master.MonthNamesFull,
@@ -165,13 +171,15 @@ var defineBodyMediaClass = function () {
     // init page-menu actions
     LeftMenuManager.bindEvents();
 
+    var isDesktop = jq("body").hasClass("desktop");
+
     // init RenderPromoBar
     if (ASC.Resources.Master.SetupInfoNotifyAddress &&
         ASC.Resources.Master.IsAuthenticated == true &&
         ASC.Resources.Master.ApiResponsesMyProfile.response && 
         ASC.Resources.Master.ShowPromotions) {
 
-        Teamlab.getBarPromotions({}, {
+        Teamlab.getBarPromotions({}, isDesktop, {
             success: function(params, content) {
                 if (content)
                     eval(content);
@@ -179,14 +187,19 @@ var defineBodyMediaClass = function () {
         });
     }
 
+    var tipsWasClosed = false;
+    if (window.sessionStorage)
+        tipsWasClosed = !!window.sessionStorage.getItem("tipsWasClosed");
+
     // init Tips
-    if (ASC.Resources.Master.SetupInfoTipsAddress &&
+    if (!tipsWasClosed &&
+        ASC.Resources.Master.SetupInfoTipsAddress &&
         ASC.Resources.Master.IsAuthenticated == true &&
         ASC.Resources.Master.ApiResponsesMyProfile.response &&
         !ASC.Resources.Master.ApiResponsesMyProfile.response.isOutsider &&
         ASC.Resources.Master.ShowTips) {
 
-        Teamlab.getBarTips({}, {
+        Teamlab.getBarTips({}, isDesktop, {
             success: function (params, content) {
                 if (content)
                     eval(content);

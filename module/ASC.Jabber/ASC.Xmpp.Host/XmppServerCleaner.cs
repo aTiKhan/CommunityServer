@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,18 +24,19 @@
 */
 
 
-using ASC.Common.Data;
-using ASC.Common.Data.Sql;
-using ASC.Common.Module;
-using ASC.Core;
-using ASC.Xmpp.Core.utils;
-using log4net;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Text.RegularExpressions;
 using System.Threading;
+
+using ASC.Common.Data;
+using ASC.Common.Data.Sql;
+using ASC.Common.Logging;
+using ASC.Common.Module;
+using ASC.Core;
+using ASC.Xmpp.Core.utils;
 
 namespace ASC.Xmpp.Host
 {

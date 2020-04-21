@@ -1,10 +1,6 @@
 ﻿<%@ Assembly Name="ASC.Web.Mail" %>
 <%@ Control Language="C#" AutoEventWireup="true" CodeBehind="AccountsPage.ascx.cs" Inherits="ASC.Web.Mail.Controls.AccountsPage" %>
-
-<%@ Import Namespace="ASC.Core" %>
-<%@ Import Namespace="ASC.Web.Mail.Controls" %>
 <%@ Import Namespace="ASC.Web.Mail.Resources" %>
-<%@ Import Namespace="ASC.Web.Studio.Core" %>
 <%@ Register TagPrefix="sc" Namespace="ASC.Web.Studio.Controls.Common" Assembly="ASC.Web.Studio" %>
 
 
@@ -28,7 +24,7 @@
 
 <div class="popup_helper" id="AccountsHelperBlock">
     <p><%=MailResource.AccountsCommonInformationText%></p>
-    <p><%=MailResource.AccountsCommonNotificationText%></p>
+    <%--<p><%=MailResource.AccountsCommonNotificationText%></p>--%>
     <div class="cornerHelpBlock pos_top"></div>
 </div>
 
@@ -40,6 +36,8 @@
         <li><a class="selectAttachmentsFolder dropdown-item"><%=MailResource.SelectAttachmentsFolderLabel%></a></li>
         <li><a class="setMailAutoreply dropdown-item"><%=MailResource.SetMailAutoreply%></a></li>
         <li><a class="editAccount dropdown-item"><%=MailResource.EditAccountLabel%></a></li>
+        <li><a class="viewAccountSettings dropdown-item"><%=MailResource.ViewAccountConnectionSettingsLabel%></a></li>
+        <li><a class="changePassword dropdown-item"><%=MailResource.ChangeAccountPasswordLabel%></a></li>
         <li><a class="deleteAccount dropdown-item"><%=MailResource.DeleteAccountLabel%></a></li>
     </ul>
 </div>
@@ -56,6 +54,7 @@
                 <p class="attentionText remove"><%=MailResource.DeleteAccountAttention%></p>
                 <p class="attentionText activate"><%=MailResource.ActivateAccountAttention%></p>
                 <p class="attentionText deactivate"><%=MailResource.DeactivateAccountAttention%></p>
+                <div class="optionText remove"></div>
                 <p class="questionText"></p>
             </div>
             <div class="buttons">

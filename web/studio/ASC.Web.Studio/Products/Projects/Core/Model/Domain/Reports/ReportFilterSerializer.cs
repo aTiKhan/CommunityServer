@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -297,8 +297,17 @@ namespace ASC.Projects.Core.Domain.Reports
             if (!string.IsNullOrEmpty(p)) filter.ToDate = DateTime.ParseExact(p, "yyyyMMdd", null);
 
             p = GetParameterFromUri(uri, "fu");
-            if (!string.IsNullOrEmpty(p)) filter.UserId = new Guid(p);
-
+            if (!string.IsNullOrEmpty(p))
+            {
+                if (GetParameterFromUri(uri, "reportType") == "6")
+                {
+                    filter.ParticipantId = new Guid(p);
+                }
+                else
+                {
+                    filter.UserId = new Guid(p);
+                }
+            }
             p = GetParameterFromUri(uri, "fd");
             if (!string.IsNullOrEmpty(p)) filter.DepartmentId = new Guid(p);
 
@@ -317,6 +326,19 @@ namespace ASC.Projects.Core.Domain.Reports
             p = GetParameterFromUri(uri, "fts");
             if (!string.IsNullOrEmpty(p)) filter.TaskStatuses = ToEnumsArray<TaskStatus>(p);
 
+            p = GetParameterFromUri(uri, "ftss");
+            if (!string.IsNullOrEmpty(p))
+            {
+                if (p.StartsWith("all"))
+                {
+                    filter.Substatus = int.Parse(p.Substring(3));
+                }
+                else
+                {
+                    filter.Substatus = int.Parse(p);
+                }
+            }
+
             p = GetParameterFromUri(uri, "fv");
             if (!string.IsNullOrEmpty(p)) filter.ViewType = int.Parse(p);
 
@@ -329,7 +351,7 @@ namespace ASC.Projects.Core.Domain.Reports
             return filter;
         }
 
-        private static string GetParameterFromUri(string uri, string paramName)
+        public static string GetParameterFromUri(string uri, string paramName)
         {
             foreach (var parameter in (uri ?? string.Empty).Split(new[] { '?', '&' }, StringSplitOptions.RemoveEmptyEntries))
             {

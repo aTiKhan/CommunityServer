@@ -79,6 +79,15 @@ namespace ASC.Web.Studio.PublicResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Validation code field cannot be empty.
+        /// </summary>
+        public static string ActivateTfaAppEmptyCode {
+            get {
+                return ResourceManager.GetString("ActivateTfaAppEmptyCode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Add.
         /// </summary>
         public static string AddButton {
@@ -88,11 +97,29 @@ namespace ASC.Web.Studio.PublicResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Add filter.
+        /// </summary>
+        public static string AddFilter {
+            get {
+                return ResourceManager.GetString("AddFilter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Use the {0}?{1} and {0}*{1} symbols to perform a single/multiple-character search. For example, to search for all the words beginning with {0}O{1}, use the  {0}O*{1} query. To search for the exact phrase use the quotation marks.{2}Learn more...{3}.
         /// </summary>
         public static string AdvansedFilterInfoText {
             get {
                 return ResourceManager.GetString("AdvansedFilterInfoText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Ascending/descending.
+        /// </summary>
+        public static string AscOrDesc {
+            get {
+                return ResourceManager.GetString("AscOrDesc", resourceCulture);
             }
         }
         
@@ -223,6 +250,15 @@ namespace ASC.Web.Studio.PublicResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Complete.
+        /// </summary>
+        public static string Complete {
+            get {
+                return ResourceManager.GetString("Complete", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Do you want to continue?.
         /// </summary>
         public static string ConfirmMessage {
@@ -349,6 +385,24 @@ namespace ASC.Web.Studio.PublicResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Select an area for avatar.
+        /// </summary>
+        public static string EmptySelectedArea {
+            get {
+                return ResourceManager.GetString("EmptySelectedArea", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Error.
+        /// </summary>
+        public static string Error {
+            get {
+                return ResourceManager.GetString("Error", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Enter the email.
         /// </summary>
         public static string ErrorEmptyEmail {
@@ -408,6 +462,24 @@ namespace ASC.Web.Studio.PublicResources {
         public static string ErrorHeadNotExist {
             get {
                 return ResourceManager.GetString("ErrorHeadNotExist", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid first name.
+        /// </summary>
+        public static string ErrorInvalidUserFirstName {
+            get {
+                return ResourceManager.GetString("ErrorInvalidUserFirstName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Invalid last name.
+        /// </summary>
+        public static string ErrorInvalidUserLastName {
+            get {
+                return ResourceManager.GetString("ErrorInvalidUserLastName", resourceCulture);
             }
         }
         
@@ -502,6 +574,15 @@ namespace ASC.Web.Studio.PublicResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to First Name.
+        /// </summary>
+        public static string FirstName {
+            get {
+                return ResourceManager.GetString("FirstName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Greeting ringtones.
         /// </summary>
         public static string GreetingRingtones {
@@ -556,6 +637,15 @@ namespace ASC.Web.Studio.PublicResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to of.
+        /// </summary>
+        public static string ImportOf {
+            get {
+                return ResourceManager.GetString("ImportOf", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Your pricing plan does not allow you to add any more users.
         /// </summary>
         public static string ImportUserOverlimitHeader {
@@ -597,6 +687,15 @@ namespace ASC.Web.Studio.PublicResources {
         public static string IPRestrictionsSettingsSuccessfullyUpdated {
             get {
                 return ResourceManager.GetString("IPRestrictionsSettingsSuccessfullyUpdated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Last Name.
+        /// </summary>
+        public static string LastName {
+            get {
+                return ResourceManager.GetString("LastName", resourceCulture);
             }
         }
         
@@ -669,24 +768,6 @@ namespace ASC.Web.Studio.PublicResources {
         public static string LoadingProcessing {
             get {
                 return ResourceManager.GetString("LoadingProcessing", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to {0}The content{1} could not be loaded..
-        /// </summary>
-        public static string MagnificContentError {
-            get {
-                return ResourceManager.GetString("MagnificContentError", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to {0}The image{1} could not be loaded..
-        /// </summary>
-        public static string MagnificImageError {
-            get {
-                return ResourceManager.GetString("MagnificImageError", resourceCulture);
             }
         }
         
@@ -1123,6 +1204,15 @@ namespace ASC.Web.Studio.PublicResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to no subject.
+        /// </summary>
+        public static string MailNoSubject {
+            get {
+                return ResourceManager.GetString("MailNoSubject", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to A problem has occurred while trying to send this message..
         /// </summary>
         public static string MailSendMessageError {
@@ -1276,11 +1366,11 @@ namespace ASC.Web.Studio.PublicResources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Offline.
+        ///   Looks up a localized string similar to You have not added any templates.
         /// </summary>
-        public static string Offline {
+        public static string NotAddedAnyTemplates {
             get {
-                return ResourceManager.GetString("Offline", resourceCulture);
+                return ResourceManager.GetString("NotAddedAnyTemplates", resourceCulture);
             }
         }
         
@@ -1296,18 +1386,27 @@ namespace ASC.Web.Studio.PublicResources {
         /// <summary>
         ///   Looks up a localized string similar to Online.
         /// </summary>
-        public static string Online {
+        public static string OnlineStatus {
             get {
-                return ResourceManager.GetString("Online", resourceCulture);
+                return ResourceManager.GetString("OnlineStatus", resourceCulture);
             }
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Online.
+        ///   Looks up a localized string similar to Open.
         /// </summary>
-        public static string OnlineStatus {
+        public static string Open {
             get {
-                return ResourceManager.GetString("OnlineStatus", resourceCulture);
+                return ResourceManager.GetString("Open", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Open Talk.
+        /// </summary>
+        public static string OpenTalk {
+            get {
+                return ResourceManager.GetString("OpenTalk", resourceCulture);
             }
         }
         
@@ -1425,6 +1524,15 @@ namespace ASC.Web.Studio.PublicResources {
         public static string QueueRingtones {
             get {
                 return ResourceManager.GetString("QueueRingtones", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Path.
+        /// </summary>
+        public static string RestoreConsumerPath {
+            get {
+                return ResourceManager.GetString("RestoreConsumerPath", resourceCulture);
             }
         }
         
@@ -1663,6 +1771,51 @@ namespace ASC.Web.Studio.PublicResources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Start filter.
+        /// </summary>
+        public static string StartFilter {
+            get {
+                return ResourceManager.GetString("StartFilter", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Подключить.
+        /// </summary>
+        public static string StorageButtonEnable {
+            get {
+                return ResourceManager.GetString("StorageButtonEnable", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Reset to Default.
+        /// </summary>
+        public static string StorageButtonResetToDefault {
+            get {
+                return ResourceManager.GetString("StorageButtonResetToDefault", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Настройки CDN.
+        /// </summary>
+        public static string StorageCdnTitle {
+            get {
+                return ResourceManager.GetString("StorageCdnTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Настройки хранилища.
+        /// </summary>
+        public static string StorageStorageTitle {
+            get {
+                return ResourceManager.GetString("StorageStorageTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0} user(s) were successfully added to the portal.
         /// </summary>
         public static string SuccessfullyImportCountUsers {
@@ -1677,6 +1830,15 @@ namespace ASC.Web.Studio.PublicResources {
         public static string SuccessfullySaveSettingsMessage {
             get {
                 return ResourceManager.GetString("SuccessfullySaveSettingsMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Template not found.
+        /// </summary>
+        public static string TemplateNotFound {
+            get {
+                return ResourceManager.GetString("TemplateNotFound", resourceCulture);
             }
         }
         
@@ -1749,6 +1911,15 @@ namespace ASC.Web.Studio.PublicResources {
         public static string UploadVoipRingtoneFileSizeErrorMsg {
             get {
                 return ResourceManager.GetString("UploadVoipRingtoneFileSizeErrorMsg", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to pending.
+        /// </summary>
+        public static string UserPending {
+            get {
+                return ResourceManager.GetString("UserPending", resourceCulture);
             }
         }
         

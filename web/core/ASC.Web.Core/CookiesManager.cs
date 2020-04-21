@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,28 +25,33 @@
 
 
 using System;
+using System.Security;
 using System.Web;
-using System.Linq;
 using ASC.Core;
 using ASC.Core.Tenants;
+using ASC.Core.Users;
 using ASC.Web.Studio.Utility;
+using SecurityContext = ASC.Core.SecurityContext;
 
 namespace ASC.Web.Core
 {
     public enum CookiesType
     {
-        AuthKey
+        AuthKey,
+        SocketIO
     }
 
     public class CookiesManager
     {
         private const string AuthCookiesName = "asc_auth_key";
+        private const string SocketIOCookiesName = "socketio.sid";
 
         private static string GetCookiesName(CookiesType type)
         {
             switch (type)
             {
                 case CookiesType.AuthKey: return AuthCookiesName;
+                case CookiesType.SocketIO: return SocketIOCookiesName;
             }
 
             return string.Empty;
@@ -100,8 +105,6 @@ namespace ASC.Web.Core
             if (HttpContext.Current != null)
             {
                 var cookieName = GetCookiesName(type);
-                if (HttpContext.Current.Response.Cookies.AllKeys.Contains(cookieName))
-                    return HttpContext.Current.Response.Cookies[cookieName].Value ?? "";
 
                 if (HttpContext.Current.Request.Cookies[cookieName] != null)
                     return HttpContext.Current.Request.Cookies[cookieName].Value ?? "";
@@ -124,8 +127,7 @@ namespace ASC.Web.Core
             if (!session)
             {
                 var tenant = CoreContext.TenantManager.GetCurrentTenant().TenantId;
-                var settings = TenantCookieSettings.GetForTenant(tenant);
-                expires = settings.IsDefault() ? DateTime.Now.AddYears(1) : DateTime.Now.AddMinutes(settings.LifeTime);
+                expires = TenantCookieSettings.GetExpiresTime(tenant);
             }
 
             return expires;
@@ -133,15 +135,24 @@ namespace ASC.Web.Core
 
         public static void SetLifeTime(int lifeTime)
         {
+            if (!CoreContext.UserManager.IsUserInGroup(SecurityContext.CurrentAccount.ID, Constants.GroupAdmin.ID))
+            {
+                throw new SecurityException();
+            }
+
             var tenant = TenantProvider.CurrentTenantID;
-            TenantCookieSettings settings = null;
+            var settings = TenantCookieSettings.GetForTenant(tenant);
 
             if (lifeTime > 0)
             {
-                settings = TenantCookieSettings.GetForTenant(tenant);
                 settings.Index = settings.Index + 1;
                 settings.LifeTime = lifeTime;
             }
+            else
+            {
+                settings.LifeTime = 0;
+            }
+
             TenantCookieSettings.SetForTenant(tenant, settings);
 
             var cookie = SecurityContext.AuthenticateMe(SecurityContext.CurrentAccount.ID);
@@ -166,6 +177,22 @@ namespace ASC.Web.Core
 
                 SetCookies(CookiesType.AuthKey, cookie);
             }
+        }
+
+        public static void ResetTenantCookie()
+        {
+            if (!CoreContext.UserManager.IsUserInGroup(SecurityContext.CurrentAccount.ID, Constants.GroupAdmin.ID))
+            {
+                throw new SecurityException();
+            }
+
+            var tenant = TenantProvider.CurrentTenantID;
+            var settings = TenantCookieSettings.GetForTenant(tenant);
+            settings.Index = settings.Index + 1;
+            TenantCookieSettings.SetForTenant(tenant, settings);
+
+            var cookie = SecurityContext.AuthenticateMe(SecurityContext.CurrentAccount.ID);
+            SetCookies(CookiesType.AuthKey, cookie);
         }
     }
 }

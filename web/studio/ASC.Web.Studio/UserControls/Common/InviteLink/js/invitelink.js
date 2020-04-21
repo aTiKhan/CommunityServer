@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -29,9 +29,11 @@ jq(document).ready(function () {
         var inviteLinkShow = true;
 
         if (Teamlab.profile.isPortalOwner === true) {
-            var users = ASC.Resources.Master.ApiResponses_ActiveProfiles.response;
-            for (var i = 0, n = users.length; i < n; i++) {
-                if (users[i].isActivated === true && users[i].isOwner === false) {
+            var users = window.UserManager.getAllUsers(true);
+            for (var userId in users) {
+                if (!users.hasOwnProperty(userId)) continue;
+                var user = users[userId];
+                if (user.isActivated === true && user.isOwner === false) {
                     inviteLinkShow = false;
                     break;
                 }

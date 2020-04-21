@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -69,6 +69,18 @@ namespace ASC.CRM.Core.Dao
                .SetMaxResults(1);
 
             return Db.ExecuteScalar<bool>(q);
+        }
+
+        private int GetTagId(EntityType entityType, String tagName)
+        {
+            var q = new SqlQuery("crm_tag")
+               .Select("id")
+               .Where("tenant_id", TenantID)
+               .Where("entity_type", (int)entityType)
+               .Where("trim(lower(title))", tagName.Trim().ToLower())
+               .SetMaxResults(1);
+
+            return Db.ExecuteScalar<int>(q);
         }
 
         public String[] GetAllTags(EntityType entityType)
@@ -230,14 +242,22 @@ namespace ASC.CRM.Core.Dao
 
         }
 
-        public int AddTag(EntityType entityType, String tagName)
+        public int AddTag(EntityType entityType, String tagName, bool returnExisted = false)
         {
             tagName = CorrectTag(tagName);
 
             if (String.IsNullOrEmpty(tagName))
                 throw new ArgumentNullException(CRMErrorsResource.TagNameNotSet);
 
-            if (IsExistInDb(entityType, tagName)) throw new ArgumentException(CRMErrorsResource.TagNameBusy);
+            var existedTagId = GetTagId(entityType, tagName);
+
+            if (existedTagId > 0)
+            {
+                if (returnExisted)
+                    return existedTagId;
+
+                throw new ArgumentException(CRMErrorsResource.TagNameBusy);
+            }
             return AddTagInDb(entityType, tagName);
         }
 

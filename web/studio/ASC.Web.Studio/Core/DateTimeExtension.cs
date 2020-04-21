@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -39,12 +39,12 @@ namespace System
             get
             {
                 return Threading.Thread.CurrentThread.CurrentCulture.DateTimeFormat.ShortDatePattern
-                                .Replace("dd", "99")
-                                .Replace("d", "99")
-                                .Replace("MM", "99")
-                                .Replace("M", "99")
-                                .Replace("y", "9")
-                                .Replace("Y", "9");
+                                .Replace("dd", "00")
+                                .Replace("d", "00")
+                                .Replace("MM", "00")
+                                .Replace("M", "00")
+                                .Replace("y", "0")
+                                .Replace("Y", "0");
             }
         }
 

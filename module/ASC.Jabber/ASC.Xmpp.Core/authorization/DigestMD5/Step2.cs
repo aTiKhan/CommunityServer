@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -343,7 +343,7 @@ namespace ASC.Xmpp.Core.authorization.DigestMD5
             int equalPos = pair.IndexOf("=");
             if (equalPos > 0)
             {
-                string key = pair.Substring(0, equalPos);
+                string key = pair.Substring(0, equalPos).Trim();
                 string data;
 
                 // is the value quoted?

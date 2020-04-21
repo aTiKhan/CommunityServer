@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -151,6 +151,10 @@ namespace ASC.Files.Thirdparty.Sharpbox
             TenantID = CoreContext.TenantManager.GetCurrentTenant().TenantId;
         }
 
+        public void Dispose()
+        {
+            SharpBoxProviderInfo.Dispose();
+        }
 
         protected DbManager GetDb()
         {
@@ -307,14 +311,6 @@ namespace ASC.Files.Thirdparty.Sharpbox
             return path;
         }
 
-        public void Dispose()
-        {
-            if (SharpBoxProviderInfo.Storage.IsOpened)
-            {
-                SharpBoxProviderInfo.Storage.Close();
-            }
-        }
-
         protected Folder ToFolder(ICloudDirectoryEntry fsEntry)
         {
             if (fsEntry == null) return null;
@@ -456,7 +452,7 @@ namespace ASC.Files.Thirdparty.Sharpbox
                 var path = MakePath(folderId);
                 return path == "/"
                            ? RootFolder()
-                           : SharpBoxProviderInfo.Storage.GetFolder(MakePath(folderId));
+                           : SharpBoxProviderInfo.Storage.GetFolder(path);
             }
             catch (SharpBoxException sharpBoxException)
             {

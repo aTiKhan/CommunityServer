@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -48,6 +48,8 @@ namespace ASC.FederatedLogin
         public string RedirectUri { get; set; }
 
         public DateTime Timestamp { get; set; }
+
+        public string OriginJson { get; set; }
 
         public OAuth20Token()
         {
@@ -104,6 +106,7 @@ namespace ASC.FederatedLogin
                     ClientID = parser.Value<string>("client_id"),
                     ClientSecret = parser.Value<string>("client_secret"),
                     RedirectUri = parser.Value<string>("redirect_uri"),
+                    OriginJson = json,
                 };
 
             long expiresIn;

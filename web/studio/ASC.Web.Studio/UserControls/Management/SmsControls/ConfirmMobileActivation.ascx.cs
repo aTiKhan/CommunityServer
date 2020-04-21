@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,19 +24,24 @@
 */
 
 
-using ASC.MessagingSystem;
-using ASC.Web.Studio.Utility;
+using System;
+using System.Globalization;
+using System.Threading;
+using System.Web;
+using System.Web.UI;
 using AjaxPro;
 using ASC.Core;
 using ASC.Core.Users;
 using ASC.Geolocation;
-using ASC.Web.Core.Client.Bundling;
+using ASC.MessagingSystem;
+using ASC.Security.Cryptography;
 using ASC.Web.Core.Security;
+using ASC.Web.Core.Sms;
 using ASC.Web.Studio.Core;
 using ASC.Web.Studio.Core.SMS;
-using System;
-using System.Web;
-using System.Web.UI;
+using ASC.Web.Studio.UserControls.Common;
+using ASC.Web.Studio.Utility;
+using Resources;
 
 namespace ASC.Web.Studio.UserControls.Management
 {
@@ -66,21 +71,24 @@ namespace ASC.Web.Studio.UserControls.Management
                 Response.Redirect(GetRefererURL(), true);
                 return;
             }
+            if (!Activation && (!StudioSmsNotificationSettings.IsVisibleSettings || !StudioSmsNotificationSettings.Enable))
+            {
+                Response.Redirect(GetRefererURL(), true);
+                return;
+            }
 
             if (IsPostBack && !Activation)
             {
-                var user = GetUser();
-
                 try
                 {
-                    SmsManager.ValidateSmsCode(user, Request["phoneAuthcode"]);
+                    SmsManager.ValidateSmsCode(User, Request["phoneAuthcode"]);
                     MessageService.Send(HttpContext.Current.Request, MessageAction.LoginSuccessViaSms);
 
                     Response.Redirect(GetRefererURL(), true);
                 }
                 catch
                 {
-                    MessageService.Send(HttpContext.Current.Request, user.DisplayUserName(false), MessageAction.LoginFailViaSms, MessageTarget.Create(user.ID));
+                    MessageService.Send(HttpContext.Current.Request, User.DisplayUserName(false), MessageAction.LoginFailViaSms, MessageTarget.Create(User.ID));
                 }
             }
 
@@ -90,10 +98,8 @@ namespace ASC.Web.Studio.UserControls.Management
 
             AjaxPro.Utility.RegisterTypeForAjax(GetType());
 
-            Page.RegisterBodyScripts("~/usercontrols/Management/SmsControls/js/confirmmobile.js")
-                .RegisterStyle("~/usercontrols/management/SmsControls/css/confirmmobile.less");
-
-            Context.Session["SmsAuthData"] = User.ID;
+            Page.RegisterBodyScripts("~/UserControls/Management/SmsControls/js/confirmmobile.js")
+                .RegisterStyle("~/UserControls/Management/SmsControls/css/confirmmobile.less");
 
             if (string.IsNullOrEmpty(User.MobilePhone))
                 Activation = true;
@@ -112,8 +118,13 @@ namespace ASC.Web.Studio.UserControls.Management
 
             if (Activation)
             {
-                var ipGeolocationInfo = new GeolocationHelper("teamlabsite").GetIPGeolocationFromHttpContext();
-                if (ipGeolocationInfo != null) Country = ipGeolocationInfo.Key;
+                Country = new RegionInfo(Thread.CurrentThread.CurrentCulture.LCID).TwoLetterISORegionName;
+
+                if (!CoreContext.Configuration.Standalone)
+                {
+                    var ipGeolocationInfo = new GeolocationHelper("teamlabsite").GetIPGeolocationFromHttpContext();
+                    if (ipGeolocationInfo != null) Country = ipGeolocationInfo.Key;
+                }
 
                 Page
                     .RegisterClientScript(new CountriesResources())
@@ -124,27 +135,41 @@ namespace ASC.Web.Studio.UserControls.Management
             }
         }
 
-        private UserInfo GetUser()
+        private static UserInfo GetUser(string query)
         {
-            var userId = SecurityContext.CurrentAccount.ID;
-            if (!SecurityContext.IsAuthenticated)
+            if (SecurityContext.IsAuthenticated)
             {
-                var smsAuthData = Context.Session["SmsAuthData"];
-                if (smsAuthData == null) return null;
-
-                userId = new Guid(smsAuthData.ToString());
+                return CoreContext.UserManager.GetUsers(SecurityContext.CurrentAccount.ID);
             }
-            return CoreContext.UserManager.GetUsers(userId);
+
+            var queryString = HttpUtility.ParseQueryString(query);
+
+            var email = (queryString["email"] ?? "").Trim();
+            var type = typeof (ConfirmType).TryParseEnum(queryString["type"] ?? "", ConfirmType.EmpInvite);
+            var checkKeyResult = EmailValidationKeyProvider.ValidateEmailKey(email + type, queryString["key"], SetupInfo.ValidAuthKeyInterval);
+
+            if (checkKeyResult == EmailValidationKeyProvider.ValidationResult.Expired)
+            {
+                throw new Exception(Resource.ErrorExpiredActivationLink);
+            }
+
+            if (checkKeyResult == EmailValidationKeyProvider.ValidationResult.Invalid)
+            {
+                throw new Exception(Resource.ErrorConfirmURLError);
+            }
+
+            var user = CoreContext.UserManager.GetUserByEmail(email);
+            return user;
         }
 
         private string GetRefererURL()
         {
             var refererURL = (string)Context.Session["refererURL"];
+            Context.Session["refererURL"] = null;
+
             if (String.IsNullOrEmpty(refererURL))
                 refererURL = CommonLinkUtility.GetDefault();
 
-            Context.Session["refererURL"] = null;
-            Context.Session["SmsAuthData"] = null;
             return refererURL;
         }
 
@@ -152,9 +177,9 @@ namespace ASC.Web.Studio.UserControls.Management
 
         [SecurityPassthrough]
         [AjaxMethod(HttpSessionStateRequirement.Read)]
-        public object SaveMobilePhone(string mobilePhone)
+        public object SaveMobilePhone(string query, string mobilePhone)
         {
-            var user = GetUser();
+            var user = GetUser(query);
             mobilePhone = SmsManager.SaveMobilePhone(user, mobilePhone);
             MessageService.Send(HttpContext.Current.Request, MessageAction.UserUpdatedMobileNumber, MessageTarget.Create(user.ID), user.DisplayUserName(false), mobilePhone);
 
@@ -163,7 +188,7 @@ namespace ASC.Web.Studio.UserControls.Management
             return
                 new
                     {
-                        phoneNoise = SmsManager.BuildPhoneNoise(mobilePhone),
+                        phoneNoise = SmsSender.BuildPhoneNoise(mobilePhone),
                         confirm = mustConfirm,
                         RefererURL = mustConfirm ? string.Empty : GetRefererURL()
                     };
@@ -171,29 +196,34 @@ namespace ASC.Web.Studio.UserControls.Management
 
         [SecurityPassthrough]
         [AjaxMethod(HttpSessionStateRequirement.Read)]
-        public object SendSmsCodeAgain()
+        public object SendSmsCodeAgain(string query)
         {
-            var user = GetUser();
+            var user = GetUser(query);
             SmsManager.PutAuthCode(user, true);
 
             return
                 new
                     {
-                        phoneNoise = SmsManager.BuildPhoneNoise(user.MobilePhone),
+                        phoneNoise = SmsSender.BuildPhoneNoise(user.MobilePhone),
                         confirm = true,
                     };
         }
 
         [SecurityPassthrough]
         [AjaxMethod(HttpSessionStateRequirement.ReadWrite)]
-        public object ValidateSmsCode(string code)
+        public object ValidateSmsCode(string query, string code)
         {
-            var user = GetUser();
+            var user = GetUser(query);
 
             try
             {
                 SmsManager.ValidateSmsCode(user, code);
                 MessageService.Send(HttpContext.Current.Request, MessageAction.LoginSuccessViaSms);
+            }
+            catch (Authorize.BruteForceCredentialException)
+            {
+                MessageService.Send(Request, user.DisplayUserName(false), MessageAction.LoginFailBruteForce);
+                throw;
             }
             catch
             {

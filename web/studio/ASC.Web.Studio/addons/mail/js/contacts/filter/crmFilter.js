@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -34,7 +34,10 @@ window.crmFilter = (function($) {
             isInit = true;
 
             $('#crmFilter').advansedFilter({
+                anykey: true,
+                anykeytimeout: 1000,
                 maxfilters: -1,
+                hintDefaultDisable: true,
                 sorters: [
                     { id: 'displayname', title: MailScriptResource.FilterByTitle, sortOrder: 'ascending', def: true },
                     { id: 'contacttype', title: MailScriptResource.FilterByContactStage, sortOrder: 'ascending' }
@@ -113,10 +116,10 @@ window.crmFilter = (function($) {
             // its replace target element with new markup
             filter = $('#crmFilter');
 
-            tagsManager.events.bind('refresh', onUpdateTags);
-            tagsManager.events.bind('delete', onUpdateTags);
-            tagsManager.events.bind('create', onUpdateTags);
-            tagsManager.events.bind('update', onUpdateTags);
+            tagsManager.bind(tagsManager.events.OnRefresh, onUpdateTags);
+            tagsManager.bind(tagsManager.events.OnDelete, onUpdateTags);
+            tagsManager.bind(tagsManager.events.OnCreate, onUpdateTags);
+            tagsManager.bind(tagsManager.events.OnUpdate, onUpdateTags);
 
             contactStages.events.bind('update', onUpdateStages);
         }

@@ -94,28 +94,23 @@
             </div>
             <select id="teamList" class="comboBox">
                 <% foreach (var user in Users) %>
-                <%
-                   { %>
+                <% { %>
                     <% if (user.ID == Participant.ID) %>
-                    <%
+                    <% { %>
+                        <option selected="selected" value="<%= user.ID %>" id="optionUser_<%= user %>"><%= DisplayUserSettings.GetFullUserName(user.UserInfo) %></option>
+                    <% }
+                       else if (!Participant.IsVisitor)
                        { %>
-                    <option selected="selected" value="<%= user.ID %>" id="optionUser_<%= user %>"><%= DisplayUserSettings.GetFullUserName(user.UserInfo) %></option>
-                    <% } 
-                       else {
-                           var userName = DisplayUserSettings.GetFullUserName(user.UserInfo);
-                           if (userName != "profile removed" && !Participant.IsVisitor)
-                           { %>
-                                <option value="<%= user.ID %>" id="optionUser_<%= user.ID %>"><%= userName %></option>
-                        <% }
-                      } %>
-                <% } %>        
+                        <option value="<%= user.ID %>" id="optionUser_<%= user.ID %>"><%= DisplayUserSettings.GetFullUserName(user.UserInfo) %></option>
+                    <% } %>
+                <% } %>
             </select>
         </div>  
         <div class="block-cnt-splitter">
             <div class="headerPanelSmall">
                 <b><%= TimeTrackingResource.Date %>:</b>
             </div>
-            <input type="text" id="inputDate" class="textEditCalendar" />
+            <input type="text" id="inputDate" class="textEditCalendar" autocomplete="off"/>
         </div>      
         <div class="block-cnt-splitter time-fields-container">
             <div class="headerPanelSmall">

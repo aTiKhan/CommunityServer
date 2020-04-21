@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -29,7 +29,7 @@ using System.Net;
 using System.Text;
 using System.Web;
 using ASC.Api.Interfaces;
-using ASC.Api.Logging;
+using ASC.Common.Logging;
 using ASC.Core;
 
 
@@ -47,7 +47,7 @@ namespace ASC.Specific
 
     public class AscBasicAuthorization : IApiAuthorization
     {
-        private readonly ILog _log;
+        private readonly ILog log;
 
 
         public AscBasicAuthorization()
@@ -57,7 +57,7 @@ namespace ASC.Specific
 
         public AscBasicAuthorization(ILog log)
         {
-            _log = log;
+            this.log = log;
         }
 
         
@@ -92,7 +92,7 @@ namespace ASC.Specific
                     var usernamePassword = user.Split(new[] { ':' });
                     var username = usernamePassword[0];
                     var password = usernamePassword[1];
-                    _log.Debug("Basic Authorizing {0}", username);
+                    log.DebugFormat("Basic Authorizing {0}", username);
                     Authentificate(username, password);
                 }
                 catch (Exception) { }

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -23,6 +23,7 @@
  *
 */
 
+
 /*
  Caches information about filtered messageses list such as first and last messages ids and etc.
  Usefull for detecting message position and prev next displaing.
@@ -33,8 +34,8 @@ window.filterCache = (function() {
 
     function init() {
         cache = {};
-        serviceManager.bind(window.Teamlab.events.getMailFilteredConversations, onGetMailConversations);
-        serviceManager.bind(window.Teamlab.events.getMailFilteredMessages, onGetMailConversations);
+        window.Teamlab.bind(window.Teamlab.events.getMailFilteredConversations, onGetMailConversations);
+        window.Teamlab.bind(window.Teamlab.events.getMailFilteredMessages, onGetMailConversations);
     }
 
     function filterHash(filter) {
@@ -42,7 +43,7 @@ window.filterCache = (function() {
     }
 
     function onGetMailConversations(params, conversations) {
-        if (undefined == conversations.length || 0 == conversations.length) {
+        if (!conversations || 0 === conversations.length) {
             return;
         }
 
@@ -51,8 +52,9 @@ window.filterCache = (function() {
         var hash = filterHash(MailFilter);
         var filterCache = (folderCache[hash] = folderCache[hash] || {});
 
-        var hasNext = (true === MailFilter.getPrevFlag()) || params.__total > MailFilter.getPageSize();
-        var hasPrev = (false === MailFilter.getPrevFlag() && null != MailFilter.getFromDate() && undefined != MailFilter.getFromDate()) || (true === MailFilter.getPrevFlag() && params.__total > MailFilter.getPageSize());
+        var hasNext = (MailFilter.getPrevFlag()) || params.__total > MailFilter.getPageSize();
+        var hasPrev = (!MailFilter.getPrevFlag() && MailFilter.getFromDate()) ||
+        (MailFilter.getPrevFlag() && params.__total > MailFilter.getPageSize());
 
         if (!hasPrev) {
             filterCache.first = conversations[0].id;

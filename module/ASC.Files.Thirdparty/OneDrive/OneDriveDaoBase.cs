@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -59,6 +59,11 @@ namespace ASC.Files.Thirdparty.OneDrive
             PathPrefix = onedriveInfo.PathPrefix;
             OneDriveDaoSelector = onedriveDaoSelector;
             TenantID = CoreContext.TenantManager.GetCurrentTenant().TenantId;
+        }
+
+        public void Dispose()
+        {
+            OneDriveProviderInfo.Dispose();
         }
 
         protected DbManager GetDb()
@@ -184,6 +189,8 @@ namespace ASC.Files.Thirdparty.OneDrive
                 return ToErrorFolder(onedriveFolder as ErrorItem);
             }
 
+            if (onedriveFolder.Folder == null) return null;
+
             var isRoot = IsRoot(onedriveFolder);
 
             var folder = new Folder
@@ -270,6 +277,8 @@ namespace ASC.Files.Thirdparty.OneDrive
                 return ToErrorFile(onedriveFile as ErrorItem);
             }
 
+            if (onedriveFile.File == null) return null;
+
             return new File
                 {
                     ID = MakeId(onedriveFile.Id),
@@ -353,6 +362,7 @@ namespace ASC.Files.Thirdparty.OneDrive
 
         protected String GetAvailableTitle(String requestTitle, string parentFolderId, Func<string, string, bool> isExist)
         {
+            requestTitle = new Regex("\\.$").Replace(requestTitle, "_");
             if (!isExist(requestTitle, parentFolderId)) return requestTitle;
 
             var re = new Regex(@"( \(((?<index>[0-9])+)\)(\.[^\.]*)?)$");

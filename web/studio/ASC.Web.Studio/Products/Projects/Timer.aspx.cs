@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -26,16 +26,16 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Globalization;
+using System.Linq;
 using ASC.Core;
 using ASC.Core.Users;
 using ASC.Projects.Core.Domain;
 using ASC.Projects.Engine;
 using ASC.Web.Core;
 using ASC.Web.Core.Users;
-using ASC.Web.Studio.Utility;
 using ASC.Web.Projects.Resources;
+using ASC.Web.Studio.Utility;
 
 namespace ASC.Web.Projects
 {
@@ -83,17 +83,26 @@ namespace ASC.Web.Projects
             if (!WebItemSecurity.IsProductAdministrator(EngineFactory.ProductId, SecurityContext.CurrentAccount.ID))
                 participantId = Participant.ID;
 
-            UserProjects = EngineFactory.ProjectEngine.GetOpenProjectsWithTasks(participantId);
+            UserProjects = EngineFactory.ProjectEngine.GetByFilter(new TaskFilter
+            {
+                ProjectStatuses = new List<ProjectStatus> { ProjectStatus.Open },
+                SortBy = "title",
+                SortOrder = true
+            }).Where(r => r.TaskCountTotal > 0).ToList();
 
             if (UserProjects.Any() && (Project == null || !UserProjects.Contains(Project)))
                 Project = UserProjects.First();
 
-            var tasks = EngineFactory.TaskEngine.GetByProject(Project.ID, null, Participant.IsVisitor ? participantId : Guid.Empty);
+            var tasks = EngineFactory.TaskEngine.GetByProject(Project.ID, null, Participant.IsVisitor ? participantId : Guid.Empty).Where(r => ProjectSecurity.CanCreateTimeSpend(r)).ToList();
 
             OpenUserTasks = tasks.Where(r => r.Status == TaskStatus.Open).OrderBy(r => r.Title);
             ClosedUserTasks = tasks.Where(r => r.Status == TaskStatus.Closed).OrderBy(r => r.Title);
 
-            Users = EngineFactory.ProjectEngine.GetTeam(Project.ID).OrderBy(r => DisplayUserSettings.GetFullUserName(r.UserInfo)).Where(r => r.UserInfo.IsVisitor() != true).ToList();
+            Users = EngineFactory.ProjectEngine.GetProjectTeamExcluded(Project.ID)
+                .OrderBy(r => DisplayUserSettings.GetFullUserName(r.UserInfo))
+                .Where(r => !r.UserInfo.IsVisitor())
+                .Where(r => !r.IsRemovedFromTeam || tasks.Any(t => t.Responsibles.Contains(r.ID)))
+                .ToList();
 
             if (!string.IsNullOrEmpty(Request.QueryString["taskId"]))
             {

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,9 +24,14 @@
 */
 
 
-using ASC.Web.Files.Classes;
 using System;
+using System.IO;
+using System.Runtime.Serialization.Json;
+using System.Text;
+using System.Web;
 using System.Web.UI;
+using ASC.Web.Files.Classes;
+using ASC.Web.Studio.Core.Quota;
 
 namespace ASC.Web.Files.Controls
 {
@@ -39,6 +44,32 @@ namespace ASC.Web.Files.Controls
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            InitScripts();
+        }
+
+        private void InitScripts()
+        {
+            var tenantQuota = GetQuotaString();
+
+            var inlineScript = new StringBuilder();
+
+            inlineScript.AppendFormat("ASC.Files.ChunkUploads.init({0});", tenantQuota);
+
+            Page.RegisterInlineScript(inlineScript.ToString());
+        }
+
+        private static string GetQuotaString()
+        {
+            var quota = QuotaWrapper.GetCurrent();
+
+            using (var ms = new MemoryStream())
+            {
+                var serializer = new DataContractJsonSerializer(typeof (QuotaWrapper));
+                serializer.WriteObject(ms, quota);
+                ms.Seek(0, SeekOrigin.Begin);
+
+                return Encoding.UTF8.GetString(ms.GetBuffer(), 0, (int)ms.Length);
+            }
         }
     }
 }

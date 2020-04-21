@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -108,28 +108,34 @@ namespace ASC.CRM.Core.Entities
             decimal cost = 0;
             foreach (var line in lines)
             {
-                InvoiceTax tax;
-                decimal taxRate = 0;
-                
+                var linePrice = Math.Round(line.Price * line.Quantity, 2);
+                var lineDiscount = Math.Round(linePrice * line.Discount / 100, 2);
+
+                linePrice = linePrice - lineDiscount;
+
+                decimal lineTax1 = 0;
                 if (line.InvoiceTax1ID > 0)
                 {
-                    tax = daoFactory.InvoiceTaxDao.GetByID(line.InvoiceTax1ID);
-                    if (tax != null)
+                    var tax1 = daoFactory.InvoiceTaxDao.GetByID(line.InvoiceTax1ID);
+                    if (tax1 != null)
                     {
-                        taxRate += tax.Rate;
+                        lineTax1 = Math.Round(linePrice * tax1.Rate / 100, 2);
                     } 
                 }
+
+                decimal lineTax2 = 0;
                 if (line.InvoiceTax2ID > 0)
                 {
-                    tax = daoFactory.InvoiceTaxDao.GetByID(line.InvoiceTax2ID);
-                    if (tax != null)
+                    var tax2 = daoFactory.InvoiceTaxDao.GetByID(line.InvoiceTax2ID);
+                    if (tax2 != null)
                     {
-                        taxRate += tax.Rate;
+                        lineTax2 = Math.Round(linePrice * tax2.Rate / 100, 2);
                     }
                 }
 
-                cost += (line.Price * line.Quantity) * (1 - line.Discount / 100 + taxRate / 100);
+                cost += linePrice + lineTax1 + lineTax2;
             }
+
             return Math.Round(cost, 2);
         }
     }

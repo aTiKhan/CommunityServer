@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -61,7 +61,7 @@ namespace ASC.Api.Impl.Routing
                     //Access-Control-Max-Age: 1728000  
                     //context.Response.Headers["Access-Control-Allow-Origin"] = "*";
                     context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE";
-                    context.Response.Headers["Access-Control-Allow-Headers"] = "origin, authorization, accept";
+                    context.Response.Headers["Access-Control-Allow-Headers"] = "origin, authorization, accept, content-type";
                     context.Response.Headers["Access-Control-Max-Age"] = "1728000";
 
                 }

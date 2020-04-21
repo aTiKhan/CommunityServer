@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -37,8 +37,8 @@ using System.Web.Configuration;
 using System.Xml.Linq;
 using System.Xml.XPath;
 using ASC.Common.Data;
+using ASC.Common.Logging;
 using ASC.Data.Storage;
-using log4net;
 
 
 namespace ASC.Data.Backup
@@ -105,7 +105,7 @@ namespace ASC.Data.Backup
                 var map = new ExeConfigurationFileMap();
                 map.ExeConfigFilename = string.Compare(Path.GetExtension(config), ".config", true) == 0 ?
                     config :
-                    Path.Combine(config, "web.config");
+                    Path.Combine(config, "Web.config");
                 return ConfigurationManager.OpenMappedExeConfiguration(map, ConfigurationUserLevel.None);
             }
             return WebConfigurationManager.OpenWebConfiguration(config);
@@ -248,7 +248,7 @@ namespace ASC.Data.Backup
                 var file = connectionString.ElementInformation.Source;
                 if ("web.connections.config".Equals(Path.GetFileName(file), StringComparison.InvariantCultureIgnoreCase))
                 {
-                    file = Path.Combine(Path.GetDirectoryName(file), "web.config");
+                    file = Path.Combine(Path.GetDirectoryName(file), "Web.config");
                 }
                 var xconfig = XDocument.Load(file);
                 var provider = xconfig.XPathSelectElement("/configuration/system.data/DbProviderFactories/add[@invariant='" + connectionString.ProviderName + "']");

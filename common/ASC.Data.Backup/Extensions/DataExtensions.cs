@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,12 +25,13 @@
 
 
 using System.Data;
+using System.Data.Common;
 
 namespace ASC.Data.Backup.Extensions
 {
     public static class DataExtensions
     {
-        public static IDbCommand WithTimeout(this IDbCommand command, int timeout)
+        public static DbCommand WithTimeout(this DbCommand command, int timeout)
         {
             if (command != null)
             {
@@ -39,7 +40,7 @@ namespace ASC.Data.Backup.Extensions
             return command;
         }
 
-        public static IDbConnection Fix(this IDbConnection connection)
+        public static DbConnection Fix(this DbConnection connection)
         {
             if (connection != null && connection.State != ConnectionState.Open)
             {

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -22,6 +22,7 @@
  * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
  *
 */
+
 
 //TODO: READ ME
 
@@ -139,6 +140,8 @@
                 if (self.settings.onChangeCallback && fireCallback)
                     self.settings.onChangeCallback();
             }
+
+            self.input.focus();
         };
 
         this.drawItems = function(items, nextObj) {
@@ -592,6 +595,7 @@
                 open: function () {
                     var e = jq.Event("keydown", { keyCode: 40 });
                     jq(self.input).trigger(e);
+                    jq(this).autocomplete('widget').css('z-index', 100);
                     return false;
                 }
             });

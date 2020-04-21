@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -80,7 +80,7 @@ namespace ASC.Web.Studio
             var emptyScreen = new EmptyScreenControl
             {
                 ID = "emptyFeedScr",
-                ImgSrc = WebPath.GetPath("usercontrols/feed/images/empty_screen_feed.png"),
+                ImgSrc = WebPath.GetPath("UserControls/Feed/images/empty_screen_feed.png"),
                 Header = UserControlsCommonResource.NewsNotFound,
                 Describe = UserControlsCommonResource.NewsNotFoundDescription
             };
@@ -89,7 +89,7 @@ namespace ASC.Web.Studio
             var emptyFilterScreen = new EmptyScreenControl
             {
                 ID = "emptyFeedFilterScr",
-                ImgSrc = WebPath.GetPath("usercontrols/feed/images/empty_filter.png"),
+                ImgSrc = WebPath.GetPath("UserControls/Feed/images/empty_filter.png"),
                 Header = UserControlsCommonResource.FilterNoNews,
                 Describe = UserControlsCommonResource.FilterNoNewsDescription,
                 ButtonHTML =
@@ -177,13 +177,15 @@ namespace ASC.Web.Studio
             return
                 string.Format(@"<li class=""top-item-box feed"">
                                   <a href=""{0}"" class=""feedActiveBox inner-text {2}"" title=""{1}"" data-feedUrl=""{0}"">
+                                      <svg><use base=""{4}"" href=""/skins/default/images/svg/top-studio-menu.svg#svgTopStudioMenufeed""></use></svg>
                                       <span class=""inner-label"">{3}</span>
                                   </a>
                                 </li>",
                               VirtualPathUtility.ToAbsolute("~/feed.aspx"),
                               UserControlsCommonResource.FeedTitle,
                               string.Empty,
-                              0);
+                              0,
+                              WebPath.GetPath(@"/"));
         }
 
         #endregion

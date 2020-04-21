@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -36,7 +36,7 @@ using ASC.Api.Attributes;
 using ASC.Api.Exceptions;
 using ASC.Api.Impl.Constraints;
 using ASC.Api.Interfaces;
-using ASC.Api.Logging;
+using ASC.Common.Logging;
 using ASC.Common.Web;
 
 using Autofac;
@@ -66,7 +66,7 @@ namespace ASC.Api.Impl
                 {
                     throw new ApiDuplicateRouteException(apiMethodCall, routeMap.Find(x => x.Equals(apiMethodCall)));
                 }
-                Log.Debug("configured {0}", apiMethodCall);
+                Log.DebugFormat("configured {0}", apiMethodCall);
                 routeMap.Add(apiMethodCall);
             }
 
@@ -94,7 +94,7 @@ namespace ASC.Api.Impl
             }
             catch (Exception err)
             {
-                Log.Error(err, "Could not load apiEntryPoint {0}", apiEntryPoint.Activator.LimitType);
+                Log.Error(string.Format("Could not load apiEntryPoint {0}", apiEntryPoint.Activator.LimitType), err);
                 return Enumerable.Empty<IApiMethodCall>();
             }
         }

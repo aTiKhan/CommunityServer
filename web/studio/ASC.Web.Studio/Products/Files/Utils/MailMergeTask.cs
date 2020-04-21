@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -22,6 +22,7 @@
  * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
  *
 */
+
 
 using System;
 using System.IO;
@@ -76,7 +77,7 @@ namespace ASC.Web.Files.Utils
 
         private void CreateDraftMail()
         {
-            var apiUrlCreate = String.Format("{0}mail/messages/save.json", SetupInfo.WebApiBaseUrl);
+            var apiUrlCreate = String.Format("{0}mail/drafts/save.json", SetupInfo.WebApiBaseUrl);
             var bodyCreate =
                 string.Format(
                     MessageBodyFormat,

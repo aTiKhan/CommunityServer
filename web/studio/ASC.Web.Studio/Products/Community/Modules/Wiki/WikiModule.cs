@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -61,12 +61,12 @@ namespace ASC.Web.Community.Wiki
 
         public override string StartURL
         {
-            get { return "~/products/community/modules/wiki/"; }
+            get { return "~/Products/Community/Modules/Wiki/"; }
         }
 
         public static string GetCreateContentPageUrl()
         {
-            return VirtualPathUtility.ToAbsolute(WikiManager.BaseVirtualPath + "/default.aspx") + "?action=new";
+            return VirtualPathUtility.ToAbsolute(WikiManager.BaseVirtualPath + "/Default.aspx") + "?action=new";
         }
 
 
@@ -75,8 +75,8 @@ namespace ASC.Web.Community.Wiki
             Context = new ModuleContext
             {
                 DefaultSortOrder = 5,
-                SmallIconFileName = "WikiLogo16.png",
-                IconFileName = "WikiLogo32.png",
+                SmallIconFileName = "wikilogo16.png",
+                IconFileName = "wikilogo32.png",
                 SubscriptionManager = new WikiSubscriptionManager(),
                 GetCreateContentPageAbsoluteUrl = GetCreateContentPageUrl,
                 SearchHandler = new WikiSearchHandler(),

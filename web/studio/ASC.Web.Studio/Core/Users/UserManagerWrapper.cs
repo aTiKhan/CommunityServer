@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -36,7 +36,6 @@ using ASC.Core.Users;
 using ASC.MessagingSystem;
 using ASC.Web.Core.Utility;
 using ASC.Web.Studio.Core.Notify;
-using ASC.Web.Studio.Utility;
 using Resources;
 
 namespace ASC.Web.Studio.Core.Users
@@ -50,7 +49,7 @@ namespace ASC.Web.Studio.Core.Users
         {
             if (String.IsNullOrEmpty(uniqueName))
                 return false;
-            return Equals(CoreContext.UserManager.GetUserByUserName(uniqueName), ASC.Core.Users.Constants.LostUser);
+            return Equals(CoreContext.UserManager.GetUserByUserName(uniqueName), Constants.LostUser);
         }
 
         private static string MakeUniqueName(UserInfo userInfo)
@@ -71,12 +70,15 @@ namespace ASC.Web.Studio.Core.Users
         public static bool CheckUniqueEmail(Guid userId, string email)
         {
             var foundUser = CoreContext.UserManager.GetUserByEmail(email);
-            return Equals(foundUser, ASC.Core.Users.Constants.LostUser) || foundUser.ID == userId;
+            return Equals(foundUser, Constants.LostUser) || foundUser.ID == userId;
         }
 
         public static UserInfo AddUser(UserInfo userInfo, string password, bool afterInvite = false, bool notify = true, bool isVisitor = false, bool fromInviteLink = false, bool makeUniqueName = true)
         {
             if (userInfo == null) throw new ArgumentNullException("userInfo");
+
+            if (!UserFormatter.IsValidUserName(userInfo.FirstName, userInfo.LastName))
+                throw new Exception(Resource.ErrorIncorrectUserName);
 
             CheckPasswordPolicy(password);
 
@@ -141,7 +143,7 @@ namespace ASC.Web.Studio.Core.Users
 
             if (isVisitor)
             {
-                CoreContext.UserManager.AddUserIntoGroup(newUserInfo.ID, ASC.Core.Users.Constants.GroupVisitor.ID);
+                CoreContext.UserManager.AddUserIntoGroup(newUserInfo.ID, Constants.GroupVisitor.ID);
             }
 
             return newUserInfo;
@@ -151,7 +153,7 @@ namespace ASC.Web.Studio.Core.Users
 
         public static void CheckPasswordPolicy(string password)
         {
-            if (String.IsNullOrEmpty(password))
+            if (String.IsNullOrWhiteSpace(password))
                 throw new Exception(Resource.ErrorPasswordEmpty);
 
             var passwordSettingsObj = PasswordSettings.Load();
@@ -198,7 +200,7 @@ namespace ASC.Web.Studio.Core.Users
             return userInfo;
         }
 
-        private const string Noise = "1234567890mnbasdflkjqwerpoiqweyuvcxnzhdkqpsdk@%&;";
+        private const string Noise = "1234567890mnbasdflkjqwerpoiqweyuvcxnzhdkqpsdk_-()=";
 
         public static string GeneratePassword()
         {

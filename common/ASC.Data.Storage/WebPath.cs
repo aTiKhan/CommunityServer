@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -29,11 +29,13 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Web;
 using System.Web.Hosting;
+using ASC.Core;
 
 namespace ASC.Data.Storage
 {
@@ -79,15 +81,27 @@ namespace ASC.Data.Storage
             var result = relativePath;
             var ext = Path.GetExtension(relativePath).ToLowerInvariant();
 
-            if (Appenders.Any())
+            if (CoreContext.Configuration.Standalone && StaticUploader.CanUpload())
             {
-                var avaliableAppenders = Appenders.Where(x => x.Extensions.Split('|').Contains(ext) || String.IsNullOrEmpty(ext));
+                try
+                {
+                    result = CdnStorageSettings.Load().DataStore.GetInternalUri("", relativePath, TimeSpan.Zero, null).AbsoluteUri.ToLower();
+                    if (!string.IsNullOrEmpty(result)) return result;
+                }
+                catch (Exception)
+                {
+                    
+                }
+            }
+            
+            if (Appenders.Any()) {
+                var avaliableAppenders = Appenders.Where(x => x.Extensions.Split('|').Contains(ext) || String.IsNullOrEmpty(ext)).ToList();
                 var avaliableAppendersCount = avaliableAppenders.LongCount();
 
                 AppenderConfigurationElement appender;
                 if (avaliableAppendersCount > 1)
                 {
-                    appender = avaliableAppenders.ToList()[(int)(relativePath.Length % avaliableAppendersCount)];
+                    appender = avaliableAppenders[(int)(relativePath.Length % avaliableAppendersCount)];
                 }
                 else if (avaliableAppendersCount == 1)
                 {
@@ -130,8 +144,8 @@ namespace ASC.Data.Storage
                     }
                 }
             }
-            //To LOWER! cause Amazon is CASE SENSITIVE!
-            return result.ToLowerInvariant();
+
+            return result;
         }
 
         public static bool Exists(string relativePath)

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -28,7 +28,11 @@ window.PagesNavigation = (function($) {
     var visiblePageCount = 3;
 
     var changeSysfolderPageCallback = function(number) {
-        var anchor = "#" + TMMail.getSysFolderNameById(MailFilter.getFolder());
+
+        var folderId = MailFilter.getFolder();
+        var anchor = "#" + (folderId !== TMMail.sysfolders.userfolder.id
+            ? TMMail.getSysFolderNameById(folderId)
+            : TMMail.getSysFolderNameById(folderId) + "=" + MailFilter.getUserFolder());
         var prevFlag, el;
         var messagesRows = $('.messages:visible .row[data_id]');
 
@@ -62,7 +66,7 @@ window.PagesNavigation = (function($) {
         }
 
 
-        mailBox.keepSelection(true);
+        mailBox.keepSelection(false);
         ASC.Controls.AnchorController.move(anchor);
     };
 

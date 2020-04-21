@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -31,7 +31,9 @@ using System.Web;
 using System.Web.UI;
 using ASC.Common.Data;
 using ASC.Common.Data.Sql;
+using ASC.Common.Logging;
 using ASC.Core;
+using ASC.Core.Tenants;
 using ASC.Core.Users;
 using ASC.FederatedLogin;
 using ASC.FederatedLogin.Profile;
@@ -44,7 +46,6 @@ using ASC.Web.Studio.Core.Users;
 using ASC.Web.Studio.UserControls.Users.UserProfile;
 using ASC.Web.Studio.Utility;
 using Resources;
-using log4net;
 
 namespace ASC.Web.Studio.UserControls.Common
 {
@@ -59,7 +60,7 @@ namespace ASC.Web.Studio.UserControls.Common
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            var accountLink = (AccountLinkControl) LoadControl(AccountLinkControl.Location);
+            var accountLink = (AccountLinkControl)LoadControl(AccountLinkControl.Location);
             accountLink.ClientCallback = "loginJoinCallback";
             accountLink.SettingsView = false;
             ThirdPartyList.Controls.Add(accountLink);
@@ -68,6 +69,7 @@ namespace ASC.Web.Studio.UserControls.Common
 
             if (loginProfile == null && !IsPostBack || SecurityContext.IsAuthenticated) return;
 
+            string cookiesKey;
             try
             {
                 if (loginProfile == null)
@@ -83,7 +85,7 @@ namespace ASC.Web.Studio.UserControls.Common
                 var userInfo = GetUserByThirdParty(loginProfile);
                 if (!CoreContext.UserManager.UserExists(userInfo.ID)) return;
 
-                var cookiesKey = SecurityContext.AuthenticateMe(userInfo.ID);
+                cookiesKey = SecurityContext.AuthenticateMe(userInfo.ID);
                 CookiesManager.SetCookies(CookiesType.AuthKey, cookiesKey);
                 MessageService.Send(HttpContext.Current.Request, MessageAction.LoginSuccessViaSocialAccount);
             }
@@ -100,15 +102,19 @@ namespace ASC.Web.Studio.UserControls.Common
                 return;
             }
 
-            var refererURL = (string) Session["refererURL"];
+            var refererURL = (string)Session["refererURL"];
 
             if (String.IsNullOrEmpty(refererURL))
-                Response.Redirect(CommonLinkUtility.GetDefault());
-            else
             {
-                Session["refererURL"] = null;
-                Response.Redirect(refererURL);
+                refererURL = CommonLinkUtility.GetDefault();
             }
+            if (Request.DesktopApp())
+            {
+                refererURL += (refererURL.Contains("?") ? "&" : "?") + "token=" + HttpUtility.HtmlEncode(cookiesKey);
+            }
+
+            Session["refererURL"] = null;
+            Response.Redirect(refererURL);
         }
 
         public static UserInfo GetUserByThirdParty(LoginProfile loginProfile)
@@ -122,24 +128,15 @@ namespace ASC.Web.Studio.UserControls.Common
                     {
                         throw new Exception(loginProfile.AuthorizationError);
                     }
-                    return ASC.Core.Users.Constants.LostUser;
+                    return Constants.LostUser;
                 }
 
-                if (string.IsNullOrEmpty(loginProfile.EMail))
-                {
-                    throw new Exception(Resource.ErrorNotCorrectEmail);
-                }
-
-                var userInfo = new UserInfo();
+                var userInfo = Constants.LostUser;
 
                 Guid userId;
                 if (TryGetUserByHash(loginProfile.HashId, out userId))
                 {
                     userInfo = CoreContext.UserManager.GetUsers(userId);
-                }
-                if (!CoreContext.UserManager.UserExists(userInfo.ID))
-                {
-                    userInfo = CoreContext.UserManager.GetUserByEmail(loginProfile.EMail);
                 }
 
                 var isNew = false;
@@ -151,7 +148,7 @@ namespace ASC.Web.Studio.UserControls.Common
                         {
                             SecurityContext.AuthenticateMe(ASC.Core.Configuration.Constants.CoreSystem);
                             CoreContext.UserManager.DeleteUser(userInfo.ID);
-                            userInfo = ASC.Core.Users.Constants.LostUser;
+                            userInfo = Constants.LostUser;
                         }
                         finally
                         {
@@ -178,8 +175,8 @@ namespace ASC.Web.Studio.UserControls.Common
                             using (var db = DbManager.FromHttpContext(_databaseID))
                             {
                                 db.ExecuteNonQuery(new SqlInsert("template_unsubscribe", false)
-                                        .InColumnValue("email",userInfo.Email.ToLowerInvariant())
-                                        .InColumnValue("reason", "personal")
+                                                       .InColumnValue("email", userInfo.Email.ToLowerInvariant())
+                                                       .InColumnValue("reason", "personal")
                                     );
                                 LogManager.GetLogger("ASC.Web").Debug(String.Format("Write to template_unsubscribe {0}", userInfo.Email.ToLowerInvariant()));
                             }
@@ -189,6 +186,12 @@ namespace ASC.Web.Studio.UserControls.Common
                             LogManager.GetLogger("ASC.Web").Debug(String.Format("ERROR write to template_unsubscribe {0}, email:{1}", ex.Message, userInfo.Email.ToLowerInvariant()));
                         }
                     }
+
+                    var analytics = HttpContext.Current.Request["analytics"] == "on";
+                    var settings = TenantAnalyticsSettings.LoadForCurrentUser();
+                    settings.Analytics = analytics;
+                    settings.SaveForCurrentUser();
+
                     StudioNotifyService.Instance.UserHasJoin();
                     UserHelpTourHelper.IsNewUser = true;
                     PersonalSettings.IsNewUser = true;
@@ -229,7 +232,7 @@ namespace ASC.Web.Studio.UserControls.Common
                     Email = loginProfile.EMail,
                     Title = string.Empty,
                     Location = string.Empty,
-                    CultureName = Thread.CurrentThread.CurrentUICulture.Name,
+                    CultureName = CoreContext.Configuration.CustomMode ? "ru-RU" : Thread.CurrentThread.CurrentUICulture.Name,
                     ActivationStatus = EmployeeActivationStatus.Activated,
                 };
 
@@ -244,23 +247,31 @@ namespace ASC.Web.Studio.UserControls.Common
 
         private static UserInfo JoinByThirdPartyAccount(LoginProfile loginProfile)
         {
-            var userInfo = ProfileToUserInfo(loginProfile);
-
-            UserInfo newUserInfo;
-            try
+            if (string.IsNullOrEmpty(loginProfile.EMail))
             {
-                SecurityContext.AuthenticateMe(ASC.Core.Configuration.Constants.CoreSystem);
-                newUserInfo = UserManagerWrapper.AddUser(userInfo, UserManagerWrapper.GeneratePassword());
+                throw new Exception(Resource.ErrorNotCorrectEmail);
             }
-            finally
+
+            var userInfo = CoreContext.UserManager.GetUserByEmail(loginProfile.EMail);
+            if (!CoreContext.UserManager.UserExists(userInfo.ID))
             {
-                SecurityContext.Logout();
+                var newUserInfo = ProfileToUserInfo(loginProfile);
+
+                try
+                {
+                    SecurityContext.AuthenticateMe(ASC.Core.Configuration.Constants.CoreSystem);
+                    userInfo = UserManagerWrapper.AddUser(newUserInfo, UserManagerWrapper.GeneratePassword());
+                }
+                finally
+                {
+                    SecurityContext.Logout();
+                }
             }
 
             var linker = new AccountLinker("webstudio");
-            linker.AddLink(newUserInfo.ID.ToString(), loginProfile);
+            linker.AddLink(userInfo.ID.ToString(), loginProfile);
 
-            return newUserInfo;
+            return userInfo;
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -72,7 +72,7 @@ namespace ASC.Api.Employee
         [Read("")]
         public IEnumerable<GroupWrapperSummary> GetAll()
         {
-            return CoreContext.UserManager.GetDepartments().Select(x => new GroupWrapperSummary(x)).ToSmartList();
+            return CoreContext.UserManager.GetDepartments().Select(x => new GroupWrapperSummary(x));
         }
 
         ///<summary>
@@ -106,7 +106,7 @@ namespace ASC.Api.Employee
         [Read("user/{userid}")]
         public IEnumerable<GroupWrapperSummary> GetByUserId(Guid userid)
         {
-            return CoreContext.UserManager.GetUserGroups(userid).Select(x => new GroupWrapperSummary(x)).ToSmartList();
+            return CoreContext.UserManager.GetUserGroups(userid).Select(x => new GroupWrapperSummary(x));
         }
 
         /// <summary>

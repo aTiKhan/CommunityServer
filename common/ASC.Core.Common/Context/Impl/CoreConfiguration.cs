@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,6 +24,7 @@
 */
 
 
+using System.Web;
 using ASC.Core.Configuration;
 using ASC.Core.Tenants;
 using System;
@@ -38,6 +39,7 @@ namespace ASC.Core
         private readonly ITenantService tenantService;
         private bool? standalone;
         private bool? personal;
+        private bool? customMode;
         private long? personalMaxSpace;
         private string basedomain;
 
@@ -54,7 +56,18 @@ namespace ASC.Core
 
         public bool Personal
         {
-            get { return personal ?? (bool)(personal = ConfigurationManager.AppSettings["core.personal"] == "true"); }
+            get
+            {
+                //todo: should replace only frotend
+                if (CustomMode && HttpContext.Current != null && HttpContext.Current.Request.SailfishApp()) return true;
+
+                return personal ?? (bool)(personal = ConfigurationManager.AppSettings["core.personal"] == "true");
+            }
+        }
+
+        public bool CustomMode
+        {
+            get { return customMode ?? (bool)(customMode = ConfigurationManager.AppSettings["core.custom-mode"] == "true"); }
         }
 
         public long PersonalMaxSpace
@@ -84,17 +97,17 @@ namespace ASC.Core
         {
             get
             {
-                bool isDefaultSettings = false;
+                var isDefaultSettings = false;
                 var tenant = CoreContext.TenantManager.GetCurrentTenant(false);
 
                 if (tenant != null)
                 {
 
-                    string settingsValue = GetSetting("SmtpSettings", tenant.TenantId);
+                    var settingsValue = GetSetting("SmtpSettings", tenant.TenantId);
                     if (string.IsNullOrEmpty(settingsValue))
                     {
                         isDefaultSettings = true;
-                        settingsValue = GetSetting("SmtpSettings", Tenant.DEFAULT_TENANT);
+                        settingsValue = GetSetting("SmtpSettings");
                     }
                     var settings = SmtpSettings.Deserialize(settingsValue);
                     settings.IsDefaultSettings = isDefaultSettings;
@@ -102,7 +115,7 @@ namespace ASC.Core
                 }
                 else
                 {
-                    string settingsValue = GetSetting("SmtpSettings", Tenant.DEFAULT_TENANT);
+                    var settingsValue = GetSetting("SmtpSettings");
 
                     var settings = SmtpSettings.Deserialize(settingsValue);
                     settings.IsDefaultSettings = true;
@@ -206,6 +219,15 @@ namespace ASC.Core
             var t = tenantService.GetTenant(tenant);
             if (t != null && !string.IsNullOrWhiteSpace(t.AffiliateId))
                 return t.AffiliateId;
+
+            return null;
+        }
+
+        public string GetCampaign(int tenant)
+        {
+            var t = tenantService.GetTenant(tenant);
+            if (t != null && !string.IsNullOrWhiteSpace(t.Campaign))
+                return t.Campaign;
 
             return null;
         }

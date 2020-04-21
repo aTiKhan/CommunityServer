@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -48,19 +48,19 @@ namespace ASC.Projects.Engine
         public FileEngine FileEngine { get { return fileEngine ?? (fileEngine = Container.Resolve<FileEngine>()); } }
 
         private ProjectEngine projectEngine;
-        public ProjectEngine ProjectEngine { get { return projectEngine ?? (projectEngine = Container.Resolve<ProjectEngine>(DisableNotifications, DIHelper.GetParameter(this))); } }
+        public ProjectEngine ProjectEngine { get { return projectEngine ?? (projectEngine = Container.Resolve<ProjectEngine>(DisableNotifications)); } }
 
         private MilestoneEngine milestoneEngine;
         public MilestoneEngine MilestoneEngine { get { return milestoneEngine ?? (milestoneEngine = Container.Resolve<MilestoneEngine>(DisableNotifications)); } }
 
         private CommentEngine commentEngine;
-        public CommentEngine CommentEngine { get { return commentEngine ?? (commentEngine = Container.Resolve<CommentEngine>(DisableNotifications, DIHelper.GetParameter(this))); } }
+        public CommentEngine CommentEngine { get { return commentEngine ?? (commentEngine = Container.Resolve<CommentEngine>(DisableNotifications)); } }
 
         private SearchEngine searchEngine;
-        public SearchEngine SearchEngine { get { return searchEngine ?? (searchEngine = Container.Resolve<SearchEngine>(DIHelper.GetParameter(this))); } }
+        public SearchEngine SearchEngine { get { return searchEngine ?? (searchEngine = Container.Resolve<SearchEngine>()); } }
 
         private TaskEngine taskEngine;
-        public TaskEngine TaskEngine { get { return taskEngine ?? (taskEngine = Container.Resolve<TaskEngine>(DisableNotifications, DIHelper.GetParameter(SubtaskEngine))); } }
+        public TaskEngine TaskEngine { get { return taskEngine ?? (taskEngine = Container.Resolve<TaskEngine>(DisableNotifications)); } }
 
         private SubtaskEngine subtaskEngine;
         public SubtaskEngine SubtaskEngine { get { return subtaskEngine ?? (subtaskEngine = Container.Resolve<SubtaskEngine>(DisableNotifications)); } }
@@ -78,9 +78,12 @@ namespace ASC.Projects.Engine
         public TagEngine TagEngine { get { return tagEngine ?? (tagEngine = Container.Resolve<TagEngine>()); } }
 
         private ReportEngine reportEngine;
-        public ReportEngine ReportEngine { get { return reportEngine ?? (reportEngine = Container.Resolve<ReportEngine>(DIHelper.GetParameter(this))); } }
+        public ReportEngine ReportEngine { get { return reportEngine ?? (reportEngine = Container.Resolve<ReportEngine>()); } }
 
         private TemplateEngine templateEngine;
         public TemplateEngine TemplateEngine { get { return templateEngine ?? (templateEngine = Container.Resolve<TemplateEngine>()); } }
+
+        private StatusEngine statusEngine;
+        public StatusEngine StatusEngine { get { return statusEngine ?? (statusEngine = Container.Resolve<StatusEngine>()); } }
     }
 }

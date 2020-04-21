@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -23,14 +23,14 @@
  *
 */
 
+
 using System;
 using System.Collections.Generic;
 using System.Data;
 using ASC.Common.Data.Sql;
 using ASC.Common.Data.Sql.Expressions;
-
+using ASC.Common.Logging;
 using ASC.Xmpp.Server.Handler;
-using log4net;
 
 namespace ASC.Xmpp.Server.Storage
 {
@@ -55,7 +55,7 @@ namespace ASC.Xmpp.Server.Storage
 
     public class DbPushStore : DbStoreBase
     {
-        private static readonly ILog log = LogManager.GetLogger(typeof(XmppHandlerManager));
+        private static readonly ILog log = LogManager.GetLogger("ASC");
 
         protected override SqlCreate[] GetCreateSchemaScript()
         {

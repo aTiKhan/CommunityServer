@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -58,8 +58,8 @@ namespace ASC.Web.Studio.UserControls.Management
         {
             AjaxPro.Utility.RegisterTypeForAjax(GetType());
 
-            Page.RegisterBodyScripts("~/usercontrols/management/maildomainsettings/js/maildomainsettings.js")
-                .RegisterStyle("~/usercontrols/management/maildomainsettings/css/maildomainsettings.less");
+            Page.RegisterBodyScripts("~/UserControls/Management/MailDomainSettings/js/maildomainsettings.js")
+                .RegisterStyle("~/UserControls/Management/MailDomainSettings/css/maildomainsettings.less");
 
             _currentTenant = CoreContext.TenantManager.GetCurrentTenant();
             _studioTrustedDomainSettings = StudioTrustedDomainSettings.Load();

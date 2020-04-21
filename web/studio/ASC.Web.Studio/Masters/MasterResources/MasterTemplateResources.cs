@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -36,19 +36,21 @@ namespace ASC.Web.Studio.Masters.MasterResources
             {
                 return new[]
                 {
-                    "~/templates/UserProfileCardTemplate.html",
-                    "~/templates/AdvansedFilterTemplate.html",
-                    "~/templates/FeedListTemplate.html",
-                    "~/templates/DropFeedTemplate.html",
-                    "~/templates/DropMailTemplate.html",
-                    "~/templates/GroupSelectorTemplate.html",
-                    "~/templates/SharingSettingsTemplate.html",
-                    "~/templates/AdvansedSelectorTemplate.html",
-                    "~/templates/AdvansedEmailSelectorTemplate.html",
-                    "~/templates/CommonTemplates.html",
-                    "~/templates/ManagementTemplates.html",
-                    "~/templates/CommentsTemplates.html",
-                    "~/templates/ContainerTemplate.html"
+                    "~/Templates/UserProfileCardTemplate.html",
+                    "~/Templates/AdvansedUserProfileEditTemplate.html",
+                    "~/Templates/AdvansedFilterTemplate.html",
+                    "~/Templates/FeedListTemplate.html",
+                    "~/Templates/DropFeedTemplate.html",
+                    "~/Templates/DropMailTemplate.html",
+                    "~/Templates/GroupSelectorTemplate.html",
+                    "~/Templates/SharingSettingsTemplate.html",
+                    "~/Templates/AdvansedSelectorTemplate.html",
+                    "~/Templates/AdvansedEmailSelectorTemplate.html",
+                    "~/Templates/CommonTemplates.html",
+                    "~/Templates/ManagementTemplates.html",
+                    "~/Templates/CommentsTemplates.html",
+                    "~/Templates/ContainerTemplate.html",
+                    "~/Templates/ProgressDialogTemplate.html"
                 };
             }
         }

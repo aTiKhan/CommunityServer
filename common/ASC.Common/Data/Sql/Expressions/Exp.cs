@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -34,9 +34,15 @@ namespace ASC.Common.Data.Sql.Expressions
     {
         public static readonly Exp Empty;
 
-        public static readonly Exp True = new EqColumnsExp("1", "1");
+        public static Exp True
+        {
+            get { return new EqColumnsExp("1", "1"); }
+        }
 
-        public static readonly Exp False = new EqColumnsExp("1", "0");
+        public static Exp False
+        {
+            get { return new EqColumnsExp("1", "0"); }
+        }
 
 
         protected bool Not { get; private set; }

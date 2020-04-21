@@ -1,4 +1,29 @@
-﻿
+/*
+ *
+ * (c) Copyright Ascensio System Limited 2010-2020
+ *
+ * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
+ * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
+ * In accordance with Section 7(a) of the GNU GPL its Section 15 shall be amended to the effect that 
+ * Ascensio System SIA expressly excludes the warranty of non-infringement of any third-party rights.
+ *
+ * THIS PROGRAM IS DISTRIBUTED WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR
+ * FITNESS FOR A PARTICULAR PURPOSE. For more details, see GNU GPL at https://www.gnu.org/copyleft/gpl.html
+ *
+ * You can contact Ascensio System SIA by email at sales@onlyoffice.com
+ *
+ * The interactive user interfaces in modified source and object code versions of ONLYOFFICE must display 
+ * Appropriate Legal Notices, as required under Section 5 of the GNU GPL version 3.
+ *
+ * Pursuant to Section 7 § 3(b) of the GNU GPL you must retain the original ONLYOFFICE logo which contains 
+ * relevant author attributions when distributing the software. If the display of the logo in its graphic 
+ * form is not reasonably feasible for technical reasons, you must include the words "Powered by ONLYOFFICE" 
+ * in every copy of the program you distribute. 
+ * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
+ *
+*/
+
+
 (function ($) {
     var resources = ASC.Resources.Master.Resource, teamlab = Teamlab;
 
@@ -61,11 +86,29 @@
 
         initAdvSelectorData: function () {
             var that = this,
-                data = that.options.showDisabled ? window.UserManager.getAllUsers() : ASC.Resources.Master.ApiResponses_ActiveProfiles.response;
-            if (!that.options.withGuests) {
-                data = $.grep(data, function (el) { return el.isVisitor == false });
+                data = [];
+
+            var dataItems = window.UserManager.getAllUsers(!that.options.showDisabled);
+
+            for (var dataItemId in dataItems) {
+                if (!dataItems.hasOwnProperty(dataItemId)) continue;
+
+                var dataItem = dataItems[dataItemId];
+                
+                if(!that.options.withGuests && dataItem.isVisitor)
+                    continue;
+
+                var newObj = {
+                    title: dataItem.displayName,
+                    id: dataItem.id,
+                    status: dataItem.isPending || dataItem.isActivated === false ? ASC.Resources.Master.Resource.UserPending : "",
+                    groups: window.GroupManager.getGroups(dataItem.groups)
+                };
+
+                data.push(newObj);
             }
-            that.rewriteObjectItem.call(that, data);
+
+            that.rewriteObjectItem.call(that, data.sort(SortData));
 
             // var   filter = {
             //        employeeStatus: 1,
@@ -92,13 +135,13 @@
         },
 
         initAdvSelectorGroupsData: function () {
-            var that = this,
-                data = ASC.Resources.Master.ApiResponses_Groups.response;
+            var that = this;
 
-            that.rewriteObjectGroup.call(that, data);
+            that.rewriteObjectGroup.call(that, window.GroupManager.getAllGroups());
+
             if (that.options.isAdmin) {
-                var groups = [],
-                    dataIds = [];
+                var groups = [];
+
                 that.$groupsListSelector.find(".advanced-selector-list li").hide();
                 that.items.forEach(function (e) {
                     groups = groups.concat(e.groups).unique();
@@ -139,29 +182,9 @@
 
         rewriteObjectItem: function (data) {
             var that = this;
-            that.items = [];
 
-            for (var i = 0, length = data.length; i < length; i++) {
-                var newObj = {};
-                newObj.title = data[i].displayName || data[i].title;
-                newObj.id = data[i].id;
-                newObj.isVisitor = data[i].isVisitor;
-                newObj.profileUrl = data[i].profileUrl;
-                if (data[i].hasOwnProperty("isPending")) {
-                    newObj.status = data[i].isPending ? "pending" : "";
-                }
-                if (data[i].hasOwnProperty("groups")) {
-                    newObj.groups = data[i].groups;
-                    if (data[i].groups && data[i].groups.length && !data[i].groups[0].id) {
-                        newObj.groups.map(function (el) {
-                            el.id = el.ID;
-                        })
-                    }
-                }
-                that.items.push(newObj);
-            }
+            that.items = data;
 
-            that.items = that.items.sort(SortData);
             that.$element.data('items', that.items);
             that.showItemsListAdvSelector.call(that);
         },
@@ -243,9 +266,13 @@
                                 id: profile.id,
                                 title: profile.displayName,
                                 isVisitor: profile.isVisitor,
-                                status: "pending",
+                                status: ASC.Resources.Master.Resource.UserPending,
                                 groups: []
                             };
+
+                            var copy = Object.assign({}, profile);
+                            copy.groups = (profile.groups || []).map(function (group) { return group.id; });
+                            UserManager.addNewUser(copy);
 
                             toastr.success(resources.UserSelectorAddSuccess.format("<b>" + newuser.title + "</b>"));
                             that.actionsAfterCreateItem.call(that, { newitem: newuser, response: profile, nameProperty: "groups" });
@@ -267,7 +294,7 @@
                 id: item.id,
                 title: item.displayName,
                 isVisitor: item.isVisitor,
-                status: item.isPending ? "pending" : "",
+                status: item.isPending || item.isActivated === false ? ASC.Resources.Master.Resource.UserPending : "",
                 groups: []
             };
             this.actionsAfterCreateItem.call(this, { newitem: newuser, response: item, nameProperty: "groups" });
@@ -298,6 +325,7 @@
         emptylist: resources.UserSelectorEmptyList,
         isAdmin: false,
         withGuests: true,
+        showDisabled: false,
         isInitializeItems: true
     });
 

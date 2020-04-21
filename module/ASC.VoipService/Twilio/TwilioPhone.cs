@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -52,7 +52,7 @@ namespace ASC.VoipService.Twilio
         {
             var number = to.Split('#');
 
-            var call = CallResource.Create(new CreateCallOptions(new PhoneNumber(number[0]), new PhoneNumber(Number))
+            var call = CallResource.Create(new CreateCallOptions(new PhoneNumber("+" + number[0].TrimStart('+')), new PhoneNumber("+" + Number.TrimStart('+')))
             {
                 SendDigits = number.Length > 1 ? number[1] + "#" : string.Empty,
                 Record = Settings.Caller.Record,

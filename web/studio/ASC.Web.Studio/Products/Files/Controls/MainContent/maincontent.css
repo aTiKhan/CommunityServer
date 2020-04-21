@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -38,35 +38,10 @@
     margin-left: 12px;
 }
 
-/*************************************************************
-    Info Panel
-*************************************************************/
-.files-info-panel {
-    background: url("images/info_16.png") no-repeat 10px 10px #EEF6FD;
-    color: #666668;
-    display: none;
-    font-size: 13px;
-    left: 50%;
-    margin: 0;
-    max-width: 900px;
-    overflow: hidden;
-    padding: 10px 10px 10px 35px;
-    position: fixed;
-    top: 0;
-    vertical-align: middle;
-    z-index: 700;
-}
-.files-info-panel.warn {
-    background: url("images/expl_16.png") no-repeat 10px 13px #FBFAD5;
-}
-
 /*******************************************************************************
     Content Menu
 *******************************************************************************/
-/*content border 1px for dragdrop*/
 ul.contentMenu {
-    margin-right: 1px;
-    margin-left: 1px;
     padding-top: 8px;
 }
 .advansed-filter {
@@ -176,9 +151,6 @@ dt.confirm-remove-files {
 /*******************************************************************************
     Panel with new items
 *******************************************************************************/
-.files-news-panel {
-    margin: 8px 0 0 0;
-}
 .files-news-panel .file-row:hover {
     background-color: #e5e5e5;
 }
@@ -207,6 +179,7 @@ dt.confirm-remove-files {
     width: auto;
 }
 #filesNewsList {
+    max-height: 300px;
     padding: 0 12px;
     width: 285px;
 }

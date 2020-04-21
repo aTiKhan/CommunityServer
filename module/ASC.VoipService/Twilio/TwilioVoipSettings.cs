@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -27,7 +27,7 @@
 using System;
 using System.Text;
 using System.Web;
-using ASC.Web.Studio.Utility;
+using ASC.Core.Common;
 using Uri = System.Uri;
 
 namespace ASC.VoipService.Twilio
@@ -69,7 +69,7 @@ namespace ASC.VoipService.Twilio
 
         private string GetEcho(string method, bool user = true)
         {
-            return new TwilioResponseHelper(this, CommonLinkUtility.GetFullAbsolutePath("")).GetEcho(method, user);
+            return new TwilioResponseHelper(this, BaseCommonLinkUtility.GetFullAbsolutePath("")).GetEcho(method, user);
         }
     }
 }

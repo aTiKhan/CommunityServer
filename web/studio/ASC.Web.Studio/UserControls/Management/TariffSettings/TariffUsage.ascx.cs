@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -33,6 +33,7 @@ using System.Web;
 using System.Web.Configuration;
 using System.Web.UI;
 using AjaxPro;
+using ASC.Common.Logging;
 using ASC.Core;
 using ASC.Core.Billing;
 using ASC.Core.Tenants;
@@ -43,7 +44,6 @@ using ASC.Web.Studio.Core;
 using ASC.Web.Studio.Core.Notify;
 using ASC.Web.Studio.UserControls.Statistics;
 using ASC.Web.Studio.Utility;
-using log4net;
 using PhoneNumbers;
 using Resources;
 
@@ -143,13 +143,13 @@ namespace ASC.Web.Studio.UserControls.Management
         protected void Page_Load(object sender, EventArgs e)
         {
             Page
-                .RegisterBodyScripts("~/usercontrols/management/tariffsettings/js/tariffusage.js",
+                .RegisterBodyScripts("~/UserControls/Management/TariffSettings/js/tariffusage.js",
                     "~/js/asc/plugins/countries.js",
                     "~/js/asc/plugins/phonecontroller.js")
                 .RegisterStyle(
                     "~/skins/default/phonecontroller.css",
-                    "~/usercontrols/management/tariffsettings/css/tariff.less",
-                    "~/usercontrols/management/tariffsettings/css/tariffusage.less")
+                    "~/UserControls/Management/TariffSettings/css/tariff.less",
+                    "~/UserControls/Management/TariffSettings/css/tariffusage.less")
                 .RegisterClientScript(new CountriesResources());
 
             CurrentRegion = RegionDefault;

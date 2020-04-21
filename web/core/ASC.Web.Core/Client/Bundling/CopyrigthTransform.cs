@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -27,22 +27,29 @@
 using System;
 using System.Linq;
 using System.Web.Optimization;
+using ASC.Web.Core.WhiteLabel;
 
 namespace ASC.Web.Core.Client.Bundling
 {
     class CopyrigthTransform : IBundleTransform
     {
         public static readonly string CopyrigthText = @"/*
-    Copyright (c) Ascensio System SIA " + DateTime.UtcNow.Year + @". All rights reserved.
-    http://www.onlyoffice.com
+    Copyright (c) {0} " + DateTime.UtcNow.Year + @". All rights reserved.
+    {1}
 */
 ";
         public void Process(BundleContext context, BundleResponse response)
         {
-            if (!response.Files.Any(f => f.VirtualFile.VirtualPath.ToLowerInvariant().Contains("jquery")))
-            {
-                response.Content = CopyrigthText + response.Content;
-            }
+            if (response.Files.Any(f => f.VirtualFile.VirtualPath.ToLowerInvariant().Contains("jquery"))) return;
+
+            var settings = CompanyWhiteLabelSettings.Instance;
+
+            if (!settings.IsLicensor)
+                settings = (CompanyWhiteLabelSettings) settings.GetDefault();
+
+            var copyrigth = string.Format(CopyrigthText, settings.CompanyName, settings.Site);
+
+            response.Content = copyrigth + response.Content;
         }
     }
 }

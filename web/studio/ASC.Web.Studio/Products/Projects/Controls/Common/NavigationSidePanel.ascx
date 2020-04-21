@@ -8,8 +8,9 @@
 <%@ Import Namespace="ASC.Web.Studio.Utility" %>
 <%@ Import Namespace="System.Linq" %>
 <%@ Import Namespace="ASC.Projects.Engine" %>
-<%@ Import Namespace="ASC.Core" %>
 <%@ Import Namespace="ASC.Projects.Core.Domain" %>
+<%@ Import Namespace="ASC.Data.Storage" %>
+
 
 
 <div class="page-menu">
@@ -32,24 +33,41 @@
     </ul>
 </div>
 <ul class="menu-actions">
-    <li id="menuCreateNewButton" class="menu-main-button without-separator <%= Page is TMDocs ? "middle" : "big" %>">
+    <li id="menuCreateNewButton" class="menu-main-button without-separator <%= Page is TMDocs ? "middle" : "big" %>" title="<%= ProjectsCommonResource.CreateNewButton %>">
         <span class="main-button-text" style="<%= Page is TMDocs ? "padding-top:8px;" : "" %>"><%= ProjectsCommonResource.CreateNewButton %></span>
         <span class="white-combobox">&nbsp;</span>
     </li>
     <% if (Page is TMDocs)
        { %>
-    <li id="buttonUpload" class="menu-upload-button not-ready" title="<%= ProjectsFileResource.ButtonUpload %>">
-        <span class="menu-upload-icon">&nbsp;</span> 
+    <li id="menuUploadActionsButton" class="menu-upload-button menu-gray-button disable" title="<%= ProjectsFileResource.ButtonUpload %>">
+        <span class="menu-upload-icon btn_other-actions"><svg class="upload-svg"><use base="<%= WebPath.GetPath("/")%>" href="/skins/default/images/svg/projects-icons.svg#projectsIconsupload"></use></svg></span>
     </li>
     <% } %>
 </ul>
+
+<% if (Page is TMDocs) { %>
+        <div id="uploadActions" class="studio-action-panel">
+        <ul class="dropdown-content">
+            <li><a id="buttonUpload" class="dropdown-item disable not-ready"><%= ProjectsFileResource.ButtonUploadFiles %></a></li>
+            <% if (!MobileDetector.IsMobile)
+               { %>
+                <li><a id="buttonFolderUpload" class="dropdown-item disable not-ready"><%= ProjectsFileResource.ButtonUploadFolder %></a></li>
+            <% } %>
+        </ul>
+    </div>
+<% } %>
+
 <%}%>
 <ul class="menu-list">
     <li id="menuProjects" class="menu-item sub-list">
         <div class="category-wrapper">
             <span class="expander"></span>
-            <a class="menu-item-label outer-text text-overflow" href="projects.aspx">
-                <span class="menu-item-icon projects"></span>
+            <a class="menu-item-label outer-text text-overflow" href="projects.aspx" title="<%= ProjectResource.Projects %>">
+                <span class="menu-item-icon projects">
+                    <svg class="menu-item-svg">
+                        <use base="<%= WebPath.GetPath("/")%>" href="/skins/default/images/svg/projects-icons.svg#projectsIconsprojects"></use>
+                    </svg>
+                </span>
                 <span class="menu-item-label inner-text"><%= ProjectResource.Projects %></span>
             </a>
             <span id="feed-new-projects-count" class="feed-new-count"></span>
@@ -60,7 +78,7 @@
                 <li id="myProjectsConteiner" class="menu-sub-item myProjectsConteiner">
                     <div class="menu-item sub-list">
                         <span id="myProjectsExpander" class="expander"></span>
-                        <a id="menuMyProjects" class="menu-item-label outer-text text-overflow" href=""><%= ProjectsCommonResource.LeftMenuMyProjects%></a>
+                        <a id="menuMyProjects" class="menu-item-label outer-text text-overflow" href="" title="<%= ProjectsCommonResource.LeftMenuMyProjects%>"><%= ProjectsCommonResource.LeftMenuMyProjects%></a>
                     </div>
                     <ul class="menu-sub-list">
                         <% foreach (var myProject in MyProjects)
@@ -73,23 +91,23 @@
                 </li>
             <% } else { %>
                 <li class="menu-sub-item filter myProjectsConteiner">
-                    <a id="menuMyProjects" class="menu-item-label outer-text text-overflow" href=""><%= ProjectsCommonResource.LeftMenuMyProjects%></a>
+                    <a id="menuMyProjects" class="menu-item-label outer-text text-overflow" href="" title="<%= ProjectsCommonResource.LeftMenuMyProjects%>"><%= ProjectsCommonResource.LeftMenuMyProjects%></a>
                 </li>
             <% } %>
             <li id="followedProjectsConteiner" class="menu-sub-item filter">
-                <a id="menuFollowedProjects" class="menu-item-label outer-text text-overflow" href="#followed=true&status=open"><%=ProjectsCommonResource.LeftMenuFollowedProjects%></a>
+                <a id="menuFollowedProjects" class="menu-item-label outer-text text-overflow" href="#followed=true&status=open" title="<%=ProjectsCommonResource.LeftMenuFollowedProjects%>"><%=ProjectsCommonResource.LeftMenuFollowedProjects%></a>
             </li>
             <% } %>
             <li class="menu-sub-item filter">
-                <a id="menuActiveProjects" class="menu-item-label outer-text text-overflow" href="#status=open"><%=ProjectsCommonResource.LeftMenuActiveProjects%></a>
+                <a id="menuActiveProjects" class="menu-item-label outer-text text-overflow" href="#status=open" title="<%=ProjectsCommonResource.LeftMenuActiveProjects%>"><%=ProjectsCommonResource.LeftMenuActiveProjects%></a>
             </li>
         </ul>
     </li>
     <li id="menuMilestones" class="menu-item sub-list">
         <div class="category-wrapper">
             <span class="expander"></span>
-            <a class="menu-item-label outer-text text-overflow" href="milestones.aspx">
-                <span class="menu-item-icon milestones"></span>
+            <a class="menu-item-label outer-text text-overflow" href="milestones.aspx" title="<%=MilestoneResource.Milestones%>">
+                <span class="menu-item-icon milestones"><svg class="menu-item-svg"><use base="<%= WebPath.GetPath("/")%>" href="/skins/default/images/svg/projects-icons.svg#projectsIconsmilestones"></use></svg></span>
                 <span class="menu-item-label inner-text"><%=MilestoneResource.Milestones%></span>
             </a>
             <span id="feed-new-milestones-count" class="feed-new-count"></span>
@@ -98,19 +116,23 @@
             <% if (!Page.Participant.IsVisitor)
                 { %>
             <li class="menu-sub-item filter">
-                <a id="menuMyMilestones" class="menu-item-label outer-text text-overflow" href=""><%=ProjectsFilterResource.MyMilestones%></a>
+                <a id="menuMyMilestones" class="menu-item-label outer-text text-overflow" href="" title="<%=ProjectsFilterResource.MyMilestones%>"><%=ProjectsFilterResource.MyMilestones%></a>
             </li>
             <%} %>
             <li class="menu-sub-item filter">
-                <a id="menuUpcomingMilestones" class="menu-item-label outer-text text-overflow" href=""><%=ProjectsFilterResource.Upcoming%></a>
+                <a id="menuUpcomingMilestones" class="menu-item-label outer-text text-overflow" href="" title="<%=ProjectsFilterResource.Upcoming%>"><%=ProjectsFilterResource.Upcoming%></a>
             </li>
         </ul>
     </li>
     <li id="menuTasks" class="menu-item <%if (!Page.Participant.IsVisitor) {%>sub-list <%}else {%> none-sub-list <%}%>">
         <div class="category-wrapper">
             <span class="expander"></span>
-            <a class="menu-item-label outer-text text-overflow" href="tasks.aspx">
-                <span class="menu-item-icon tasks"></span>
+            <a class="menu-item-label outer-text text-overflow" href="tasks.aspx" title="<%=TaskResource.Tasks%>">
+                <span class="menu-item-icon tasks">
+                  <svg class="menu-item-svg">
+                    <use base="<%= WebPath.GetPath("/")%>" href="/skins/default/images/svg/projects-icons.svg#projectsIconstasks"></use>
+                  </svg>
+                </span>
                 <span class="menu-item-label inner-text"><%=TaskResource.Tasks%></span>
             </a>
             <span id="feed-new-tasks-count" class="feed-new-count"></span>
@@ -119,10 +141,10 @@
             { %>
         <ul class="menu-sub-list">
             <li class="menu-sub-item filter">
-                <a id="menuMyTasks" class="menu-item-label outer-text text-overflow" href=""><%=ProjectsFilterResource.MyTasks%></a>
+                <a id="menuMyTasks" class="menu-item-label outer-text text-overflow" href="" title="<%=ProjectsFilterResource.MyTasks%>"><%=ProjectsFilterResource.MyTasks%></a>
             </li>
             <li class="menu-sub-item filter">
-                <a id="menuUpcomingTasks" class="menu-item-label outer-text text-overflow" href=""><%=ProjectsFilterResource.Upcoming%></a>
+                <a id="menuUpcomingTasks" class="menu-item-label outer-text text-overflow" href="" title="<%=ProjectsFilterResource.Upcoming%>"><%=ProjectsFilterResource.Upcoming%></a>
             </li>
         </ul>
         <%} %>
@@ -130,8 +152,12 @@
     <li id="menuMessages" class="menu-item sub-list">
         <div class="category-wrapper">
             <span class="expander"></span>
-            <a class="menu-item-label outer-text text-overflow" href="messages.aspx">
-                <span class="menu-item-icon messages"></span>
+            <a class="menu-item-label outer-text text-overflow" href="messages.aspx" title="<%=MessageResource.Messages%>">
+                <span class="menu-item-icon messages">
+<svg class="menu-item-svg">
+                    <use base="<%= WebPath.GetPath("/")%>" href="/skins/default/images/svg/projects-icons.svg#projectsIconsdiscussions"></use>
+                </svg>
+</span>
                 <span class="menu-item-label inner-text"><%=MessageResource.Messages%></span>
             </a>
             <span id="feed-new-discussions-count" class="feed-new-count"></span>
@@ -140,19 +166,19 @@
             <% if (!Page.Participant.IsVisitor)
                 { %>
             <li class="menu-sub-item filter">
-                <a id="menuMyDiscussions" class="menu-item-label outer-text text-overflow" href=""><%=ProjectsCommonResource.LeftMenuMyDiscussions%></a>
+                <a id="menuMyDiscussions" class="menu-item-label outer-text text-overflow" href="" title="<%=ProjectsCommonResource.LeftMenuMyDiscussions%>"><%=ProjectsCommonResource.LeftMenuMyDiscussions%></a>
             </li>
             <%} %>
             <li class="menu-sub-item filter">
-                <a id="menuLatestDiscussion" class="menu-item-label outer-text text-overflow" href=""><%=ProjectsCommonResource.LeftMenuLatest%></a>
+                <a id="menuLatestDiscussion" class="menu-item-label outer-text text-overflow" href="" title="<%=ProjectsCommonResource.LeftMenuLatest%>"><%=ProjectsCommonResource.LeftMenuLatest%></a>
             </li>
         </ul>
     </li>
     <% if (!MobileDetector.IsMobile)
         { %>
     <li id="menuGanttChart" class="menu-item none-sub-list">
-        <a class="menu-item-label outer-text text-overflow" href="ganttchart.aspx">
-            <span class="menu-item-icon chart"></span>
+        <a class="menu-item-label outer-text text-overflow" href="ganttchart.aspx" title="<%= ProjectResource.GanttGart %>">
+            <span class="menu-item-icon chart"><svg class="menu-item-svg"><use base="<%= WebPath.GetPath("/")%>" href="/skins/default/images/svg/projects-icons.svg#projectsIconsgantt-diagram"></use></svg></span>
             <span class="menu-item-label inner-text"><%= ProjectResource.GanttGart %></span>
         </a>
     </li>
@@ -160,8 +186,8 @@
     <%if (!Page.Participant.IsVisitor)
         {%>
     <li id="menuTimeTracking" class="menu-item none-sub-list">
-        <a class="menu-item-label outer-text text-overflow" href="timeTracking.aspx">
-            <span class="menu-item-icon timetrack"></span>
+        <a class="menu-item-label outer-text text-overflow" href="timeTracking.aspx" title="<%=ProjectsCommonResource.TimeTracking%>">
+            <span class="menu-item-icon timetrack"><svg class="menu-item-svg"><use base="<%= WebPath.GetPath("/")%>" href="/skins/default/images/svg/projects-icons.svg#projectsIconstimetrack"></use></svg></span>
             <span class="menu-item-label inner-text"><%=ProjectsCommonResource.TimeTracking%></span>
         </a>
     </li>
@@ -171,8 +197,8 @@
             {%>
         <div class="category-wrapper">
             <span class="expander"></span>
-            <a class="menu-item-label outer-text text-overflow">
-                <span class="menu-item-icon documents"></span>
+            <a class="menu-item-label outer-text text-overflow" title="<%= ProjectsFileResource.Documents %>">
+                <span class="menu-item-icon documents"><svg class="menu-item-svg"><use base="<%= WebPath.GetPath("/")%>" href="/skins/default/images/svg/projects-icons.svg#projectsIconsdocuments"></use></svg></span>
                 <span class="menu-item-label inner-text"><%= ProjectsFileResource.Documents %></span>
             </a>
             <span class="new-label-menu is-new display-none" title="<%= ASC.Web.Files.Resources.FilesUCResource.RemoveIsNew %>" data-id="<%= ASC.Web.Files.Classes.Global.FolderProjects %>"></span>
@@ -181,8 +207,8 @@
             <asp:PlaceHolder runat="server" ID="placeHolderFolderTree"></asp:PlaceHolder>
         </div>
         <% } else{%>
-            <a class="menu-item-label outer-text text-overflow" href="tmdocs.aspx">
-                <span class="menu-item-icon documents"></span>
+            <a class="menu-item-label outer-text text-overflow" href="tmdocs.aspx" title="<%= ProjectsFileResource.Documents %>">
+                <span class="menu-item-icon documents"><svg class="menu-item-svg"><use base="<%= WebPath.GetPath("/")%>" href="/skins/default/images/svg/projects-icons.svg#projectsIconsdocuments"></use></svg></span>
                 <span class="menu-item-label inner-text"><%= ProjectsFileResource.Documents %></span>
             </a>
         <% } %>
@@ -190,17 +216,17 @@
     <% if (!Page.Participant.IsVisitor)
         { %>
         <li id="menuReports" class="menu-item none-sub-list">
-            <a class="menu-item-label outer-text text-overflow" href="reports.aspx">
-                <span class="menu-item-icon reports"></span>
+            <a class="menu-item-label outer-text text-overflow" href="reports.aspx" title="<%= ProjectsCommonResource.ReportsModuleTitle %>">
+                <span class="menu-item-icon reports"><svg class="menu-item-svg"><use base="<%= WebPath.GetPath("/")%>" href="/skins/default/images/svg/projects-icons.svg#projectsIconsstatistic"></use></svg></span>
                 <span class="menu-item-label inner-text"><%= ProjectsCommonResource.ReportsModuleTitle %></span>
             </a>     
         </li>
                 
-        <% if (ProjectSecurity.CanCreate<Project>(null))
+        <% if (Page.ProjectSecurity.CanCreate<Project>(null))
         { %>
         <li id="menuTemplates" class="menu-item none-sub-list">
-            <a id="menuProjectTemplate" class="menu-item-label outer-text text-overflow" href="projectTemplates.aspx">
-                <span class="menu-item-icon proj-templates"></span>
+            <a id="menuProjectTemplate" class="menu-item-label outer-text text-overflow" href="projectTemplates.aspx" title="<%= ProjectResource.ProjectTemplates %>">
+                <span class="menu-item-icon proj-templates"><svg class="menu-item-svg"><use base="<%= WebPath.GetPath("/")%>" href="/skins/default/images/svg/projects-icons.svg#projectsIconsproject-templates"></use></svg></span>
                 <span class="menu-item-label inner-text"><%= ProjectResource.ProjectTemplates %></span>
             </a>
         </li>
@@ -208,24 +234,30 @@
 
     <asp:PlaceHolder ID="InviteUserHolder" runat="server"></asp:PlaceHolder>
 <% } %>
-    <% if (ProjectSecurity.IsProjectsEnabled())
+    <% if (Page.ProjectSecurity.IsProjectsEnabled())
         { %>
         <li id="menuSettings" class="menu-item sub-list add-block">
             <div class="category-wrapper">
                 <span class="expander"></span>
-                <a class="menu-item-label outer-text text-overflow" href="settings.aspx">
-                    <span class="menu-item-icon settings"></span>
+                <a class="menu-item-label outer-text text-overflow" href="settings.aspx" title="<%= ProjectsCommonResource.Settings %>">
+                    <span class="menu-item-icon settings"><svg class="menu-item-svg"><use base="<%= WebPath.GetPath("/")%>" href="/skins/default/images/svg/top-studio-menu.svg#svgTopStudioMenusettings"></use></svg></span>
                     <span class="menu-item-label inner-text"><%= ProjectsCommonResource.Settings %></span>
                 </a>
             </div>
             <ul class="menu-sub-list">
                 <li class="menu-sub-item">
-                    <a class="menu-item-label outer-text text-overflow" href="settings.aspx"><%= ProjectsCommonResource.CommonSettings %></a>
+                    <a class="menu-item-label outer-text text-overflow" href="settings.aspx" title="<%= ProjectsCommonResource.CommonSettings %>"><%= ProjectsCommonResource.CommonSettings %></a>
                 </li>
+                <% if (IsProjectAdmin)
+                   { %>
+                <li class="menu-sub-item">
+                    <a class="menu-item-label outer-text text-overflow" href="settings.aspx#status" title="<%= ProjectsCommonResource.TaskStatusesSettings %>"><%= ProjectsCommonResource.TaskStatusesSettings %></a>
+                </li>
+                <% } %>
                 <% if (IsFullAdmin)
                     { %>
                 <li id="menuAccessRights" class="menu-sub-item">
-                    <a class="menu-item-label outer-text text-overflow" href="<%= CommonLinkUtility.GetAdministration(ManagementType.AccessRights) + "#projects" %>"><%= ProjectResource.AccessRightSettings %></a>
+                    <a class="menu-item-label outer-text text-overflow" href="<%= CommonLinkUtility.GetAdministration(ManagementType.AccessRights) + "#projects" %>" title="<%= ProjectResource.AccessRightSettings %>"><%= ProjectResource.AccessRightSettings %></a>
                 </li>
                 <% } %>
             </ul>

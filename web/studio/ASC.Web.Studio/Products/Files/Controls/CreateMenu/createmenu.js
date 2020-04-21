@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -38,6 +38,16 @@ window.ASC.Files.CreateMenu = (function () {
             inPopup: true,
             addTop: 4
         });
+
+        jq.dropdownToggle({
+            switcherSelector: "#menuUploadActionsButton:not(.disable)",
+            dropdownID: "uploadActions",
+            beforeShowFunction: function () {
+                jq("#buttonFolderUpload").toggleClass("disable", !!ASC.Desktop && ASC.Desktop.encryptionSupport() && !!ASC.Desktop.encryptionUploadDialog);
+            },
+            inPopup: true,
+            addTop: 4
+        });
     };
 
     var updateCreateDocList = function () {
@@ -62,7 +72,7 @@ window.ASC.Files.CreateMenu = (function () {
     };
 
     var disableMenu = function (enable) {
-        var listButtons = jq("#buttonUpload, #createDocument, #createSpreadsheet, #createPresentation, #createNewFolder" +
+        var listButtons = jq("#menuUploadActionsButton, #buttonUpload, #buttonFolderUpload, #createDocument, #createSpreadsheet, #createPresentation, #createNewFolder" +
             (!ASC.Files.Tree.folderIdCurrentRoot
                 ? ", .page-menu .menu-actions .menu-main-button"
                 : ""));

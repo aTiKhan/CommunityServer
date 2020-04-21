@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -36,7 +36,7 @@ using ASC.ActiveDirectory.Base;
 using ASC.ActiveDirectory.Base.Data;
 using ASC.ActiveDirectory.Novell.Exceptions;
 using ASC.ActiveDirectory.Novell.Extensions;
-using log4net;
+using ASC.Common.Logging;
 using Novell.Directory.Ldap;
 using Novell.Directory.Ldap.Controls;
 using Novell.Directory.Ldap.Utilclass;
@@ -45,7 +45,7 @@ namespace ASC.ActiveDirectory.Novell
 {
     public class NovellLdapSearcher: IDisposable
     {
-        private readonly ILog _log = LogManager.GetLogger(typeof(NovellLdapSearcher));
+        private readonly ILog _log = LogManager.GetLogger("ASC");
         private LdapCertificateConfirmRequest _certificateConfirmRequest;
         private static readonly object RootSync = new object();
 

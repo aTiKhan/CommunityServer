@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -215,6 +215,11 @@ namespace ASC.Xmpp.Core.protocol
         ///   <para>XEP-0184: Message Receipts</para> <para>urn:xmpp:receipts</para>
         /// </summary>
         public const string MSG_RECEIPT = "urn:xmpp:receipts";
+
+        /// <summary>
+        ///   <para>XEP-0333: Chat Markers</para> <para>urn:xmpp:chat-markers:0</para>
+        /// </summary>
+        public const string MSG_CHAT_MARKERS = "urn:xmpp:chat-markers:0";
 
         /// <summary>
         ///   Multi User Chat (MUC) JEP-0045 http://jabber.org/protocol/muc

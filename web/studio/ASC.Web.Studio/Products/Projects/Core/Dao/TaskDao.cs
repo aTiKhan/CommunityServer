@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,19 +24,21 @@
 */
 
 
-using ASC.Collections;
-using ASC.Common.Data.Sql;
-using ASC.Common.Data.Sql.Expressions;
-using ASC.Core.Tenants;
-using ASC.FullTextIndex;
-using ASC.Projects.Core.DataInterfaces;
-using ASC.Projects.Core.Domain;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
 using System.Linq;
+
+using ASC.Collections;
+using ASC.Common.Data.Sql;
+using ASC.Common.Data.Sql.Expressions;
+using ASC.Core.Tenants;
+using ASC.Projects.Core.DataInterfaces;
+using ASC.Projects.Core.Domain;
+using ASC.ElasticSearch;
 using ASC.Web.Projects;
+using ASC.Web.Projects.Core.Search;
 
 namespace ASC.Projects.Data.DAO
 {
@@ -44,7 +46,7 @@ namespace ASC.Projects.Data.DAO
     {
         private readonly HttpRequestDictionary<Task> taskCache = new HttpRequestDictionary<Task>("task");
 
-        public CachedTaskDao(int tenantID, IDaoFactory factory) : base(tenantID, factory)
+        public CachedTaskDao(int tenantID) : base(tenantID)
         {
         }
 
@@ -82,14 +84,16 @@ namespace ASC.Projects.Data.DAO
 
     class TaskDao : BaseDao, ITaskDao
     {
-        public static readonly string[] TaskColumns = new[] { "id", "title", "description", "status", "create_by", "create_on", "last_modified_by", "last_modified_on", "priority", "milestone_id", "sort_order", "deadline", "start_date", "progress", "responsibles" };
+        public static readonly string[] TaskColumns = new[] { "id", "title", "description", "status", "create_by", "create_on", "last_modified_by", "last_modified_on", "priority", "milestone_id", "sort_order", "deadline", "start_date", "progress", "responsibles", "status_id" };
         private readonly Converter<object[], Task> converter;
 
-        private readonly ISubtaskDao SubtaskDao;
-        public TaskDao(int tenantID, IDaoFactory factory) : base(tenantID)
+        private ISubtaskDao SubtaskDao { get { return DaoFactory.SubtaskDao; } }
+
+        public IDaoFactory DaoFactory { get; set; }
+
+        public TaskDao(int tenantID) : base(tenantID)
         {
             converter = ToTask;
-            SubtaskDao = factory.SubtaskDao;
         }
 
 
@@ -235,10 +239,10 @@ namespace ASC.Projects.Data.DAO
             return result;
         }
 
-        public Dictionary<Guid, int> GetByFilterCountForReport(TaskFilter filter, bool isAdmin, bool checkAccess)
+        public List<Tuple<Guid, int, int>> GetByFilterCountForReport(TaskFilter filter, bool isAdmin, bool checkAccess)
         {
             var query = new SqlQuery(TasksTable + " t")
-                .Select("t.create_by")
+                .Select("t.create_by", "t.project_id")
                 .InnerJoin(ProjectsTable + " p", Exp.EqColumns("t.project_id", "p.id") & Exp.EqColumns("t.tenant_id", "p.tenant_id"))
                 .Where("t.tenant_id", Tenant)
                 .Where(Exp.Between("t.create_on", filter.GetFromDate(), filter.GetToDate()));
@@ -254,11 +258,11 @@ namespace ASC.Projects.Data.DAO
 
             var queryCount = new SqlQuery()
                 .SelectCount()
-                .Select("t1.create_by")
+                .Select("t1.create_by", "t1.project_id")
                 .From(query, "t1")
-                .GroupBy("create_by");
+                .GroupBy("create_by", "project_id");
 
-            return Db.ExecuteList(queryCount).ToDictionary(a => Guid.Parse((string)a[1]), b => Convert.ToInt32(b[0])); ;
+            return Db.ExecuteList(queryCount).ConvertAll(b => new Tuple<Guid, int, int>(Guid.Parse((string)b[1]), Convert.ToInt32(b[2]),Convert.ToInt32(b[0])));
         }
 
         public List<Task> GetByResponsible(Guid responsibleId, IEnumerable<TaskStatus> statuses)
@@ -389,6 +393,7 @@ namespace ASC.Projects.Data.DAO
                     .Set("status_changed", TenantUtil.DateTimeToUtc(task.StatusChangedOn))
                     .Set("start_date", task.StartDate)
                     .Set("progress", task.Progress)
+                    .Set("status_id", task.CustomTaskStatus)
                     .Where("id", task.ID);
 
                 Db.ExecuteNonQuery(update);
@@ -524,6 +529,7 @@ namespace ASC.Projects.Data.DAO
                 .Select("t.id", "t.title", "t.create_by", "t.create_on", "t.last_modified_by", "t.last_modified_on")
                 .Select("t.description", "t.priority", "t.status", "t.milestone_id", "t.sort_order", "t.deadline", "t.start_date", "t.progress")
                 .Select("group_concat(distinct ptr.responsible_id) task_resp")
+                .Select("t.status_id")
                 .Where("t.tenant_id", Tenant)
                 .GroupBy("t.id");
         }
@@ -562,13 +568,24 @@ namespace ASC.Projects.Data.DAO
                 }
             }
 
-            if (filter.TaskStatuses.Count != 0)
+            if (filter.Substatus.HasValue)
+            {
+                var substatus = filter.Substatus.Value;
+                if (substatus > -1)
+                {
+                    query.InnerJoin(StatusTable + " pstat", Exp.EqColumns("pstat.tenant_id", "t.tenant_id") & Exp.Eq("pstat.id", filter.Substatus.Value));
+                    query.Where(Exp.Eq("t.status_id", filter.Substatus.Value) | (Exp.Eq("t.status_id", null) & Exp.EqColumns("t.status", "pstat.statusType") & Exp.Eq("pstat.isDefault", true)));
+                }
+                else
+                {
+                    query.Where("t.status", -substatus).Where("t.status_id", null);
+
+                }
+            }
+            else if (filter.TaskStatuses.Count != 0)
             {
                 var status = filter.TaskStatuses.First();
-                if (status == TaskStatus.Open)
-                    query.Where(!Exp.Eq("t.status", TaskStatus.Closed));
-                else
-                    query.Where("t.status", TaskStatus.Closed);
+                query.Where("t.status", status);
             }
 
             if (!filter.UserId.Equals(Guid.Empty))
@@ -600,12 +617,14 @@ namespace ASC.Projects.Data.DAO
 
             if (!string.IsNullOrEmpty(filter.SearchText))
             {
-                if (FullTextSearch.SupportModule(FullTextSearch.ProjectsTasksModule))
+                List<int> taskIds;
+                if (FactoryIndexer<TasksWrapper>.TrySelectIds(s => s.MatchAll(filter.SearchText), out taskIds))
                 {
-                    var taskIds = FullTextSearch.Search(FullTextSearch.ProjectsTasksModule.Match(filter.SearchText));
-
-                    if (FullTextSearch.SupportModule(FullTextSearch.ProjectsSubtasksModule))
-                        taskIds.AddRange(FullTextSearch.Search(FullTextSearch.ProjectsSubtasksModule.Select("task_id").Match(filter.SearchText)));
+                    IReadOnlyCollection<SubtasksWrapper> subtaskIds;
+                    if (FactoryIndexer<SubtasksWrapper>.TrySelect(s => s.MatchAll(filter.SearchText), out subtaskIds))
+                    {
+                        taskIds.AddRange(subtaskIds.Select(r => r.Task).ToList());
+                    }
 
                     query.Where(Exp.In("t.id", taskIds));
                 }
@@ -751,7 +770,8 @@ namespace ASC.Projects.Data.DAO
                 StartDate = !startDate.Equals(DateTime.MinValue) ? DateTime.SpecifyKind(startDate, DateTimeKind.Local) : default(DateTime),
                 Progress = Convert.ToInt32(r[13 + offset]),
                 Responsibles = !string.IsNullOrEmpty((string)r[14 + offset]) ? new List<Guid>(((string)r[14 + offset]).Split(',').Select(ToGuid)) : new List<Guid>(),
-                SubTasks = new List<Subtask>()
+                SubTasks = new List<Subtask>(),
+                CustomTaskStatus = r[15 + offset] != null ? (int?)Convert.ToInt32(r[15 + offset]) : null
             };
 
             return task;

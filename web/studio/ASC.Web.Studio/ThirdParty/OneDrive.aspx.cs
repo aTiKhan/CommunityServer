@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -38,10 +38,8 @@ namespace ASC.Web.Studio.ThirdParty
     {
         public static string Location
         {
-            get { return CommonLinkUtility.ToAbsolute("~/thirdparty/onedrive.aspx"); }
+            get { return CommonLinkUtility.ToAbsolute("~/ThirdParty/OneDrive.aspx"); }
         }
-
-        private const string Source = "onedrive";
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -60,15 +58,11 @@ namespace ASC.Web.Studio.ThirdParty
                 var code = Request["code"];
                 if (string.IsNullOrEmpty(code))
                 {
-                    OAuth20TokenHelper.RequestCode(HttpContext.Current,
-                                                   OneDriveLoginProvider.OneDriveOauthCodeUrl,
-                                                   OneDriveLoginProvider.OneDriveOAuth20ClientId,
-                                                   OneDriveLoginProvider.OneDriveOAuth20RedirectUrl,
-                                                   OneDriveLoginProvider.OneDriveProfileScope);
+                    OAuth20TokenHelper.RequestCode<OneDriveLoginProvider>(HttpContext.Current, OneDriveLoginProvider.Instance.Scopes);
                 }
                 else
                 {
-                    Master.SubmitToken(code, Source);
+                    Master.SubmitCode(code);
                 }
             }
             catch (ThreadAbortException)
@@ -76,7 +70,7 @@ namespace ASC.Web.Studio.ThirdParty
             }
             catch (Exception ex)
             {
-                Master.SubmitError(ex.Message, Source);
+                Master.SubmitError(ex.Message);
             }
         }
     }

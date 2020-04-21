@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -31,7 +31,6 @@ using ASC.Xmpp.Core.protocol;
 using ASC.Xmpp.Core.utils.Idn;
 using ASC.Xmpp.Server.Gateway;
 using ASC.Xmpp.Server.Services;
-using log4net.Config;
 
 namespace ASC.Xmpp.Server.Configuration
 {
@@ -62,8 +61,6 @@ namespace ASC.Xmpp.Server.Configuration
 
         public static void Configure(XmppServer server, string configFile)
         {
-            XmlConfigurator.Configure();
-
             var jabberSection = GetSection(configFile);
 
             ConfigureListeners(jabberSection, server);

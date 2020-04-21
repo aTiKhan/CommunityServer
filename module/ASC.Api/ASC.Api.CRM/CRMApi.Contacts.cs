@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -27,12 +27,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Security;
 using System.Web;
 using ASC.Api.Attributes;
 using ASC.Api.Collections;
 using ASC.Api.CRM.Wrappers;
+using ASC.Api.Employee;
 using ASC.Api.Exceptions;
 using ASC.Common.Threading.Progress;
 using ASC.CRM.Core;
@@ -41,13 +41,15 @@ using ASC.MessagingSystem;
 using ASC.Projects.Engine;
 using ASC.Specific;
 using ASC.Thrdparty;
-using ASC.Thrdparty.Facebook;
 using ASC.Thrdparty.Twitter;
 using ASC.Web.CRM.Classes;
 using ASC.Web.CRM.Classes.SocialMedia;
 using ASC.Web.CRM.Core.Enums;
 using ASC.Web.CRM.Resources;
 using ASC.Web.CRM.SocialMedia;
+using ASC.Web.Projects.Core;
+using ASC.Web.Studio.Core;
+using Autofac;
 using Contact = ASC.CRM.Core.Entities.Contact;
 
 namespace ASC.Api.CRM
@@ -121,7 +123,11 @@ namespace ASC.Api.CRM
 
             var project = ProjectsDaoFactory.ProjectDao.GetById(projectid);
             if (project == null) throw new ItemNotFoundException();
-            if (!ProjectSecurity.CanLinkContact(project)) throw CRMSecurity.CreateSecurityException();
+
+            using (var scope = DIHelper.Resolve())
+            {
+                if (!scope.Resolve<ProjectSecurity>().CanLinkContact(project)) throw CRMSecurity.CreateSecurityException();
+            }
 
             DaoFactory.ContactDao.SetRelativeContactProject(new List<int> {contactid}, projectid);
 
@@ -154,7 +160,12 @@ namespace ASC.Api.CRM
 
             var project = ProjectsDaoFactory.ProjectDao.GetById(projectid);
             if (project == null) throw new ItemNotFoundException();
-            if (!ProjectSecurity.CanLinkContact(project)) throw CRMSecurity.CreateSecurityException();
+
+            using (var scope = DIHelper.Resolve())
+            {
+                if (!scope.Resolve<ProjectSecurity>().CanLinkContact(project))
+                    throw CRMSecurity.CreateSecurityException();
+            }
 
 
             var contacts = DaoFactory.ContactDao.GetContacts(contactIds.ToArray()).Where(CRMSecurity.CanAccessTo).ToList();
@@ -186,7 +197,11 @@ namespace ASC.Api.CRM
             if (contact == null || !CRMSecurity.CanAccessTo(contact)) throw new ItemNotFoundException();
 
             var project = ProjectsDaoFactory.ProjectDao.GetById(projectid);
-            if (project == null || !ProjectSecurity.CanLinkContact(project)) throw new ItemNotFoundException();
+
+            using (var scope = DIHelper.Resolve())
+            {
+                if (project == null || !scope.Resolve<ProjectSecurity>().CanLinkContact(project)) throw new ItemNotFoundException();
+            }
 
             DaoFactory.ContactDao.RemoveRelativeContactProject(contactid, projectid);
 
@@ -231,7 +246,7 @@ namespace ASC.Api.CRM
         /// </summary>
         /// <param name="opportunityid">Opportunity ID</param>
         /// <param name="contactid">Contact ID</param>
-        /// <short>Add contact opportunity</short> 
+        /// <short>Delete contact opportunity</short> 
         /// <category>Contacts</category>
         /// <exception cref="ArgumentException"></exception>
         /// <returns>
@@ -741,16 +756,25 @@ namespace ASC.Api.CRM
         [Update(@"contact/{contactid:[0-9]+}/changephoto")]
         public string ChangeContactPhoto(int contactid, IEnumerable<HttpPostedFileBase> photo)
         {
-            if (contactid <= 0) throw new ArgumentException();
+            if (contactid <= 0)
+                throw new ArgumentException();
 
             var contact = DaoFactory.ContactDao.GetByID(contactid);
-            if (contact == null || !CRMSecurity.CanAccessTo(contact)) throw new ItemNotFoundException();
+            if (contact == null || !CRMSecurity.CanAccessTo(contact))
+                throw new ItemNotFoundException();
 
             var firstPhoto = photo != null ? photo.FirstOrDefault() : null;
+            if (firstPhoto == null)
+                throw new ArgumentException();
 
-            if (firstPhoto == null) return string.Empty;
-            if (!(firstPhoto.ContentType.StartsWith("image/") && firstPhoto.ContentLength > 0)) return string.Empty;
-            if (!firstPhoto.InputStream.CanRead) return string.Empty;
+            if (firstPhoto.ContentLength == 0 ||
+                !firstPhoto.ContentType.StartsWith("image/") || 
+                !firstPhoto.InputStream.CanRead)
+                throw new InvalidOperationException(CRMErrorsResource.InvalidFile);
+
+            if (SetupInfo.MaxImageUploadSize > 0 &&
+                SetupInfo.MaxImageUploadSize < firstPhoto.ContentLength)
+                throw new Exception(FileSizeComment.GetFileImageSizeNote(CRMCommonResource.ErrorMessage_UploadFileSize, false));
 
             return ContactPhotoManager.UploadPhoto(firstPhoto.InputStream, contactid, false).Url;
         }
@@ -785,10 +809,11 @@ namespace ASC.Api.CRM
         /// <short>Merge contacts</short> 
         /// <category>Contacts</category>
         /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="ItemNotFoundException"></exception>
+        /// <exception cref="SecurityException"></exception>
         /// <returns>
         ///    Contact
         /// </returns>
-        /// <exception cref="ArgumentException"></exception>
         [Update(@"contact/merge")]
         public ContactWrapper MergeContacts(int fromcontactid, int tocontactid)
         {
@@ -797,7 +822,9 @@ namespace ASC.Api.CRM
             var fromContact = DaoFactory.ContactDao.GetByID(fromcontactid);
             var toContact = DaoFactory.ContactDao.GetByID(tocontactid);
 
-            if (fromContact == null || toContact == null || !CRMSecurity.CanEdit(fromContact) || !CRMSecurity.CanEdit(toContact)) throw new ItemNotFoundException();
+            if (fromContact == null || toContact == null) throw new ItemNotFoundException();
+
+            if (!CRMSecurity.CanEdit(fromContact) || !CRMSecurity.CanEdit(toContact)) throw CRMSecurity.CreateSecurityException();
 
             DaoFactory.ContactDao.MergeDublicate(fromcontactid, tocontactid);
             var resultContact = DaoFactory.ContactDao.GetByID(tocontactid);
@@ -1275,6 +1302,32 @@ namespace ASC.Api.CRM
         }
 
         /// <summary>
+        ///   Get access rights to the contact with the ID specified in the request
+        /// </summary>
+        /// <short>Get contact access rights</short> 
+        /// <category>Contacts</category>
+        ///<exception cref="ArgumentException"></exception>
+        ///<exception cref="ItemNotFoundException"></exception>
+        ///<exception cref="SecurityException"></exception>
+        /// <returns>User list</returns>
+        [Read(@"contact/{contactid:[0-9]+}/access")]
+        public IEnumerable<EmployeeWraper> GetContactAccessList(int contactid)
+        {
+            if (contactid <= 0) throw new ArgumentException();
+
+            var contact = DaoFactory.ContactDao.GetByID(contactid);
+
+            if (contact == null) throw new ItemNotFoundException();
+
+            if (!CRMSecurity.CanAccessTo(contact)) throw CRMSecurity.CreateSecurityException();
+
+            return CRMSecurity.IsPrivate(contact)
+                       ? CRMSecurity.GetAccessSubjectTo(contact)
+                                    .Select(item => EmployeeWraper.Get(item.Key))
+                       : new List<EmployeeWraper>();
+        }
+
+        /// <summary>
         ///   Sets access rights for other users to the contact with the ID specified in the request
         /// </summary>
         /// <param name="contactid">Contact ID</param>
@@ -1651,33 +1704,6 @@ namespace ASC.Api.CRM
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="searchText"></param>
-        /// <param name="isUser"></param>
-        /// <category>Contacts</category>
-        /// <returns></returns>
-        [Read(@"contact/facebookprofile")]
-        public List<FacebookUserInfo> FindFacebookProfiles(string searchText, bool isUser)
-        {
-            try
-            {
-                FacebookApiInfo apiInfo = FacebookApiHelper.GetFacebookApiInfoForCurrentUser();
-                if (apiInfo == null)
-                    throw new SocialMediaAccountNotFound(CRMSocialMediaResource.SocialMediaAccountNotFoundFacebook);
-
-                FacebookDataProvider facebookProvider = new FacebookDataProvider(apiInfo);
-
-
-                return facebookProvider.FindPages(searchText, isUser);
-            }
-            catch (Exception ex)
-            {
-                throw new SocialMediaUI(DaoFactory).ProcessError(ex, "ASC.Api.CRM.CRMApi.FindFacebookProfiles");
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
         /// <param name="contactId"></param>
         /// <param name="contactType"></param>
         /// <param name="uploadOnly"></param>
@@ -1735,14 +1761,12 @@ namespace ASC.Api.CRM
                 return new List<SocialMediaImageDescription>();
             }
             var twitter = new List<String>();
-            var facebook = new List<String>();
 
             foreach (var sn in socialNetworks) {
                 if (sn.InfoType == ContactInfoType.Twitter) twitter.Add(sn.Data);
-                if (sn.InfoType == ContactInfoType.Facebook) facebook.Add(sn.Data);
             }
 
-            return new SocialMediaUI(DaoFactory).GetContactSMImages(twitter, facebook);
+            return new SocialMediaUI(DaoFactory).GetContactSMImages(twitter);
         }
 
         /// <summary>
@@ -1758,7 +1782,7 @@ namespace ASC.Api.CRM
         [Update(@"contact/{contactid:[0-9]+}/avatar")]
         public ContactPhotoManager.PhotoData UploadUserAvatarFromSocialNetwork(int contactId, SocialNetworks socialNetwork, string userIdentity, bool uploadOnly, string tmpDirName)
         {
-            if (socialNetwork != SocialNetworks.Twitter && socialNetwork != SocialNetworks.Facebook)
+            if (socialNetwork != SocialNetworks.Twitter)
                 throw new ArgumentException();
 
             if (contactId != 0)
@@ -1773,13 +1797,7 @@ namespace ASC.Api.CRM
             {
                 var provider = new TwitterDataProvider(TwitterApiHelper.GetTwitterApiInfoForCurrentUser());
                 var imageUrl = provider.GetUrlOfUserImage(userIdentity, TwitterDataProvider.ImageSize.Original);
-                return UploadAvatar(contactId, imageUrl, uploadOnly, tmpDirName);
-            }
-            if (socialNetwork == SocialNetworks.Facebook)
-            {
-                var provider = new FacebookDataProvider(FacebookApiHelper.GetFacebookApiInfoForCurrentUser());
-                var imageUrl = provider.GetUrlOfUserImage(userIdentity, FacebookDataProvider.ImageSize.Original);
-                return UploadAvatar(contactId, imageUrl, uploadOnly, tmpDirName);
+                return UploadAvatar(contactId, imageUrl, uploadOnly, tmpDirName, false);
             }
 
             return null;
@@ -1851,15 +1869,15 @@ namespace ASC.Api.CRM
         }
         
 
-        private static ContactPhotoManager.PhotoData UploadAvatar(int contactID, string imageUrl, bool uploadOnly, string tmpDirName)
+        private static ContactPhotoManager.PhotoData UploadAvatar(int contactID, string imageUrl, bool uploadOnly, string tmpDirName, bool checkFormat = true)
         {
             if (contactID != 0)
             {
-                return ContactPhotoManager.UploadPhoto(imageUrl, contactID, uploadOnly);
+                return ContactPhotoManager.UploadPhoto(imageUrl, contactID, uploadOnly, checkFormat);
             }
 
             if (string.IsNullOrEmpty(tmpDirName) || tmpDirName == "null") tmpDirName = null;
-            return ContactPhotoManager.UploadPhotoToTemp(imageUrl, tmpDirName);
+            return ContactPhotoManager.UploadPhotoToTemp(imageUrl, tmpDirName, checkFormat);
         }
 
         private IEnumerable<ContactWithTaskWrapper> ToSimpleListContactWrapper(IReadOnlyList<Contact> itemList)

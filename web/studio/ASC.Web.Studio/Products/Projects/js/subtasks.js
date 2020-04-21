@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -44,6 +44,8 @@ ASC.Projects.SubtasksManager = (function () {
     var escKey = 27,
         enterKey = 13;
 
+    var allUsers;
+
     var init = function () {
         if (isInit) {
             return;
@@ -51,6 +53,7 @@ ASC.Projects.SubtasksManager = (function () {
 
         isInit = true;
         teamlab = Teamlab;
+        allUsers = UserManager.getAllUsers(true);
 
         currentUserId = teamlab.profile.id;
         currentProjectId = jq.getURLParam("prjID");
@@ -277,7 +280,7 @@ ASC.Projects.SubtasksManager = (function () {
             return { id: item.id, title: item.displayName };
         }
 
-        var choose = validTeamMembers.find(function (item) { return item.id === subtaskResponsible });
+        var choose = allUsers[subtaskResponsible];
         if (!choose) {
             choose = nobody;
         }

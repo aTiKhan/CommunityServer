@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,6 +25,7 @@
 
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Web;
 using ASC.FederatedLogin.Helpers;
@@ -38,14 +39,11 @@ namespace ASC.Web.Studio.ThirdParty
     {
         public static string Location
         {
-            get { return CommonLinkUtility.ToAbsolute("~/thirdparty/dropbox.aspx"); }
+            get { return CommonLinkUtility.ToAbsolute("~/ThirdParty/Dropbox.aspx"); }
         }
-
-        private const string Source = "dropboxv2";
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            var code = Request["code"];
             try
             {
                 var error = Request["error"];
@@ -58,16 +56,18 @@ namespace ASC.Web.Studio.ThirdParty
                     throw new Exception(error);
                 }
 
+                var code = Request["code"];
                 if (string.IsNullOrEmpty(code))
                 {
-                    OAuth20TokenHelper.RequestCode(HttpContext.Current,
-                                                   DropboxLoginProvider.DropboxOauthCodeUrl,
-                                                   DropboxLoginProvider.DropboxOAuth20ClientId,
-                                                   DropboxLoginProvider.DropboxOAuth20RedirectUrl);
+                    OAuth20TokenHelper.RequestCode<DropboxLoginProvider>(HttpContext.Current,
+                                                                         additionalArgs: new Dictionary<string, string>
+                                                                             {
+                                                                                 { "force_reauthentication", "true" }
+                                                                             });
                 }
                 else
                 {
-                    Master.SubmitToken(code, Source);
+                    Master.SubmitCode(code);
                 }
             }
             catch (ThreadAbortException)
@@ -75,7 +75,7 @@ namespace ASC.Web.Studio.ThirdParty
             }
             catch (Exception ex)
             {
-                Master.SubmitError(ex.Message, Source);
+                Master.SubmitError(ex.Message);
             }
         }
     }

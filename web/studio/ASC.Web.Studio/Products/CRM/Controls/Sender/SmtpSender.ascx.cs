@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -36,7 +36,7 @@ namespace ASC.Web.CRM.Controls.Sender
     {
         public static String Location
         {
-            get { return PathProvider.GetFileStaticRelativePath("sender/smtpsender.ascx"); }
+            get { return PathProvider.GetFileStaticRelativePath("Sender/SmtpSender.ascx"); }
         }
 
         protected void Page_Load(object sender, EventArgs e)
@@ -76,7 +76,7 @@ namespace ASC.Web.CRM.Controls.Sender
 
         private void RegisterScript()
         {
-            Page.RegisterBodyScripts("~/usercontrols/common/ckeditor/ckeditor-connector.js");
+            Page.RegisterBodyScripts("~/UserControls/Common/ckeditor/ckeditor-connector.js");
 
             var sb = new StringBuilder();
 

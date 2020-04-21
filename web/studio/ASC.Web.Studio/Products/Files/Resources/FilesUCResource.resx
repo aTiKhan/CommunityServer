@@ -117,6 +117,12 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="AceStatusEnum_Comment" xml:space="preserve">
+    <value>Comment</value>
+  </data>
+  <data name="AceStatusEnum_FillForms" xml:space="preserve">
+    <value>Form Filling</value>
+  </data>
   <data name="AceStatusEnum_Read" xml:space="preserve">
     <value>Read Only</value>
   </data>
@@ -192,11 +198,20 @@
   <data name="ButtonCreateFolder" xml:space="preserve">
     <value>Folder</value>
   </data>
+  <data name="ButtonCreateDocument2" xml:space="preserve">
+    <value>Create Document</value>
+  </data>
   <data name="ButtonCreatePresentation" xml:space="preserve">
     <value>Presentation</value>
   </data>
+  <data name="ButtonCreatePresentation2" xml:space="preserve">
+    <value>Create Presentation</value>
+  </data>
   <data name="ButtonCreateSpreadsheet" xml:space="preserve">
     <value>Spreadsheet</value>
+  </data>
+  <data name="ButtonCreateSpreadsheet2" xml:space="preserve">
+    <value>Create Spreadsheet</value>
   </data>
   <data name="ButtonCreateText" xml:space="preserve">
     <value>Document</value>
@@ -225,14 +240,17 @@
   <data name="ButtonFilterDocument" xml:space="preserve">
     <value>Documents</value>
   </data>
-  <data name="ButtonFilterFile" xml:space="preserve">
-    <value>Files</value>
+  <data name="ButtonFilterFiles" xml:space="preserve">
+    <value>All files</value>
   </data>
   <data name="ButtonFilterFolder" xml:space="preserve">
     <value>Folders</value>
   </data>
   <data name="ButtonFilterImage" xml:space="preserve">
     <value>Images</value>
+  </data>
+  <data name="ButtonFilterMedia" xml:space="preserve">
+    <value>Media</value>
   </data>
   <data name="ButtonFilterPresentation" xml:space="preserve">
     <value>Presentations</value>
@@ -297,7 +315,13 @@
   <data name="ButtonSelectAll" xml:space="preserve">
     <value>All</value>
   </data>
+  <data name="ButtonSendInEmail" xml:space="preserve">
+    <value>Send by email</value>
+  </data>
   <data name="ButtonShareAccess" xml:space="preserve">
+    <value>Sharing Settings</value>
+  </data>
+  <data name="ButtonShareAccessShort" xml:space="preserve">
     <value>Sharing Settings</value>
   </data>
   <data name="ButtonChangeOwner" xml:space="preserve">
@@ -314,6 +338,15 @@
   </data>
   <data name="ButtonDuplicate" xml:space="preserve">
     <value>Create file copy</value>
+  </data>
+  <data name="ButtonUploadCancelAndClose" xml:space="preserve">
+    <value>Cancel uploading and close</value>
+  </data>
+  <data name="ButtonUploadMinimize" xml:space="preserve">
+    <value>Minimize dialog</value>
+  </data>
+  <data name="ButtonUploadMaximize" xml:space="preserve">
+    <value>Maximize dialog</value>
   </data>
   <data name="ButtonVersion" xml:space="preserve">
     <value>Version history</value>
@@ -345,21 +378,6 @@
   <data name="ButtonSendDocuSignDialog" xml:space="preserve">
     <value>Send</value>
   </data>
-  <data name="ButtonSortAuthor" xml:space="preserve">
-    <value>Author</value>
-  </data>
-  <data name="ButtonSortModified" xml:space="preserve">
-    <value>Date</value>
-  </data>
-  <data name="ButtonSortName" xml:space="preserve">
-    <value>Name</value>
-  </data>
-  <data name="ButtonSortSize" xml:space="preserve">
-    <value>Size</value>
-  </data>
-  <data name="ButtonSortType" xml:space="preserve">
-    <value>Type</value>
-  </data>
   <data name="ButtonToParentFolder" xml:space="preserve">
     <value>Back to parent folder</value>
   </data>
@@ -378,9 +396,6 @@
   <data name="ButtonViaFacebook" xml:space="preserve">
     <value>Facebook</value>
   </data>
-  <data name="ButtonViaGoogle" xml:space="preserve">
-    <value>Google</value>
-  </data>
   <data name="ButtonViaTwitter" xml:space="preserve">
     <value>Twitter</value>
   </data>
@@ -396,6 +411,15 @@
   <data name="CaptionCopyConvertOpen" xml:space="preserve">
     <value>Convert and open document</value>
   </data>
+  <data name="CaptionCopyConvertOpen2" xml:space="preserve">
+    <value>Document saving</value>
+  </data>
+  <data name="CaptionCopyConvertSave" xml:space="preserve">
+    <value>Document uploading</value>
+  </data>
+  <data name="CaptionConvertPassword" xml:space="preserve">
+    <value>The file is password protected. Enter the password for conversion.</value>
+  </data>
   <data name="ChooseFormatToDownload" xml:space="preserve">
     <value>Choose format for each file to be downloaded</value>
   </data>
@@ -404,6 +428,9 @@
   </data>
   <data name="ConfirmDelete" xml:space="preserve">
     <value>Confirmation dialog for deletion to recycle bin</value>
+  </data>
+  <data name="ConfirmDontShow" xml:space="preserve">
+    <value>Do not show this message again</value>
   </data>
   <data name="ConfirmOverwrite" xml:space="preserve">
     <value>Overwrite confirmation</value>
@@ -421,7 +448,10 @@
     <value>Save the file copy in the original format as well</value>
   </data>
   <data name="ConfirmStoreOriginalOpenTitle" xml:space="preserve">
-    <value>The document file you open will be converted to the Office Open XML format for faster viewing and editing.</value>
+    <value>To edit the file its copy in the Office Open XML format (docx, xlsx or pptx) will be created on the portal. The source file will not be changed.</value>
+  </data>
+  <data name="ConfirmStoreOriginalSaveTitle" xml:space="preserve">
+    <value>All the documents you upload will be converted into the corresponding Office Open XML format (docx, xlsx or pptx) for faster editing.</value>
   </data>
   <data name="ConfirmStoreOriginalOpenToMyText" xml:space="preserve">
     <value>The file copy will be created in the {0}My documents{1} folder</value>
@@ -537,6 +567,9 @@
   <data name="EmptyScreenDescrProject" xml:space="preserve">
     <value>The documents and image files you create or upload for your project are kept in this section. You can open and edit them using the ONLYOFFICE™ portal editor, organize into folders.</value>
   </data>
+  <data name="EmptyScreenDescrProjectVisitor" xml:space="preserve">
+    <value>The documents and image files uploaded for the project are kept in this section. You can view them using the ONLYOFFICE portal editor.</value>
+  </data>
   <data name="EmptyScreenDescrTrash" xml:space="preserve">
     <value>The 'Recycle Bin' section is where all the deleted files are moved. You can either restore them in case they are deleted by mistake or delete them permanently. Please note, that when you delete the files from the 'Recycle Bin' they cannot be restored any longer.</value>
   </data>
@@ -548,6 +581,9 @@
   </data>
   <data name="EmptyScreenHeader" xml:space="preserve">
     <value>No files to be displayed in this section</value>
+  </data>
+  <data name="EmptyScreenFolderHeader" xml:space="preserve">
+    <value>No files in this folder</value>
   </data>
   <data name="EmptyScreenThirdPartyDscr" xml:space="preserve">
     <value>No connected accounts</value>
@@ -561,6 +597,12 @@
   <data name="Everyone" xml:space="preserve">
     <value>All Users</value>
   </data>
+  <data name="FileChoiceFormat" xml:space="preserve">
+    <value>Select the file in {0} format</value>
+  </data>
+  <data name="FileChoiceType" xml:space="preserve">
+    <value>Select files of type: {0}</value>
+  </data>
   <data name="FilesWillBeCompressed" xml:space="preserve">
     <value>Files will be compressed into the {0}.zip file{1}</value>
   </data>
@@ -572,6 +614,9 @@
   </data>
   <data name="GetGreeAccountBtn" xml:space="preserve">
     <value>Start Now</value>
+  </data>
+  <data name="GetShorten" xml:space="preserve">
+    <value>Shorten</value>
   </data>
   <data name="Group" xml:space="preserve">
     <value>Group</value>
@@ -591,11 +636,8 @@
   <data name="Login" xml:space="preserve">
     <value>Login</value>
   </data>
-  <data name="MailMergeFileTitle" xml:space="preserve">
-    <value>File name</value>
-  </data>
-  <data name="MailMergeOpenTab" xml:space="preserve">
-    <value>Open merged document in new tab</value>
+  <data name="LostDataConvert" xml:space="preserve">
+    <value>If you choose to convert the file to the format different from the original, some data might be lost.</value>
   </data>
   <data name="MainHeaderSelectAll" xml:space="preserve">
     <value>Select all</value>
@@ -639,6 +681,9 @@
   <data name="OpenFolder" xml:space="preserve">
     <value>Open</value>
   </data>
+  <data name="OpenParent" xml:space="preserve">
+    <value>Open location</value>
+  </data>
   <data name="OriginalFormat" xml:space="preserve">
     <value>Original format</value>
   </data>
@@ -654,13 +699,13 @@
   <data name="ProjectFiles" xml:space="preserve">
     <value>Project Documents</value>
   </data>
-  <data name="RecipientsFormat" xml:space="preserve">
-    <value>Select the data source file in {0} format</value>
-  </data>
   <data name="Remove" xml:space="preserve">
     <value>delete</value>
   </data>
   <data name="RemoveIsNew" xml:space="preserve">
+    <value>Mark as Read</value>
+  </data>
+  <data name="RemoveIsNewShort" xml:space="preserve">
     <value>Mark as Read</value>
   </data>
   <data name="RemoveIsNewAll" xml:space="preserve">
@@ -668,6 +713,12 @@
   </data>
   <data name="RemoveShareMessage" xml:space="preserve">
     <value>Remove message</value>
+  </data>
+  <data name="SaveAsFileTitle" xml:space="preserve">
+    <value>File name</value>
+  </data>
+  <data name="SaveAsOpenTab" xml:space="preserve">
+    <value>Open saved document in new tab</value>
   </data>
   <data name="Search" xml:space="preserve">
     <value>Search</value>
@@ -681,8 +732,17 @@
   <data name="SendShareNotify" xml:space="preserve">
     <value>Send notification</value>
   </data>
+  <data name="SettingForcesave" xml:space="preserve">
+    <value>Keep intermediate versions when editing</value>
+  </data>
+  <data name="SettingStoreForcesave" xml:space="preserve">
+    <value>Keep all saved intermediate versions</value>
+  </data>
   <data name="SettingUpdateIfExist" xml:space="preserve">
     <value>Common Settings</value>
+  </data>
+  <data name="SettingVersions" xml:space="preserve">
+    <value>Storing file versions</value>
   </data>
   <data name="Share" xml:space="preserve">
     <value>Share</value>
@@ -783,6 +843,15 @@
   <data name="ThirdPartyYandex" xml:space="preserve">
     <value>Yandex</value>
   </data>
+  <data name="TitleSearchIn" xml:space="preserve">
+    <value>Search in</value>
+  </data>
+  <data name="TitleSearchSubfolder" xml:space="preserve">
+    <value>and {0}all subfolders{1}</value>
+  </data>
+  <data name="TitleSearchWithoutSubfolder" xml:space="preserve">
+    <value>Click for searchibg without subfolders</value>
+  </data>
   <data name="TitleSelectFile" xml:space="preserve">
     <value>Select</value>
   </data>
@@ -842,5 +911,11 @@
   </data>
   <data name="DesktopSales" xml:space="preserve">
     <value>For any purchase questions, email us at {0}.</value>
+  </data>
+  <data name="ButtonUploadFiles" xml:space="preserve">
+    <value>Upload files</value>
+  </data>
+  <data name="ButtonUploadFolder" xml:space="preserve">
+    <value>Upload folder</value>
   </data>
 </root>

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -28,6 +28,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using ASC.Common.Logging;
 using ASC.CRM.Core.Dao;
 using ASC.Data.Storage;
 using ASC.Web.Core;
@@ -163,21 +164,15 @@ namespace ASC.Web.CRM.Classes
 
             catch (Exception ex)
             {
-                log4net.LogManager.GetLogger("ASC.CRM").ErrorFormat("TryUploadOrganisationLogoFromTmp failed with error: {0}", ex);
+                LogManager.GetLogger("ASC.CRM").ErrorFormat("TryUploadOrganisationLogoFromTmp failed with error: {0}", ex);
                 return 0;
             }
         }
 
-        public static String UploadLogo(Stream inputStream, bool isTmpDir)
+        public static String UploadLogo(byte[] imageData, ImageFormat imageFormat)
         {
-            var imageData = Global.ToByteArray(inputStream);
-
-            var fileExtension = String.Concat("." + Global.GetImgFormatName(ImageFormat.Jpeg));
-            var photoPath = BuildFilePath(fileExtension);
-
-            var result = ExecResizeImage(imageData, OrganisationLogoSize, Global.GetStore(), photoPath);
-
-            return result;
+            var photoPath = BuildFilePath("." + Global.GetImgFormatName(imageFormat));
+            return ExecResizeImage(imageData, OrganisationLogoSize, Global.GetStore(), photoPath);
         }
     }
 }

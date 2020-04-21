@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -33,6 +33,7 @@
 #milestonesList {
     a {
         text-decoration: none;
+        cursor:default;
     }
 
     td {
@@ -50,12 +51,13 @@
             }
 
             .key {
-                background: url("../images/common-icons.png") no-repeat -3px -96px;
+                background: url("../../../../../skins/default/images/svg/projects/key-alt.svg") no-repeat;
                 float: left;
                 margin-right: 5px;
                 display: block;
                 width: 16px;
                 height: 16px;
+                background-position:50%;
             }
         }
 
@@ -124,7 +126,7 @@
 
         &.process {
             height: 37px;
-            background: url('../../../../../skins/default/Images/loader_16.gif') no-repeat 18px 11px;
+            background: url('../../../../../skins/default/images/loader_16.gif') no-repeat 18px 11px;
         }
     }
 

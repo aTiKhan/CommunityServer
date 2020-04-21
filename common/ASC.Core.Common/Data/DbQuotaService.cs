@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -37,7 +37,7 @@ namespace ASC.Core.Data
     public class DbQuotaService : DbBaseService, IQuotaService
     {
         private const string tenants_quota = "tenants_quota";
-        internal const string tenants_quotarow = "tenants_quotarow";
+        public const string tenants_quotarow = "tenants_quotarow";
 
 
         public DbQuotaService(ConnectionStringSettings connectionString)

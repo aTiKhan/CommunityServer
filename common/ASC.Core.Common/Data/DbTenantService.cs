@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -200,7 +200,7 @@ namespace ASC.Core.Data
                     db.ExecuteNonQuery(u);
                 }
 
-                if (string.IsNullOrEmpty(t.PartnerId) && string.IsNullOrEmpty(t.AffiliateId))
+                if (string.IsNullOrEmpty(t.PartnerId) && string.IsNullOrEmpty(t.AffiliateId) && string.IsNullOrEmpty(t.Campaign))
                 {
                     var d = new SqlDelete("tenants_partners").Where("tenant_id", t.TenantId);
                     db.ExecuteNonQuery(d);
@@ -210,7 +210,8 @@ namespace ASC.Core.Data
                     var i = new SqlInsert("tenants_partners", true)
                         .InColumnValue("tenant_id", t.TenantId)
                         .InColumnValue("partner_id", t.PartnerId)
-                        .InColumnValue("affiliate_id", t.AffiliateId);
+                        .InColumnValue("affiliate_id", t.AffiliateId)
+                        .InColumnValue("campaign", t.Campaign);
                     db.ExecuteNonQuery(i);
                 }
 
@@ -264,47 +265,18 @@ namespace ASC.Core.Data
             ExecNonQuery(i);
         }
 
-        public T LoadSettings<T>(int tenantId, Guid userId)
-        {
-            var settingsInstance = (ISettings) Activator.CreateInstance<T>();
-
-            var query = new SqlQuery("webstudio_settings")
-                .Select("data")
-                .Where("id", settingsInstance.ID)
-                .Where("tenantid", tenantId)
-                .Where("userid", userId);
-
-            var result = ExecScalar<object>(query);
-
-            if (result == null)
-                return (T) settingsInstance.GetDefault();
-
-            var data = result is string ? Encoding.UTF8.GetBytes((string) result) : (byte[]) result;
-
-            object settings;
-
-            using (var stream = new MemoryStream(data))
-            {
-                settings = data[0] == 0
-                               ? new BinaryFormatter().Deserialize(stream)
-                               : new DataContractJsonSerializer(typeof (T)).ReadObject(stream);
-            }
-
-            return (T) settings;
-        }
-
         private IEnumerable<Tenant> GetTenants(Exp where)
         {
             var q = TenantsQuery(where);
             return ExecList(q).ConvertAll(ToTenant);
         }
 
-        private SqlQuery TenantsQuery(Exp where)
+        private static SqlQuery TenantsQuery(Exp where)
         {
             return new SqlQuery("tenants_tenants t")
                 .Select("t.id", "t.alias", "t.mappeddomain", "t.version", "t.version_changed", "t.name", "t.language", "t.timezone", "t.owner_id")
                 .Select("t.trusteddomains", "t.trusteddomainsenabled", "t.creationdatetime", "t.status", "t.statuschanged", "t.payment_id", "t.last_modified")
-                .Select("p.partner_id", "p.affiliate_id")
+                .Select("p.partner_id", "p.affiliate_id", "p.campaign")
                 .Select("t.industry", "t.spam", "t.calls")
                 .LeftOuterJoin("tenants_partners p", Exp.EqColumns("t.id", "p.tenant_id"))
                 .Where(where);
@@ -329,9 +301,10 @@ namespace ASC.Core.Data
                 LastModified = (DateTime)r[15],
                 PartnerId = (string)r[16],
                 AffiliateId = (string)r[17],
-                Industry = r[18] != null ? (TenantIndustry)Convert.ToInt32(r[18]) : TenantIndustry.Other,
-                Spam = Convert.ToBoolean(r[19]),
-                Calls = Convert.ToBoolean(r[20])
+                Campaign = (string)r[18],
+                Industry = r[18] != null ? (TenantIndustry)Convert.ToInt32(r[19]) : TenantIndustry.Other,
+                Spam = Convert.ToBoolean(r[20]),
+                Calls = Convert.ToBoolean(r[21]),
             };
             tenant.SetTrustedDomains((string)r[9]);
 

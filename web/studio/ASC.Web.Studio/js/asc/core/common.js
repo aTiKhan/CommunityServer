@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -26,6 +26,109 @@
 
 if (typeof jq == "undefined")
     var jq = jQuery.noConflict();
+
+// Production steps of ECMA-262, Edition 6, 22.1.2.1
+if (!Array.from) {
+    Array.from = (function () {
+        var toStr = Object.prototype.toString;
+        var isCallable = function (fn) {
+            return typeof fn === 'function' || toStr.call(fn) === '[object Function]';
+        };
+        var toInteger = function (value) {
+            var number = Number(value);
+            if (isNaN(number)) { return 0; }
+            if (number === 0 || !isFinite(number)) { return number; }
+            return (number > 0 ? 1 : -1) * Math.floor(Math.abs(number));
+        };
+        var maxSafeInteger = Math.pow(2, 53) - 1;
+        var toLength = function (value) {
+            var len = toInteger(value);
+            return Math.min(Math.max(len, 0), maxSafeInteger);
+        };
+
+        // The length property of the from method is 1.
+        return function from(arrayLike/*, mapFn, thisArg */) {
+            // 1. Let C be the this value.
+            var C = this;
+
+            // 2. Let items be ToObject(arrayLike).
+            var items = Object(arrayLike);
+
+            // 3. ReturnIfAbrupt(items).
+            if (arrayLike == null) {
+                throw new TypeError('Array.from requires an array-like object - not null or undefined');
+            }
+
+            // 4. If mapfn is undefined, then let mapping be false.
+            var mapFn = arguments.length > 1 ? arguments[1] : void undefined;
+            var T;
+            if (typeof mapFn !== 'undefined') {
+                // 5. else
+                // 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
+                if (!isCallable(mapFn)) {
+                    throw new TypeError('Array.from: when provided, the second argument must be a function');
+                }
+
+                // 5. b. If thisArg was supplied, let T be thisArg; else let T be undefined.
+                if (arguments.length > 2) {
+                    T = arguments[2];
+                }
+            }
+
+            // 10. Let lenValue be Get(items, "length").
+            // 11. Let len be ToLength(lenValue).
+            var len = toLength(items.length);
+
+            // 13. If IsConstructor(C) is true, then
+            // 13. a. Let A be the result of calling the [[Construct]] internal method 
+            // of C with an argument list containing the single item len.
+            // 14. a. Else, Let A be ArrayCreate(len).
+            var A = isCallable(C) ? Object(new C(len)) : new Array(len);
+
+            // 16. Let k be 0.
+            var k = 0;
+            // 17. Repeat, while k < len… (also steps a - h)
+            var kValue;
+            while (k < len) {
+                kValue = items[k];
+                if (mapFn) {
+                    A[k] = typeof T === 'undefined' ? mapFn(kValue, k) : mapFn.call(T, kValue, k);
+                } else {
+                    A[k] = kValue;
+                }
+                k += 1;
+            }
+            // 18. Let putStatus be Put(A, "length", len, true).
+            A.length = len;
+            // 20. Return A.
+            return A;
+        };
+    }());
+}
+
+//ie11
+if (!Array.prototype.find) {
+    Array.prototype.find = function (predicate) {
+        if (this == null) {
+            throw new TypeError('Array.prototype.find called on null or undefined');
+        }
+        if (typeof predicate !== 'function') {
+            throw new TypeError('predicate must be a function');
+        }
+        var list = Object(this);
+        var length = list.length >>> 0;
+        var thisArg = arguments[1];
+        var value;
+
+        for (var i = 0; i < length; i++) {
+            value = list[i];
+            if (predicate.call(thisArg, value, i, list)) {
+                return value;
+            }
+        }
+        return undefined;
+    };
+}
 
 toastr.options.hideDuration = 100;
 
@@ -59,8 +162,8 @@ jQuery.fn.colorFade = function(color, tiemout, cb) {
         }));
 };
 
-// google analitics track
-var trackingGoogleAnalitics = function (ctg, act, lbl) {
+// google analytics track
+var trackingGoogleAnalytics = function (ctg, act, lbl) {
     try {
         if (window.ga) {
             window.ga('www.send', 'event', ctg, act, lbl);
@@ -75,21 +178,21 @@ jQuery.fn.trackEvent = function (category, action, label, typeAction) { // only 
     switch (typeAction) {
         case "click":
             jq(this).on("click", function () {
-                trackingGoogleAnalitics(category, action, label);
+                trackingGoogleAnalytics(category, action, label);
                 return true;
             });
             break;
         case "enter":
             jq(this).keypress(function (e) {
                 if (e.which == 13) {
-                    trackingGoogleAnalitics(category, action, label);
+                    trackingGoogleAnalytics(category, action, label);
                 }
                 return true;
             });
             break;
         default:
             jq(this).on("click", function () {
-                trackingGoogleAnalitics(category, action, label);
+                trackingGoogleAnalytics(category, action, label);
                 return true;
             });
             break;
@@ -159,7 +262,7 @@ jQuery.extend({
 
     linksParser: function(val) {
         var replaceUrl = function(str) {
-            return '<a target="_new" href="' + (/^http/.test(str) ? str : 'http://' + str) + '">' + str + '</a>';
+            return '<a target="_blank" href="' + (/^http/.test(str) ? str : 'http://' + str) + '">' + str + '</a>';
         };
         var regUrl = /(\b(((https?|ftp|file):\/\/)|(www.))[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
         return val.replace(regUrl, replaceUrl);
@@ -276,11 +379,9 @@ jQuery.extend({
     },
 
     isValidEmail: function(email) {
-        var reg = new RegExp(ASC.Resources.Master.EmailRegExpr, "i");
-        if (reg.test(email) == true) {
-            return true;
-        }
-        return false;
+        return (ASC.Mail && ASC.Mail.Utility && ASC.Mail.Utility.IsValidEmail) ?
+            ASC.Mail.Utility.IsValidEmail(email) :
+            new RegExp(ASC.Resources.Master.EmailRegExpr, "i").test(email);
     },
 
     switcherAction: function(el, block) {
@@ -328,7 +429,7 @@ jQuery.extend({
         return e;
     },
 
-    showDropDownByContext: function (evt, target, dropdownItem) {
+    showDropDownByContext: function (evt, target, dropdownItem, showFunction) {
         var ddiHeight = dropdownItem.innerHeight(),
             ddiWidth = dropdownItem.innerWidth(),
 
@@ -366,6 +467,13 @@ jQuery.extend({
                     "margin": "0"
                 });
         }
+
+        if (typeof showFunction === "function") {
+            if (showFunction(evt) === false) {
+                return;
+            }
+        }
+
         dropdownItem.show();
     }
 });
@@ -755,23 +863,30 @@ var StudioManager = new function () {
     };
 
     this.initImageZoom = function (options) {
-        var setting = jq.extend({
-            type: 'image',
-            tLoading: '', // remove text from preloader
-            gallery: {
-                enabled: true,
-                tCounter: '%curr% / %total%',
-                preload: [0,0]
-            },
-            image: {
-                tError: jq.format(ASC.Resources.Master.Resource.MagnificImageError, '<a href="%url%">' ,'</a>') // Error message when image could not be loaded
-            },
-            ajax: {
-                tError: jq.format(ASC.Resources.Master.Resource.MagnificContentError, '<a href="%url%">', '</a>') // Error message when resource could not be loaded
-            }
-        }, options);
+        jq(".mediafile, .screenzoom").click(function (event) {
+            event.stopPropagation();
 
-        jq(".screenzoom").magnificPopup(setting);
+            jq(window).click();
+
+            var playlist = [];
+            var selIndex = 0;
+
+            jq(".mediafile, .screenzoom").each(function (i, v) {
+                playlist.push({ title: v.title, id: i, src: v.href });
+                if (v.href == event.currentTarget.href)
+                    selIndex = i;
+            });
+
+            ASC.Files.MediaPlayer.init(-1, {
+                playlist: playlist,
+                playlistPos: selIndex,
+                downloadAction: function (fileId) {
+                    return playlist[fileId].src;
+                }
+            });
+
+            return false;
+        });
     };
 
     var pendingRequests = new Array();
@@ -801,7 +916,7 @@ var StudioManager = new function () {
 };
 
 /*--------Error messages for required field-------*/
-function ShowRequiredError (item, withouthScroll) {
+function ShowRequiredError (item, withouthScroll, withouthFocus) {
     jq("div[class='infoPanel alert']").hide();
     jq("div[class='infoPanel alert']").empty();
     var parentBlock = jq(item).parents(".requiredField");
@@ -810,7 +925,10 @@ function ShowRequiredError (item, withouthScroll) {
     if (typeof(withouthScroll) == "undefined" || withouthScroll == false) {
         jq.scrollTo(jq(parentBlock).position().top - 50, {speed: 500});
     }
-    jq(item).focus();
+
+    if (typeof (withouthFocus) == "undefined" || withouthFocus == false) {
+        jq(item).focus();
+    }
 }
 
 function HideRequiredError () {
@@ -907,18 +1025,25 @@ ASC.EmailOperationManager = (function () {
             return false;
         });
         
-        jq("#emailOperation_email").unbind("onkeyup");
-        
-        jq("#emailOperation_email").keyup(function (key) {
-            if (jq(this).val() != userEmail) {
-                var sendButton = jq("#btEmailOperationSend");
-                sendButton.removeClass("disable");
-                if (getKeyCode(key) == 13) {
-                    sendButton.click();
+        jq("#emailOperation_email").off(".emailChange");
+
+        jq("#emailOperation_email").on("keyup.emailChange paste.emailChange cut.emailChange", function (key) {
+            var checkEmail = function () {
+                if (jq("#emailOperation_email").val() != userEmail) {
+                    var sendButton = jq("#btEmailOperationSend");
+                    sendButton.removeClass("disable");
+                    if (getKeyCode(key) == 13) {
+                        sendButton.click();
+                    }
+                } else {
+                    jq("#btEmailOperationSend").addClass("disable");
                 }
-            } else {
-                jq("#btEmailOperationSend").addClass("disable");
+            };
+            if (key.type != "keyup") {
+                setTimeout(checkEmail, 1);
+                return true;
             }
+            checkEmail();
             return false;
         });
         
@@ -929,35 +1054,35 @@ ASC.EmailOperationManager = (function () {
 
     function showResendInviteWindow (userEmail, userID, adminMode, responseAction) {
         jq("#divEmailOperationError").html("").hide();
-        jq("#studio_emailOperationResult").hide();
+        jq("#studio_emailOperationResult").addClass("display-none");
 
         if (adminMode == true) {
             jq("#emailInputContainer").removeClass("display-none");
-            jq("#emailMessageContainer").hide();
+            jq("#emailMessageContainer").addClass("display-none");
         } else {
             jq("#emailInputContainer").addClass("display-none");
-            jq("#emailMessageContainer").show();
+            jq("#emailMessageContainer").removeClass("display-none");
 
-            jq("#emailActivationText").hide();
-            jq("#emailChangeText").hide();
-            jq("#resendInviteText").show();
+            jq("#emailActivationText").addClass("display-none");
+            jq("#emailChangeText").addClass("display-none");
+            jq("#resendInviteText").removeClass("display-none");
 
             jq("#emailMessageContainer [name='userEmail']").attr("href", "../../addons/mail/#composeto/email=" + userEmail).html(userEmail);
         }
 
-        jq("#emailActivationDialogPopupHeader").hide();
-        jq("#emailChangeDialogPopupHeader").hide();
-        jq("#resendInviteDialogPopupHeader").show();
+        jq("#emailActivationDialogPopupHeader").addClass("display-none");
+        jq("#emailChangeDialogPopupHeader").addClass("display-none");
+        jq("#resendInviteDialogPopupHeader").removeClass("display-none");
 
         jq("#studio_emailOperationContent").removeClass("display-none");
 
-        jq("#emailChangeDialogText").hide();
-        jq("#emailActivationDialogText").hide();
-        jq("#resendInviteDialogText").show();
+        jq("#emailChangeDialogText").addClass("display-none");
+        jq("#emailActivationDialogText").addClass("display-none");
+        jq("#resendInviteDialogText").removeClass("display-none");
 
         jq("#emailOperation_email").val(userEmail);
         jq("#btEmailOperationSend").removeClass("disable");
-        jq("#emailOperation_email").unbind("onkeyup");
+        jq("#emailOperation_email").off(".emailChange");
         
         openPopupDialog();
 
@@ -1082,11 +1207,14 @@ LoadingBanner = function () {
         showLoaderBtn: function(block) {
             hideMesInfoBtn();
 
-            var loaderHtml = "<div class=\"loader-container\">{0}</div>".format(LoadingBanner.strLoading),
-                btnContainer = jq(block).find("[class*=\"button-container\"]");
+            var btnContainer = jq(block).find("[class*=\"button-container\"]");
+
+            if (!btnContainer.length || btnContainer.find(".loader-container").length)
+                return;
+
             jq(btnContainer).siblings(".error-popup, .success-popup").each(function() {jq(this).hide();});
             btnContainer.find(".button").addClass("disable").attr("disabled" , true);
-            jq(btnContainer).append(loaderHtml);
+            jq(btnContainer).append("<div class=\"loader-container\">{0}</div>".format(LoadingBanner.strLoading));
 
         },
 
@@ -1297,7 +1425,10 @@ var ScrolledGroupMenu = new function () {
 
         var $menuObj = jq(options.menuSelector),
             $boxTop = jq(options.menuAnchorSelector),
-            $menuSpacerObj = jq(options.menuSpacerSelector);
+            $menuSpacerObj = jq(options.menuSpacerSelector),
+            $groupActionsObj = jq(".studio-action-panel.group-actions"),
+            $otherActionsObj = jq(".studio-action-panel.other-actions"),
+            $otherActionsBtn = $menuObj.find(".otherFunctions");
 
         if ($menuObj.length == 0 || $boxTop.length == 0 || $menuSpacerObj.length == 0) {
             return;
@@ -1327,17 +1458,23 @@ var ScrolledGroupMenu = new function () {
                     "position": "fixed",
                     "paddingTop": "8px"
                 });
-            jq(".studio-action-panel.group-actions").css(
+
+            $groupActionsObj.css(
                 {
                     "top": jq(document).scrollTop() + $menuObj.outerHeight() - 4 + "px",
                     "position": "absolute"
                 });
 
-            jq(".studio-action-panel.other-actions").css(
-                {
-                    top: $menuObj.outerHeight() - 4 + "px",
-                    position: "fixed"
-                });
+            $menuObj.offset({ left: $menuObj.parent().offset().left });
+
+            if ($otherActionsObj.length && $otherActionsBtn.length) {
+                $otherActionsObj.css(
+                    {
+                        top: $otherActionsBtn.offset().top - jq(document).scrollTop() + $otherActionsBtn.outerHeight() + 4,
+                        position: "fixed",
+                        left: $otherActionsBtn.offset().left - jq(document).scrollLeft() + $otherActionsBtn.outerWidth() - $otherActionsObj.outerWidth()
+                    });
+            }
         } else {
             $menuSpacerObj.hide();
             $menuObj.css("width", "auto");
@@ -1351,15 +1488,20 @@ var ScrolledGroupMenu = new function () {
                     "position": "static",
                     "paddingTop": 0
                 });
-            jq(".studio-action-panel.group-actions").css(
+
+            $groupActionsObj.css(
                 {
                     "top": $menuObj.offset().top + $menuObj.outerHeight() - 4 + "px"
                 });
-            jq(".studio-action-panel.other-actions").css(
-                {
-                    top: $menuObj.offset().top + $menuObj.outerHeight() - 4 + "px",
-                    position: "absolute"
-                });
+
+            if ($otherActionsObj.length && $otherActionsBtn.length) {
+                $otherActionsObj.css(
+                    {
+                        top: $otherActionsBtn.offset().top + $otherActionsBtn.outerHeight() + 4,
+                        position: "absolute",
+                        left: $otherActionsBtn.offset().left + $otherActionsBtn.outerWidth() - $otherActionsObj.outerWidth()
+                    });
+            }
         }
     };
 
@@ -1460,38 +1602,51 @@ less = {}; less.env = 'development';
  * UserManager
  */
 window.UserManager = new function() {
-    var users = null;
-    var usersCache = [];
+    var usersCache = null;
+    var usersDisabledCache = null;
     var personCache = [];
 
     function init() {
-        if (users != null)
+        if (usersCache != null)
             return;
 
         var master = ASC.Resources.Master;
-        users = [].concat(master.ApiResponses_ActiveProfiles.response, master.ApiResponses_DisabledProfiles.response);
+        usersCache = {};
+
+        var activeUsers = master.ApiResponses_ActiveProfiles.response;
+        var activeUsersLength = activeUsers.length;
+        for (var i = 0; i < activeUsersLength; i++) {
+            var activeUserItem = activeUsers[i];
+            usersCache[activeUserItem.id] = activeUserItem;
+        }
+
+        delete master.ApiResponses_ActiveProfiles;
+
+        usersDisabledCache = {};
+        var disabledUsers = master.ApiResponses_DisabledProfiles.response;
+        var disabledUsersLength = disabledUsers.length;
+        for (var j = 0; j < disabledUsersLength; j++) {
+            var disabledUserItem = disabledUsers[j];
+            usersDisabledCache[disabledUserItem.id] = disabledUserItem;
+        }
+
+        delete master.ApiResponses_DisabledProfiles;
     }
 
-    function getAllUsers() {
+    function getAllUsers(activeOnly) {
         init();
-        return users;
+        return activeOnly ? usersCache : jq.extend({}, usersCache, usersDisabledCache);
     }
 
     function getUser(userId) {
         if (!userId)
             return null;
 
-        if (usersCache[userId]) return usersCache[userId];
-
         init();
 
-        for (var i = 0, j = users.length; i < j; i++) {
-            var usersItem = users[i];
-            if (usersItem.id === userId) {
-                usersCache[userId] = usersItem;
-                return usersItem;
-            }
-        }
+        if (usersCache[userId]) return usersCache[userId];
+
+        if (usersDisabledCache[userId]) return usersDisabledCache[userId];
 
         return null;
     }
@@ -1523,9 +1678,17 @@ window.UserManager = new function() {
 
         var result = [];
 
-        for (var i = 0; i < users.length; i++)
-            if (~ids.indexOf(users[i].id))
-                result.push(users[i]);
+        for (var userId in usersCache) {
+            if (usersCache.hasOwnProperty(userId) && ~ids.indexOf(userId)) {
+                result.push(usersCache[userId]);
+            }
+        }
+
+        for (var disabledUserId in usersDisabledCache) {
+            if (usersDisabledCache.hasOwnProperty(disabledUserId) && ~ids.indexOf(disabledUserId)) {
+                result.push(usersDisabledCache[disabledUserId]);
+            }
+        }
 
         return result;
     }
@@ -1534,12 +1697,124 @@ window.UserManager = new function() {
         return ASC.Resources.Master.ApiResponsesRemovedProfile.response;
     }
 
+    function addNewUser(newUser) {
+        usersCache[newUser.id] = newUser;
+    }
+
     return {
         getAllUsers: getAllUsers,
         getUser: getUser,
         getPerson: getPerson,
         getUsers: getUsers,
-        getRemovedProfile: getRemovedProfile
+        getRemovedProfile: getRemovedProfile,
+        addNewUser: addNewUser
+    };
+};
+
+/**
+ * GroupManager
+ */
+window.GroupManager = new function () {
+    var groups = null;
+    var groupItems = null;
+    var groupsCache = [];
+
+    function comparer (a, b) {
+        var compA = a.name.toLowerCase(),
+            compB = b.name.toLowerCase();
+        return (compA < compB) ? -1 : (compA > compB) ? 1 : 0;
+    }
+
+    function init() {
+        if (groups != null)
+            return;
+
+        groups = ASC.Resources.Master.ApiResponses_Groups.response.sort(comparer);
+    }
+
+    function initGroupItems() {
+        if (groupItems != null)
+            return;
+
+        init();
+
+        groupItems = {};
+
+        var i, j, k, n, groupId;
+
+        for (i = 0, j = groups.length; i < j; i++) {
+            groupId = groups[i].id;
+            groupItems[groupId] = [];
+        }
+
+        var users = window.UserManager.getAllUsers();
+
+        for (var userId in users) {
+            if (!users.hasOwnProperty(userId)) continue;
+
+            var user = users[userId];
+            for (j = 0, k = user.groups.length; j < k; j++) {
+                groupId = user.groups[j];
+                groupItems[groupId] ? groupItems[groupId].push(userId) : groupItems[groupId] = [userId];
+            }
+        }
+    }
+
+    function getAllGroups() {
+        init();
+        return groups;
+    }
+
+    function getGroup(groupId) {
+        if (!groupId)
+            return null;
+
+        var fromCache = groupsCache[groupId];
+
+        if (fromCache) return fromCache;
+
+        init();
+
+        for (var i = 0, j = groups.length; i < j; i++) {
+            var groupItem = groups[i];
+            if (groupItem.id === groupId) {
+                groupsCache[groupId] = groupItem;
+                return groupItem;
+            }
+        }
+
+        return null;
+    }
+
+    function getGroups(ids) {
+        if (!ids || !ids.length)
+            return [];
+
+        init();
+
+        var result = [];
+
+        for (var i = 0; i < groups.length; i++)
+            if (~ids.indexOf(groups[i].id))
+                result.push(groups[i]);
+
+        return result;
+    }
+
+    function getGroupItems(groupId) {
+        if (!groupId)
+            return null;
+
+        initGroupItems();
+
+        return groupItems[groupId];
+    }
+
+    return {
+        getAllGroups: getAllGroups,
+        getGroup: getGroup,
+        getGroups: getGroups,
+        getGroupItems: getGroupItems
     };
 };
 

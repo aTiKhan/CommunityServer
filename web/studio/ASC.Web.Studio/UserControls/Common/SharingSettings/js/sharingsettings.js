@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -483,10 +483,12 @@ var SharingSettingsManager = function (elementId, sharingData) {
         return _data;
     };
 
-    this.ShowDialog = function (width, height, asFlat) {
+    this.ShowDialog = function (width, height, asFlat, hideSelector) {
         reDrawItems();
         reDrawDefActions();
         hideShareMessage();
+
+        jq("#shareGroupSelector, #shareGroupDefAction").toggle(!hideSelector);
 
         jq("#studio_sharingSettingsDialog .userLink").each(function () {
             var id = jq(this).attr("id");
@@ -502,7 +504,7 @@ var SharingSettingsManager = function (elementId, sharingData) {
         height = height || 470;
 
         if (!asFlat) {
-            StudioBlockUIManager.blockUI("#studio_sharingSettingsDialog", width, 0, -height/2, "absolute");
+            StudioBlockUIManager.blockUI("#studio_sharingSettingsDialog", width, 0, -height/2);
         } else {
             jq("#studio_sharingSettingsDialog").show()
                 .css({
@@ -517,11 +519,18 @@ var SharingSettingsManager = function (elementId, sharingData) {
     this.SaveAndCloseDialog = function () {
         _data = _workData;
 
+        var close = true;
         if (_manager.OnSave != null) {
-            _manager.OnSave(_data);
+            if (_manager.OnSave(_data) === false) {
+                close = false;
+            }
         }
 
-        return _manager.CloseDialog();
+        if (close) {
+            return _manager.CloseDialog();
+        }
+
+        return false;
     };
 
     this.CloseDialog = function () {

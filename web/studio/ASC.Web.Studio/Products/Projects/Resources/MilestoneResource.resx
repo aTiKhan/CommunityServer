@@ -279,4 +279,10 @@
   <data name="DeleteMilestonesPopup" xml:space="preserve">
     <value>Are you sure you want to delete milestones?</value>
   </data>
+  <data name="Days" xml:space="preserve">
+    <value>d</value>
+  </data>
+  <data name="MilestonesMarkMajorTimestampsVisitor" xml:space="preserve">
+    <value>Milestones mark the major timestamps in project planning process. Once a milestone is created you can fill it with tasks for all project participants. Plan a milestone and set a due date to make sure that the tasks are completed on time.</value>
+  </data>
 </root>

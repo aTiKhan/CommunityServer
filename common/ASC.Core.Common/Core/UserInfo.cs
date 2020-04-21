@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -38,6 +38,7 @@ namespace ASC.Core.Users
     public sealed class UserInfo : IDirectRecipient, ICloneable
     {
         private readonly HttpRequestDictionary<GroupInfo[]> groupCache = new HttpRequestDictionary<GroupInfo[]>("UserInfo-Groups");
+        private readonly HttpRequestDictionary<IEnumerable<Guid>> groupCacheId = new HttpRequestDictionary<IEnumerable<Guid>>("UserInfo-Groups1");
 
         public UserInfo()
         {
@@ -86,7 +87,7 @@ namespace ASC.Core.Users
 
         public bool IsActive
         {
-            get { return ActivationStatus == EmployeeActivationStatus.Activated; }
+            get { return ActivationStatus.HasFlag(EmployeeActivationStatus.Activated); }
         }
 
         public string CultureName { get; set; }
@@ -161,12 +162,17 @@ namespace ASC.Core.Users
             return groups;
         }
 
+        internal IEnumerable<Guid> GetUserGroupsId()
+        {
+            return groupCacheId.Get(ID.ToString(), () => CoreContext.UserManager.GetUserGroupsGuids(ID));
+        }
+
         internal void ResetGroupCache()
         {
             groupCache.Reset(ID.ToString());
         }
 
-        internal string ContactsToString()
+        public string ContactsToString()
         {
             if (Contacts.Count == 0) return null;
             var sBuilder = new StringBuilder();
@@ -177,7 +183,7 @@ namespace ASC.Core.Users
             return sBuilder.ToString();
         }
 
-        internal UserInfo ContactsFromString(string contacts)
+        public UserInfo ContactsFromString(string contacts)
         {
             if (string.IsNullOrEmpty(contacts)) return this;
             Contacts.Clear();

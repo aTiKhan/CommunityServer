@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -64,7 +64,7 @@ namespace ASC.Web.Community.Forum
                             {
                                 ID = thread.ID.ToString(),
                                 Name = thread.Title,
-                                URL = VirtualPathUtility.ToAbsolute(ForumManager.BaseVirtualPath + "/topics.aspx") + "?f=" + thread.ID.ToString(),
+                                URL = VirtualPathUtility.ToAbsolute(ForumManager.BaseVirtualPath + "/Topics.aspx") + "?f=" + thread.ID.ToString(),
                                 SubscriptionType = GetSubscriptionTypes().Find(st => st.ID.Equals(_threadSubscriptionTypeID))
                             });
                         }
@@ -82,7 +82,7 @@ namespace ASC.Web.Community.Forum
                             {
                                 ID = topic.ID.ToString(),
                                 Name = topic.Title,
-                                URL = VirtualPathUtility.ToAbsolute(ForumManager.BaseVirtualPath + "/posts.aspx") + "?t=" + topic.ID.ToString(),
+                                URL = VirtualPathUtility.ToAbsolute(ForumManager.BaseVirtualPath + "/Posts.aspx") + "?t=" + topic.ID.ToString(),
                                 SubscriptionType = GetSubscriptionTypes().Find(st => st.ID.Equals(_topicSubscriptionTypeID))
                             });
                         }

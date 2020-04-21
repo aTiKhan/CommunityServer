@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -28,7 +28,7 @@
 
 using System;
 using System.Web;
-
+using ASC.Web.Studio.Utility;
 
 #endregion
 
@@ -41,15 +41,21 @@ namespace ASC.Web.CRM.Controls.Settings
 
         public static string Location { get { return PathProvider.GetFileStaticRelativePath("Settings/InvoiceSettings/OrganisationProfile.ascx"); } }
 
+        protected string HelpLink { get; set; }
+
         #endregion
 
         #region Events
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            HelpLink = CommonLinkUtility.GetHelpLink();
+
             Page.RegisterClientScript(new Masters.ClientScripts.OrganisationProfileViewData());
 
             RegisterScript();
+
+            HelpLink = CommonLinkUtility.GetHelpLink();
         }
 
         #endregion

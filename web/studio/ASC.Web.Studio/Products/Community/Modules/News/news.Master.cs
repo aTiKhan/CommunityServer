@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -71,8 +71,8 @@ namespace ASC.Web.Community.News
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            Page.RegisterStyle("~/products/community/modules/news/app_themes/default/newsstylesheet.css")
-                .RegisterBodyScripts("~/products/community/modules/news/js/news.js");
+            Page.RegisterStyle("~/Products/Community/Modules/News/App_Themes/default/newsstylesheet.css")
+                .RegisterBodyScripts("~/Products/Community/Modules/News/js/news.js");
 
             SearchText = "";
             if (!string.IsNullOrEmpty(Request["search"]))

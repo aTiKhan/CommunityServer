@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -28,6 +28,7 @@ using System;
 using System.Net;
 using System.Web;
 using System.Xml;
+using ASC.Common.Logging;
 using ASC.Core;
 using ASC.Web.Core.Files;
 using ASC.Web.Files.Classes;
@@ -35,7 +36,6 @@ using ASC.Web.Files.Helpers;
 using ASC.Web.Files.Resources;
 using ASC.Web.Files.Services.NotifyService;
 using ASC.Web.Studio.UserControls.Statistics;
-using log4net;
 
 namespace ASC.Web.Files.HttpHandlers
 {

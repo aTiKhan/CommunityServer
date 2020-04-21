@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -62,7 +62,7 @@ var ProfileManager = new function () {
         });
         
         jq("#confirmationDeleteUserPanel .middle-button-container .reassign-btn").unbind("click").bind("click", function () {
-            window.location.replace("reassigns.aspx?user=" + encodeURIComponent(userName));
+            window.location.replace("reassigns.aspx?delete=true&user=" + encodeURIComponent(userName));
         });
 
         StudioBlockUIManager.blockUI("#confirmationDeleteUserPanel", 500, 500, 0);

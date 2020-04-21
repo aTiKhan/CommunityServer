@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -439,6 +439,33 @@ namespace ASC.Api.Community
 
             BookmarkingServiceHelper.GetCurrentInstanse().UpdateComment(commentid, content);
             return HtmlUtility.GetFull(content);
+        }
+
+        /// <summary>
+        /// Removes bookmark from favourite. If after removing user bookmark raiting of this bookmark is 0, the bookmark will be removed completely.
+        /// </summary>
+        /// <short>Removes bookmark from favourite</short>
+        /// <param name="id">Bookmark ID</param>
+        /// <returns>bookmark</returns>
+        /// <category>Bookmarks</category>
+        [Delete("bookmark/@favs/{id}")]
+        public BookmarkWrapper RemoveBookmarkFromFavourite(long id)
+        {
+            var bookmark = BookmarkingServiceHelper.GetCurrentInstanse().RemoveBookmarkFromFavourite(id);
+
+            return bookmark == null ? null : new BookmarkWrapper(bookmark);
+        }
+
+        /// <summary>
+        /// Removes bookmark
+        /// </summary>
+        /// <short>Removes bookmark</short>
+        /// <param name="id">Bookmark ID</param>
+        /// <category>Bookmarks</category>
+        [Delete("bookmark/{id}")]
+        public void RemoveBookmark(long id)
+        {
+            BookmarkingServiceHelper.GetCurrentInstanse().RemoveBookmark(id);
         }
     }
 }

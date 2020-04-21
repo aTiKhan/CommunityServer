@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -43,6 +43,7 @@ ASC.People.PeopleController = (function() {
     var _tenantQuota = {};
 
     var pageNavigator;
+    var isRetina;
 
     function showLoader() {
         LoadingBanner.displayLoading();
@@ -75,11 +76,10 @@ ASC.People.PeopleController = (function() {
             today.setHours(00);
             today.setMinutes(00);
             today.setSeconds(00);
-        
+
         for (var i = 0, n = profiles.length; i < n; i++) {
             var profile = profiles[i];
-            profile.displayName = profile.displayName;
-            profile.group = profile.groups.length > 0 ? { id: profile.groups[0].id, name: profile.groups[0].name} : null;
+            profile.groups = window.GroupManager.getGroups(window.UserManager.getUser(profile.id).groups);
             profile.link = "profile.aspx?user=" + encodeURIComponent(profile.userName);
 
             var date = profile.birthday;
@@ -107,15 +107,21 @@ ASC.People.PeopleController = (function() {
 
     function getRequestFilter(filter) {
         filter = filter || {};
-        filter.sortby = "displayname";
 
-        filter.fields = 'id,status,isAdmin,isOwner,isVisitor,activationStatus,userName,email,displayName,avatarSmall,listAdminModules,birthday,title,groups,location,isLDAP,isSSO';
-        
+        filter.fields = 'id,status,isAdmin,isOwner,isVisitor,activationStatus,userName,email,displayName,avatarSmall,listAdminModules,birthday,title,location,isLDAP,isSSO';
+
+        if (jq.cookies.get("is_retina")) {
+            filter.fields += ",avatar";
+        }
+
         var anchor = jq.anchorToObject(ASC.Controls.AnchorController.getAnchor());
 
         for (var fld in anchor) {
             if (anchor.hasOwnProperty(fld)) {
                 switch (fld) {
+                    case "sortby":
+                        filter.sortby = anchor[fld];
+                        break;
                     case "sortorder":
                         filter.sortorder = anchor[fld];
                         break;
@@ -125,8 +131,11 @@ ASC.People.PeopleController = (function() {
                     case "group":
                         filter.groupId = anchor[fld];
                         break;
-                    case "status":
-                        filter.status = anchor[fld];
+                    case "employeestatus":
+                        filter.employeestatus = anchor[fld];
+                        break;
+                    case "activationstatus":
+                        filter.activationstatus = anchor[fld];
                         break;
                     case "type":
                         filter.type = anchor[fld];
@@ -135,23 +144,36 @@ ASC.People.PeopleController = (function() {
             }
         }
 
-        if (filter.hasOwnProperty("status")) {
-            switch (filter.status) {
+        if (filter.hasOwnProperty("employeestatus")) {
+            switch (filter.employeestatus) {
                 case "active":
                     //EmployeeStatus.Active
                     filter.employeestatus = 1;
-                    filter.activationstatus = 1;
                     break;
                 case "disabled":
                     //EmployeeStatus.Terminated
                     filter.employeestatus = 2;
                     break;
+                default:
+                    delete filter.employeestatus;
+                    break;
+            }
+        }
+
+        if (filter.hasOwnProperty("activationstatus")) {
+            switch (filter.activationstatus) {
+                case "active":
+                    //EmployeeActivationStatus.Activated
+                    filter.activationstatus = 1;
+                    break;
                 case "pending":
                     //EmployeeActivationStatus.Pending
                     filter.activationstatus = 2;
                     break;
+                default:
+                    delete filter.activationstatus;
+                    break;
             }
-            delete filter.status;
         }
 
         if (filter.hasOwnProperty("type")) {
@@ -252,7 +274,12 @@ ASC.People.PeopleController = (function() {
 
         _peopleList = data;
 
-        var $o = jq.tmpl("userListTemplate", { users: data, isAdmin: Teamlab.profile.isAdmin || window.ASC.Resources.Master.IsProductAdmin });
+        var $o = jq.tmpl("userListTemplate",
+        {
+            users: data,
+            isAdmin: Teamlab.profile.isAdmin || window.ASC.Resources.Master.IsProductAdmin,
+            isRetina: isRetina
+        });
         jq("#peopleData tbody").empty().append($o);
         bindEvents(jq($o));
         jq(window).trigger('people-render-profiles', [params, data]);
@@ -289,7 +316,7 @@ ASC.People.PeopleController = (function() {
     }
 
     function onShowEditGroup(params, groupData) {
-        DepartmentManagement.EditDepartmentOpenDialog(groupData.id, groupData.name, groupData.manager);
+        DepartmentManagement.EditDepartmentOpenDialog(groupData);
     };
 
     function thisSection(cur, ne) {
@@ -298,11 +325,13 @@ ASC.People.PeopleController = (function() {
 
         cur = jq.removeParam('p', cur);
         cur = jq.removeParam('c', cur);
+        cur = jq.removeParam('sortby', cur);
         cur = jq.removeParam('sortorder', cur);
         cur = jq.removeParam('query', cur);
 
         ne = jq.removeParam('p', ne);
         ne = jq.removeParam('c', ne);
+        ne = jq.removeParam('sortby', ne);
         ne = jq.removeParam('sortorder', ne);
         ne = jq.removeParam('query', ne);
 
@@ -319,23 +348,27 @@ ASC.People.PeopleController = (function() {
             var newAnchorObj = jq.anchorToObject(newAnchor);
             var currentAnchorObj = currentAnchor != null ? jq.anchorToObject(currentAnchor) : null;
             if (!newAnchorObj.hasOwnProperty("sortorder")) {
-                if (currentAnchorObj != null && currentAnchorObj.hasOwnProperty("sortorder")) {
+                if (currentAnchorObj != null && currentAnchorObj.hasOwnProperty("sortby") && currentAnchorObj.hasOwnProperty("sortorder")) {
+                    newAnchorObj["sortby"] = currentAnchorObj["sortby"];
                     newAnchorObj["sortorder"] = currentAnchorObj["sortorder"];
                 } else {
+                    newAnchorObj["sortby"] = ASC.People.Data.userDisplayFormat == 1 ? "firstname" : "lastname";
                     newAnchorObj["sortorder"] = "ascending";
                     if (currentAnchorObj == null && (Teamlab.profile.isAdmin || window.ASC.Resources.Master.IsProductAdmin)) {
                         //check if active users exist
                         var needActiveFilterAsDefault = false;
-                        var users = ASC.Resources.Master.ApiResponses_ActiveProfiles.response;
-                        for (var i = 0, n = users.length; i < n; i++) {
-                            if (users[i].isActivated === true && users[i].isOwner === false) {
+                        var users = window.UserManager.getAllUsers(true);
+                        for (var userId in users) {
+                            if (!users.hasOwnProperty(users)) continue;
+                            var user = users[userId];
+                            if (user.isActivated === true && user.isOwner === false) {
                                 needActiveFilterAsDefault = true;
                                 break;
                             }
                         }
 
                         if (needActiveFilterAsDefault) {
-                            newAnchorObj["status"] = "active";
+                            newAnchorObj["employeestatus"] = "active";
                         }
                     }
                 }
@@ -638,6 +671,7 @@ ASC.People.PeopleController = (function() {
         }
         isInit = true;
 
+        isRetina = jq.cookies.get("is_retina");
         pageNavigator = ASC.People.PageNavigator.pgNavigator;
 
         showFirstLoader();
@@ -662,15 +696,19 @@ ASC.People.PeopleController = (function() {
             filter = filters[i];
             switch (filter.id) {
                 case "sorter":
+                    newAnchor.sortby = filter.params.id;
                     newAnchor.sortorder = filter.params.sortOrder;
                     break;
                 case "text":
                     newAnchor.query = encodeURIComponent(filter.params.value);
                     break;
-                case "selected-status-active":
-                case "selected-status-disabled":
-                case "selected-status-pending":
-                    newAnchor.status = filter.params.value;
+                case "selected-employee-status-active":
+                case "selected-employee-status-disabled":
+                    newAnchor.employeestatus = filter.params.value;
+                    break;
+                case "selected-activation-status-active":
+                case "selected-activation-status-pending":
+                    newAnchor.activationstatus = filter.params.value;
                     break;
                 case "selected-type-admin":
                 case "selected-type-user":
@@ -739,8 +777,10 @@ ASC.People.PeopleController = (function() {
             pageCount = pageNavigator.EntryCountOnPage,
             page = pageNavigator.CurrentPageNumber,
             type = jq.getAnchorParam("type") || null,
-            status = jq.getAnchorParam("status") || null,
+            employeestatus = jq.getAnchorParam("employeestatus") || null,
+            activationstatus = jq.getAnchorParam("activationstatus") || null,
             groupId = jq.getAnchorParam("group") || null,
+            sortby = jq.getAnchorParam("sortby") || ASC.People.Data.userDisplayFormat == 1 ? "firstname" : "lastname",
             sortorder = jq.getAnchorParam("sortorder") == "descending" || false,
             search = decodeURIComponent(jq.getAnchorParam("query"));
 
@@ -748,9 +788,12 @@ ASC.People.PeopleController = (function() {
         jq("#countOfRows").val(pageCount).tlCombobox();
 
         var params = {
+            sortby: sortby,
+            sortorder: sortorder,
             page: page,
             type: type,
-            status: status,
+            employeestatus: employeestatus,
+            activationstatus: activationstatus,
             groupId: groupId,
             query: search
         };
@@ -758,8 +801,10 @@ ASC.People.PeopleController = (function() {
         var filter = getRequestFilter({
             StartIndex: (page > 0 ? page - 1 : page) * pageCount,
             Count: pageCount,
+            sortby: sortby,
             sortorder: sortorder,
-            status: status
+            employeestatus: employeestatus,
+            activationstatus: activationstatus
         });
 
         Teamlab.getProfilesByFilter(params, {
@@ -884,7 +929,7 @@ ASC.People.PeopleController = (function() {
                     if (!(user.isAdmin || user.listAdminModules.length || user.isPortalOwner)) {
                         enableChangeType++;
                     }
-                    if (!user.isActivated && !user.isLDAP && !user.isSSO) {
+                    if (!user.isActivated && !user.isSSO) {
                         enableSendInvite++;
                     }
                 }
@@ -1130,7 +1175,7 @@ ASC.People.PeopleController = (function() {
             //GET QUOTA & SET TO INTERFACE
             var quota = _tenantQuota.availableUsersCount;
             jq("#userTypeInfo .tariff-limit").html(jq.format(PeopleManager.UserLimit, "<b>", quota, "</b>"));
-            updateUserListByQuota(container, quota);
+            updateUserListToChangeTypeByQuota(container, quota);
 
             if (quota == 0) {
                 jq("#userTypeInfo .action-info").addClass("display-none");
@@ -1140,6 +1185,7 @@ ASC.People.PeopleController = (function() {
             jq("#userTypeInfo").addClass("display-none");
             jq("#visitorTypeInfo").removeClass("display-none");
         }
+
         if (dialog.find("input[disabled]").length == dialog.find("input").length) {
             jq("#changeTypeDialogOk").addClass("disable");
         } else {
@@ -1168,6 +1214,64 @@ ASC.People.PeopleController = (function() {
             }
         }
         return users;
+    };
+
+    var updateUserListToChangeTypeByQuota = function (container, quota) {
+        if (typeof (quota) == "undefined" || quota == null)
+            return;
+
+        var $containerBox = jq(container);
+        var count = 0;
+
+        $containerBox.find("input[type=checkbox]").each(function (i, item) {
+            var $checkbox = jq(item);
+            if ($checkbox.attr("locked")) {
+                $checkbox.prop("checked", false).attr("disabled", true);
+            } else {
+                if (quota > 0 && count < quota) {
+                    $checkbox.prop("checked", true).attr("disabled", false);
+                    count++;
+                } else {
+                    $checkbox.prop("checked", false).attr("disabled", true);
+                }
+            }
+        });
+
+        $containerBox.on("click", "input[type=checkbox]", function () {
+            selectItemToChangeTypeInUserList(this, container, quota);
+        });
+    };
+
+    var selectItemToChangeTypeInUserList = function (obj, container, quota) {
+        var $checkbox = jq(obj);
+        var $containerBox = jq(container);
+        var $inputs = $containerBox.find("input[type=checkbox]");
+
+        if ($checkbox.is(":checked")) {
+            var selectedCount = $inputs.filter(":checked").length;
+
+            if (selectedCount > quota) {
+                $checkbox.prop("checked", false);
+                return;
+            }
+
+            if (selectedCount == quota) {
+                $inputs.each(function (i, item) {
+                    var $item = jq(item);
+                    if (!$item.is(":checked"))
+                        $item.attr("disabled", true);
+                });
+            }
+        } else {
+            $inputs.each(function (i, item) {
+                var $item = jq(item);
+                if ($item.attr("locked")) {
+                    $item.prop("checked", false).attr("disabled", true);
+                } else {
+                    $item.attr("disabled", false);
+                }
+            });
+        }
     };
 
     var changeUserType = function() {
@@ -1246,16 +1350,18 @@ ASC.People.PeopleController = (function() {
 
             //GET QUOTA & SET TO INTERFACE
             var quota = _tenantQuota.availableUsersCount;
-            jq("#activeStatusInfo .tariff-limit").html(jq.format(PeopleManager.UserLimit, "<b>", quota, "</b>"));
-            updateUserListByQuota(container, quota);
+            jq("#activeStatusInfo .tariff-limit").html(jq.format(PeopleManager.UserLimitExcludingGuests, "<b>", quota, "</b>"));
+            updateUserListToChangeStatusByQuota(container, quota);
 
-            if (quota == 0) {
-                jq("#activeStatusInfo .action-info").addClass("display-none");
-                jq("#changeStatusDialog .selected-users-info").addClass("display-none");
-            }
         } else if (_selectedStatus == 2) {
             jq("#activeStatusInfo").addClass("display-none");
             jq("#terminateStatusInfo").removeClass("display-none");
+        }
+
+        if (dialog.find("input[disabled]").length == dialog.find("input").length) {
+            jq("#changeStatusOkBtn").addClass("disable");
+        } else {
+            jq("#changeStatusOkBtn").removeClass("disable");
         }
     };
 
@@ -1274,6 +1380,74 @@ ASC.People.PeopleController = (function() {
             }
         }
         return users;
+    };
+
+    var updateUserListToChangeStatusByQuota = function (container, quota) {
+        if (typeof (quota) == "undefined" || quota == null)
+            return;
+
+        var $containerBox = jq(container);
+        var count = 0;
+
+        $containerBox.find("input[type=checkbox]").each(function (i, item) {
+            var $checkbox = jq(item);
+            if ($checkbox.attr("locked")) {
+                $checkbox.prop("checked", false).attr("disabled", true);
+            } else {
+                if ($checkbox.attr("user-isvisitor") == "true") {
+                    $checkbox.prop("checked", true).attr("disabled", false);
+                } else if (quota > 0 && count < quota) {
+                    $checkbox.prop("checked", true).attr("disabled", false);
+                    count++;
+                } else {
+                    $checkbox.prop("checked", false).attr("disabled", true);
+                }
+            }
+        });
+
+        $containerBox.on("click", "input[type=checkbox]", function () {
+            selectItemToChangeStatusInUserList(this, container, quota);
+        });
+    };
+
+    var selectItemToChangeStatusInUserList = function (obj, container, quota) {
+        var $checkbox = jq(obj);
+        var $containerBox = jq(container);
+        var $inputs = $containerBox.find("input[type=checkbox]");
+
+        var isCheckboxVisitor = $checkbox.attr("user-isvisitor") == "true";
+
+        if (isCheckboxVisitor) return;
+
+        if ($checkbox.is(":checked")) {
+
+            var selectedCount = $inputs.filter(function () {
+                var cbx = jq(this);
+                return cbx.is(":checked") && cbx.attr("user-isvisitor") != "true";
+            }).length;
+
+            if (selectedCount > quota) {
+                $checkbox.prop("checked", false);
+                return;
+            }
+
+            if (selectedCount == quota) {
+                $inputs.each(function (i, item) {
+                    var $item = jq(item);
+                    if (!$item.is(":checked") && $item.attr("user-isvisitor") != "true")
+                        $item.attr("disabled", true);
+                });
+            }
+        } else {
+            $inputs.each(function (i, item) {
+                var $item = jq(item);
+                if ($item.attr("locked")) {
+                    $item.prop("checked", false).attr("disabled", true);
+                } else {
+                    $item.attr("disabled", false);
+                }
+            });
+        }
     };
 
     var changeUserStatus = function() {
@@ -1372,6 +1546,7 @@ ASC.People.PeopleController = (function() {
             }
         });
     };
+
     //RemoveUsersDialog
 
     var showRemoveUsersDialog = function () {
@@ -1435,16 +1610,15 @@ ASC.People.PeopleController = (function() {
 
     // write letter for users
 
-    var writeLetterUsers = function () {
+    var writeLetterUsers = function() {
         jq("#changeTypePanel, #changeStatusPanel, #otherFunctionCnt").hide();
         var users = jq.extend(true, [], _selectedItems),
-                    emails = [];
+            emails = [];
         for (var i = 0, n = users.length; i < n; i++) {
             emails.push(users[i].email);
         }
         window.open('../../addons/mail/#composeto/email=' + emails.join(), "_blank");
-    }
-
+    };
 
     //redraw user rows
 
@@ -1453,7 +1627,12 @@ ASC.People.PeopleController = (function() {
             var profile = data[i];
             profile.isChecked = true;
 
-            var $row = jq.tmpl("userListTemplate", { users: [profile], isAdmin: Teamlab.profile.isAdmin || window.ASC.Resources.Master.IsProductAdmin });
+            var $row = jq.tmpl("userListTemplate",
+            {
+                users: [profile],
+                isAdmin: Teamlab.profile.isAdmin || window.ASC.Resources.Master.IsProductAdmin,
+                isRetina: isRetina
+            });
             jq("#user_" + profile.id).replaceWith($row);
 
             for (var j = 0, m = _peopleList.length; j < m; j++) {
@@ -1495,59 +1674,6 @@ ASC.People.PeopleController = (function() {
             $label.appendTo($div);
             $div.appendTo($containerBox);
         });
-    };
-
-    var updateUserListByQuota = function(container, quota) {
-        if (typeof (quota) == "undefined" || quota == null)
-            return;
-
-        var $containerBox = jq(container);
-        var count = 0;
-        $containerBox.find("input[type=checkbox]").each(function(i, item) {
-            var $checkbox = jq(item);
-            if ($checkbox.attr("locked")) {
-                $checkbox.prop("checked", false).attr("disabled", true);
-            } else {
-                if (count < quota || 
-                    (count == quota) && container.parents("#changeStatusDialog").length && ($checkbox.attr("user-isvisitor") == "true")) // for undisabling the guest on the full portal
-                {
-                    $checkbox.prop("checked", true).attr("disabled", false);
-                    count++;
-                } else {
-                    $checkbox.prop("checked", false).attr("disabled", true);
-                }
-            }
-        });
-
-        $containerBox.on("click", "input[type=checkbox]", function() {
-            selectItemInUserList(this, container, quota);
-        });
-    };
-
-    var selectItemInUserList = function(obj, container, quota) {
-        var inputs = jq(container).find("input[type=checkbox]");
-        var selectedCount = jq(container).find("input[type=checkbox]:checked").length;
-
-        if (jq(obj).is(":checked")) {
-            if (selectedCount > quota) {
-                jq(obj).prop("checked", false);
-            }
-            if (selectedCount == quota) {
-                inputs.each(function(i, item) {
-                    if (!jq(item).is(":checked"))
-                        jq(item).attr("disabled", true);
-                });
-            }
-        } else {
-            inputs.each(function(i, item) {
-                var $checkbox = jq(item);
-                if ($checkbox.attr("locked")) {
-                    $checkbox.prop("checked", false).attr("disabled", true);
-                } else {
-                    $checkbox.attr("disabled", false);
-                }
-            });
-        }
     };
 
     var toggleSelectedUserList = function(obj) {
@@ -1606,64 +1732,60 @@ ASC.People.PeopleController = (function() {
         if (Teamlab.profile.isAdmin || window.ASC.Resources.Master.IsProductAdmin) {
             filters.push({
                     type: "combobox",
-                    id: "selected-status-active",
+                    id: "selected-employee-status-active",
                     title: ASC.People.Resources.PeopleJSResource.LblActive,
                     filtertitle: ASC.People.Resources.PeopleJSResource.LblStatus,
                     group: ASC.People.Resources.PeopleJSResource.LblStatus,
-                    groupby: "selected-profile-status-value",
+                    groupby: "selected-employee-status-value",
                     options: [
                         { value: "active", classname: "active", title: ASC.People.Resources.PeopleJSResource.LblActive, def: true },
-                        { value: "disabled", classname: "disabled", title: ASC.People.Resources.PeopleJSResource.LblTerminated },
-                        { value: "pending", classname: "pending", title: ASC.People.Resources.PeopleJSResource.LblPending }
+                        { value: "disabled", classname: "disabled", title: ASC.People.Resources.PeopleJSResource.LblTerminated }
                     ],
                     hashmask: "type/{0}"
                 },
                 {
                     type: "combobox",
-                    id: "selected-status-disabled",
+                    id: "selected-employee-status-disabled",
                     title: ASC.People.Resources.PeopleJSResource.LblTerminated,
                     filtertitle: ASC.People.Resources.PeopleJSResource.LblStatus,
                     group: ASC.People.Resources.PeopleJSResource.LblStatus,
-                    groupby: "selected-profile-status-value",
+                    groupby: "selected-employee-status-value",
                     options: [
                         { value: "active", classname: "active", title: ASC.People.Resources.PeopleJSResource.LblActive },
-                        { value: "disabled", classname: "disabled", title: ASC.People.Resources.PeopleJSResource.LblTerminated, def: true },
-                        { value: "pending", classname: "pending", title: ASC.People.Resources.PeopleJSResource.LblPending }
-                    ],
-                    hashmask: "type/{0}"
-                },
-                {
-                    type: "combobox",
-                    id: "selected-status-pending",
-                    title: ASC.People.Resources.PeopleJSResource.LblPending,
-                    filtertitle: ASC.People.Resources.PeopleJSResource.LblStatus,
-                    group: ASC.People.Resources.PeopleJSResource.LblStatus,
-                    groupby: "selected-profile-status-value",
-                    options: [
-                        { value: "active", classname: "active", title: ASC.People.Resources.PeopleJSResource.LblActive },
-                        { value: "disabled", classname: "disabled", title: ASC.People.Resources.PeopleJSResource.LblTerminated },
-                        { value: "pending", classname: "pending", title: ASC.People.Resources.PeopleJSResource.LblPending, def: true }
+                        { value: "disabled", classname: "disabled", title: ASC.People.Resources.PeopleJSResource.LblTerminated, def: true }
                     ],
                     hashmask: "type/{0}"
                 }
             );
-        } else {
-            filters.push(
-                {
-                    type: "combobox",
-                    id: "selected-status-pending",
-                    title: ASC.People.Resources.PeopleJSResource.LblPending,
-                    filtertitle: ASC.People.Resources.PeopleJSResource.LblStatus,
-                    group: ASC.People.Resources.PeopleJSResource.LblStatus,
-                    groupby: "selected-profile-status-value",
-                    options: [
-                        { value: "pending", classname: "pending", title: ASC.People.Resources.PeopleJSResource.LblPending, def: true }
-                    ],
-                    hashmask: "type/{0}"
-                });
-        }
-        
+        } 
+
         filters.push(
+            {
+                type: "combobox",
+                id: "selected-activation-status-active",
+                title: ASC.People.Resources.PeopleJSResource.LblActive,
+                filtertitle: ASC.People.Resources.PeopleResource.Email,
+                group: ASC.People.Resources.PeopleResource.Email,
+                groupby: "selected-activation-status-value",
+                options: [
+                    { value: "active", classname: "active", title: ASC.People.Resources.PeopleJSResource.LblActive, def: true },
+                    { value: "pending", classname: "pending", title: ASC.People.Resources.PeopleJSResource.LblPending }
+                ],
+                hashmask: "type/{0}"
+            },
+            {
+                type: "combobox",
+                id: "selected-activation-status-pending",
+                title: ASC.People.Resources.PeopleJSResource.LblPending,
+                filtertitle: ASC.People.Resources.PeopleResource.Email,
+                group: ASC.People.Resources.PeopleResource.Email,
+                groupby: "selected-activation-status-value",
+                options: [
+                    { value: "active", classname: "active", title: ASC.People.Resources.PeopleJSResource.LblActive },
+                    { value: "pending", classname: "pending", title: ASC.People.Resources.PeopleJSResource.LblPending, def: true }
+                ],
+                hashmask: "type/{0}"
+            },
             {
                 type: "combobox",
                 id: "selected-type-admin",
@@ -1722,7 +1844,8 @@ ASC.People.PeopleController = (function() {
             hintDefaultDisable: true,
             sorters:
             [
-                { id: "by-name", title: ASC.People.Resources.PeopleJSResource.LblByName, dsc: false, def: true }
+                { id: "firstname", title: ASC.Resources.Master.Resource.FirstName, dsc: false, def: ASC.People.Data.userDisplayFormat == 1 },
+                { id: "lastname", title: ASC.Resources.Master.Resource.LastName, dsc: false, def: ASC.People.Data.userDisplayFormat == 2 }
             ],
             filters: filters
         })
@@ -1732,8 +1855,9 @@ ASC.People.PeopleController = (function() {
 
         PeopleManager.SelectedCount = ASC.People.Resources.PeopleJSResource.SelectedCount;
         PeopleManager.UserLimit = ASC.People.Resources.PeopleJSResource.TariffActiveUserLimit;
+        PeopleManager.UserLimitExcludingGuests = ASC.People.Resources.PeopleJSResource.TariffActiveUserLimitExcludingGuests;
 
-        ASC.People.PeopleController.advansedFilter.one("adv-ready", function () {
+        ASC.People.PeopleController.advansedFilter.one("adv-ready", function() {
             var peopleAdvansedFilterContainer = jq("#peopleFilter .advansed-filter-list");
             peopleAdvansedFilterContainer.find("li[data-id='selected-status-active'] .inner-text").trackEvent(ga_Categories.people, ga_Actions.filterClick, 'status_active');
             peopleAdvansedFilterContainer.find("li[data-id='selected-status-disabled'] .inner-text").trackEvent(ga_Categories.people, ga_Actions.filterClick, 'status_disabled');
@@ -1742,7 +1866,8 @@ ASC.People.PeopleController = (function() {
             peopleAdvansedFilterContainer.find("li[data-id='selected-type-user'] .inner-text").trackEvent(ga_Categories.people, ga_Actions.filterClick, 'type_user');
             peopleAdvansedFilterContainer.find("li[data-id='selected-type-visitor'] .inner-text").trackEvent(ga_Categories.people, ga_Actions.filterClick, 'type_visitor');
             peopleAdvansedFilterContainer.find("li[data-id='selected-group'] .inner-text").trackEvent(ga_Categories.people, ga_Actions.filterClick, 'group');
-        })
+        });
+
         jq(".people-import-banner_img").trackEvent(ga_Categories.people, ga_Actions.bannerClick, "import-people");
         jq("#peopleFilter .btn-toggle-sorter").trackEvent(ga_Categories.people, ga_Actions.filterClick, "sort");
         jq("#peopleFilter .advansed-filter-input").trackEvent(ga_Categories.people, ga_Actions.filterClick, "search_text", "enter");
@@ -1921,8 +2046,9 @@ ASC.People.PeopleController = (function() {
              dropdownID: "otherFunctionCnt",
              switcherSelector: "#peopleHeaderMenu .otherFunctions",
              position: "fixed",
-             addTop: 5,
-             addLeft: -8
+             addTop: 4,
+             addLeft: 0,
+             rightPos: true
          });
 
     };

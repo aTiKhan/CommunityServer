@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,15 +25,9 @@
 
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 using System.Web.UI;
-using System.Web.UI.WebControls;
 using ASC.Web.Studio.Core.Backup;
 using Resources;
-using ASC.Web.Studio.Core;
-using ASC.Web.Core.WhiteLabel;
 
 namespace ASC.Web.Studio.UserControls.Common
 {
@@ -41,7 +35,7 @@ namespace ASC.Web.Studio.UserControls.Common
     {
         public static string Location
         {
-            get { return "~/usercontrols/common/preparationportal/preparationportal.ascx"; }
+            get { return "~/UserControls/Common/PreparationPortal/PreparationPortal.ascx"; }
         }
 
         protected String HeaderPage { get; set; }

@@ -69,7 +69,7 @@
         <div class="big-button-container">
             <a class="abort-btn button gray big display-none"><%= PeopleResource.RemovingAbortButton %></a>
             <a class="restart-btn button gray big display-none"><%= PeopleResource.RemovingRestartButton %></a>
-            <a class="ok-btn button gray big display-none" href="/products/people"><%= Resource.OKButton %></a>
+            <a class="ok-btn button gray big display-none" href="/products/people/"><%= Resource.OKButton %></a>
         </div>
     </div>
 
@@ -97,6 +97,11 @@
             </a>
         </div>
         <% } %>
+        <div class="delete-profile-container">
+            <label>
+                <input type="checkbox" <%= DeleteProfile ? "checked" : "" %>/><%= PeopleResource.DeleteProfileAfterReassignment %>
+            </label>
+        </div>
         <div class="big-button-container">
             <a class="start-btn button blue big disable"><%= PeopleResource.ReassignButton %></a>
             <span class="splitter-buttons"></span>
@@ -130,7 +135,7 @@
         <div class="big-button-container">
             <a class="abort-btn button gray big display-none"><%= PeopleResource.ReassignAbortButton %></a>
             <a class="restart-btn button gray big display-none"><%= PeopleResource.ReassignRestartButton %></a>
-            <a class="ok-btn button gray big display-none" href="/products/people"><%= Resource.OKButton %></a>
+            <a class="ok-btn button gray big display-none" href="/products/people/"><%= Resource.OKButton %></a>
         </div>
     </div>
 

@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -30,6 +30,7 @@ using System.Linq;
 using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
+using ASC.Web.Core.WhiteLabel;
 
 namespace ASC.Web.Studio.UserControls.Common.LoaderPage
 {
@@ -37,13 +38,17 @@ namespace ASC.Web.Studio.UserControls.Common.LoaderPage
     {
         public bool Static { get; set; }
 
+        protected bool DefaultSettings { get; set; }
+
         public static string Location
         {
             get { return "~/UserControls/Common/LoaderPage/LoaderPage.ascx"; }
         }
         protected void Page_Load(object sender, EventArgs e)
         {
-            Page.RegisterStyle("~/usercontrols/common/loaderpage/css/loaderpage.less");
+            DefaultSettings = CompanyWhiteLabelSettings.Instance.IsDefault;
+
+            Page.RegisterStyle("~/UserControls/Common/LoaderPage/css/loaderpage.less");
         }
     }
 }

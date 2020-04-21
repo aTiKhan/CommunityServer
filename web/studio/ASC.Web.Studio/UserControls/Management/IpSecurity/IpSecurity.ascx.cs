@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -51,8 +51,8 @@ namespace ASC.Web.Studio.UserControls.Management.IpSecurity
         {
             if (!Enabled) return;
 
-            Page.RegisterBodyScripts("~/usercontrols/management/ipsecurity/js/ipsecurity.js")
-                .RegisterStyle("~/usercontrols/management/ipsecurity/css/ipsecurity.less");
+            Page.RegisterBodyScripts("~/UserControls/Management/IpSecurity/js/ipsecurity.js")
+                .RegisterStyle("~/UserControls/Management/IpSecurity/css/ipsecurity.less");
 
             var managementPage = Page as Studio.Management;
             TenantAccessAnyone = managementPage != null ?

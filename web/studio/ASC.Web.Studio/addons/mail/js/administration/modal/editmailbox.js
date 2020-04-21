@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -68,7 +68,7 @@ window.editMailboxModal = (function($) {
                 );
         });
 
-        popup.addPopup(window.MailAdministrationResource.EditMailboxLabel, html, 392, null, null, { focusInput: false });
+        popup.addBig(window.MailAdministrationResource.EditMailboxLabel, html, null, null, { focusInput: false });
 
         PopupKeyUpActionProvider.EnterAction = "jq('#mail_server_edit_mailbox:visible .addAlias').trigger('click');";
 

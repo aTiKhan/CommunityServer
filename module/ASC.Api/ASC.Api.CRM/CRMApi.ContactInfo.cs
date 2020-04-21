@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -33,8 +33,12 @@ using ASC.Api.Collections;
 using ASC.Api.Exceptions;
 using ASC.CRM.Core;
 using ASC.CRM.Core.Entities;
+using ASC.ElasticSearch;
 using ASC.MessagingSystem;
+using ASC.Web.CRM.Classes;
+using ASC.Web.CRM.Core.Search;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace ASC.Api.CRM
 {
@@ -179,6 +183,61 @@ namespace ASC.Api.CRM
         }
 
         /// <summary>
+        ///    Adds the address information to the contact with the selected ID
+        /// </summary>
+        /// <param name="contactid">Contact ID</param>
+        /// <param name="address">Address data</param>
+        /// <short>Add address info</short> 
+        /// <category>Contacts</category>
+        /// <seealso cref="GetContactInfoType"/>
+        /// <seealso cref="GetContactInfoCategory"/>
+        /// <returns>
+        ///    Contact information
+        /// </returns> 
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="ItemNotFoundException"></exception>
+        [Create(@"contact/{contactid:[0-9]+}/addressdata")]
+        public ContactInfoWrapper CreateContactInfoAddress(int contactid, Address address)
+        {
+            if (contactid <= 0) throw new ArgumentException("Invalid value", "contactid");
+
+            var contact = DaoFactory.ContactDao.GetByID(contactid);
+
+            if (contact == null || !CRMSecurity.CanEdit(contact)) throw new ItemNotFoundException();
+
+            if (address == null) throw new ArgumentException("Value cannot be null", "address");
+
+            if (!Enum.IsDefined(typeof(AddressCategory), address.Category)) throw new ArgumentException("Value does not fall within the expected range.", "address.Category");
+
+            address.CategoryName = ((AddressCategory)address.Category).ToLocalizedString();
+
+            var settings = new JsonSerializerSettings
+                {
+                    ContractResolver = new DefaultContractResolver
+                        {
+                            NamingStrategy = new CamelCaseNamingStrategy()
+                        },
+                    Formatting = Formatting.Indented
+                };
+
+            var contactInfo = new ContactInfo
+                {
+                    InfoType = ContactInfoType.Address,
+                    ContactID = contactid,
+                    IsPrimary = address.IsPrimary,
+                    Category = address.Category,
+                    Data = JsonConvert.SerializeObject(address, settings)
+                };
+
+            contactInfo.ID = DaoFactory.ContactInfoDao.Save(contactInfo);
+
+            var messageAction = contact is Company ? MessageAction.CompanyUpdatedPrincipalInfo : MessageAction.PersonUpdatedPrincipalInfo;
+            MessageService.Send(Request, messageAction, MessageTarget.Create(contact.ID), contact.GetTitle());
+
+            return ToContactInfoWrapper(contactInfo);
+        }
+
+        /// <summary>
         ///  Creates contact information (add new information to the old list) with the parameters specified in the request for the contact with the selected ID
         /// </summary>
         ///<short>Group contact info</short> 
@@ -218,7 +277,7 @@ namespace ASC.Api.CRM
                 contactInfo.ContactID = contactid;
             }
 
-            var ids = DaoFactory.ContactInfoDao.SaveList(contactInfoList);
+            var ids = DaoFactory.ContactInfoDao.SaveList(contactInfoList, contact);
 
             for (var index = 0; index < itemsList.Count; index++)
             {
@@ -290,6 +349,60 @@ namespace ASC.Api.CRM
             return contactInfoWrapper;
         }
 
+        /// <summary>
+        ///   Updates the address information with the parameters specified in the request for the contact with the selected ID
+        /// </summary>
+        /// <param name="id">Contact information record ID</param>
+        /// <param name="contactid">Contact ID</param>
+        /// <param name="address">Address data</param>
+        /// <short>Update address info</short> 
+        /// <category>Contacts</category>
+        /// <exception cref="ArgumentException"></exception>
+        /// <exception cref="ItemNotFoundException"></exception>
+        /// <returns>
+        ///   Contact information
+        /// </returns>
+        [Update(@"contact/{contactid:[0-9]+}/addressdata/{id:[0-9]+}")]
+        public ContactInfoWrapper UpdateContactInfoAddress(int id, int contactid, Address address)
+        {
+            if (id <= 0) throw new ArgumentException("Invalid value", "id");
+
+            var contactInfo = DaoFactory.ContactInfoDao.GetByID(id);
+
+            if (contactInfo == null || contactInfo.InfoType != ContactInfoType.Address) throw new ItemNotFoundException();
+
+            if (contactid <= 0) throw new ArgumentException("Invalid value", "contactid");
+
+            var contact = DaoFactory.ContactDao.GetByID(contactid);
+
+            if (contact == null || !CRMSecurity.CanEdit(contact) || contactInfo.ContactID != contactid) throw new ItemNotFoundException();
+
+            if (address == null) throw new ArgumentException("Value cannot be null", "address");
+
+            if (!Enum.IsDefined(typeof(AddressCategory), address.Category)) throw new ArgumentException("Value does not fall within the expected range.", "address.Category");
+
+            address.CategoryName = ((AddressCategory) address.Category).ToLocalizedString();
+
+            var settings = new JsonSerializerSettings
+            {
+                ContractResolver = new DefaultContractResolver
+                {
+                    NamingStrategy = new CamelCaseNamingStrategy()
+                },
+                Formatting = Formatting.Indented
+            };
+
+            contactInfo.IsPrimary = address.IsPrimary;
+            contactInfo.Category = address.Category;
+            contactInfo.Data = JsonConvert.SerializeObject(address, settings);
+
+            DaoFactory.ContactInfoDao.Update(contactInfo);
+
+            var messageAction = contact is Company ? MessageAction.CompanyUpdatedPrincipalInfo : MessageAction.PersonUpdatedPrincipalInfo;
+            MessageService.Send(Request, messageAction, MessageTarget.Create(contact.ID), contact.GetTitle());
+
+            return ToContactInfoWrapper(contactInfo);
+        }
 
         /// <summary>
         ///  Updates contact information (delete old information and add new list) with the parameters specified in the request for the contact with the selected ID
@@ -330,7 +443,7 @@ namespace ASC.Api.CRM
             }
 
             DaoFactory.ContactInfoDao.DeleteByContact(contactid);
-            var ids = DaoFactory.ContactInfoDao.SaveList(contactInfoList);
+            var ids = DaoFactory.ContactInfoDao.SaveList(contactInfoList, contact);
 
             for (var index = 0; index < itemsList.Count; index++)
             {
@@ -391,6 +504,12 @@ namespace ASC.Api.CRM
 
             var messageAction = contact is Company ? MessageAction.CompanyUpdatedPrincipalInfo : MessageAction.PersonUpdatedPrincipalInfo;
             MessageService.Send(Request, messageAction, MessageTarget.Create(contact.ID), contact.GetTitle());
+
+            if (contactInfo.InfoType == ContactInfoType.Email)
+            {
+                FactoryIndexer<EmailWrapper>.DeleteAsync(EmailWrapper.ToEmailWrapper(contact, new List<ContactInfo> { contactInfo}));
+            }
+            FactoryIndexer<InfoWrapper>.DeleteAsync(contactInfo);
 
             return wrapper;
         }

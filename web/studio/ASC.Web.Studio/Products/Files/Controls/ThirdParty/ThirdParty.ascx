@@ -2,6 +2,7 @@
 <%@ Assembly Name="ASC.Web.Files" %>
 <%@ Control Language="C#" AutoEventWireup="true" CodeBehind="ThirdParty.ascx.cs" Inherits="ASC.Web.Files.Controls.ThirdParty" %>
 
+<%@ Import Namespace="System.Threading" %>
 <%@ Import Namespace="ASC.Core" %>
 <%@ Import Namespace="ASC.Web.Files.Classes" %>
 <%@ Import Namespace="ASC.Web.Files.Helpers" %>
@@ -31,8 +32,6 @@
             <span id="thirdPartyDialogCaption"></span>
         </header>
         <body>
-            <input class="display-none" type="text" name="fakeusernameremembered" />
-            <input class="display-none" type="password" name="fakepasswordremembered" />
             <div id="thirdPartyPanel">
                 <div class="thirdparty-editor-row">
                     <div><%: FilesUCResource.ThirdPartyReconnectTitle %></div>
@@ -41,12 +40,12 @@
 
                 <div class="thirdparty-editor-row">
                     <div><%: FilesUCResource.ConnectionUrl %></div>
-                    <input type="url" id="thirdPartyConnectionUrl" class="textEdit" placeholder="<%: FilesUCResource.ThirdPartyCorrect %>" autocomplete="off" />
+                    <input type="url" id="thirdPartyConnectionUrl" class="textEdit" placeholder="<%: FilesUCResource.ThirdPartyCorrect %>" name="account-new-field" autocomplete="off" />
                 </div>
 
                 <div class="thirdparty-editor-row">
                     <div><%: FilesUCResource.Password %></div>
-                    <input type="password" id="thirdPartyPassword" class="textEdit" placeholder="<%: FilesUCResource.ThirdPartyCorrect %>" autocomplete="off" />
+                    <input type="password" id="thirdPartyPassword" class="textEdit" placeholder="<%: FilesUCResource.ThirdPartyCorrect %>" name="account-new-field" autocomplete="new-password" />
                 </div>
 
                 <div class="thirdparty-editor-row">
@@ -100,7 +99,7 @@
         </header>
         <body>
             <%: FilesUCResource.ThirdPartyConnectAccountsDescription %>
-            <% if (Global.IsAdministrator && !CoreContext.Configuration.Personal)
+            <% if (Global.IsAdministrator && !CoreContext.Configuration.Personal && !CoreContext.Configuration.CustomMode)
                { %>
                 <%= " " + string.Format(FilesUCResource.ThirdPartyConnectAccountsKeys,
                                         "<a href=\"" + CommonLinkUtility.GetAdministration(ManagementType.ThirdPartyAuthorization) + "\">",
@@ -131,14 +130,17 @@
                 <% { %>
                 <span class="add-account-big add-account-button SharePoint SkyDrive" data-provider="SharePoint" title="<%= FilesUCResource.ThirdPartySharePointDescr %>"></span>
                 <% } %>
-                <% if (ThirdpartyConfiguration.SupportWebDavInclusion) %>
+                <% if (ThirdpartyConfiguration.SupportNextcloudInclusion) %>
                 <% { %>
                 <span class="add-account-big add-account-button Nextcloud" data-provider="WebDav" title="<%= FilesUCResource.ThirdPartyOwnCloud %>"></span>
+                <% } %>
+                <% if (ThirdpartyConfiguration.SupportOwncloudInclusion) %>
+                <% { %>
                 <span class="add-account-big add-account-button OwnCloud" data-provider="WebDav" title="<%= FilesUCResource.ThirdPartyOwnCloud %>"></span>
                 <% } %>
                 <% if (ThirdpartyConfiguration.SupportYandexInclusion) %>
                 <% { %>
-                <span class="add-account-big add-account-button Yandex" data-provider="Yandex" title="<%= FilesUCResource.ThirdPartyYandex %>"></span>
+                <span class="add-account-big add-account-button Yandex <%= Thread.CurrentThread.CurrentCulture.TwoLetterISOLanguageName %>" data-provider="Yandex" title="<%= FilesUCResource.ThirdPartyYandex %>"></span>
                 <% } %>
                 <% if (ThirdpartyConfiguration.SupportDocuSignInclusion) %>
                 <% { %>
@@ -229,12 +231,12 @@
     <ul class="dropdown-content">
         <li id="accountEditLinkContainer">
             <a class="dropdown-item">
-                <%= FilesUCResource.ButtonEdit %>
+                <%= FilesUCResource.ButtonChangeThirdParty %>
             </a>
         </li>
         <li id="accountDeleteLinkContainer">
             <a class="dropdown-item">
-                <%= FilesUCResource.ButtonDelete %>
+                <%= FilesUCResource.ButtonDeleteThirdParty %>
             </a>
         </li>
     </ul>

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -23,14 +23,6 @@
  *
 */
 
-
-/*
- * Popup Widgets
- *
- * Dmitry Sokolov
- * Ascensio System SIA.
- * 2011
- */
 
 (function($, window) {
 
@@ -74,15 +66,30 @@
 		_arrowWidth: 0,
 		_arrowHeight: 0,
 
+		_arrowSize: {},
+
 		_create: function() {
+			var arrow = $('<div class="arrow" style="margin:0;"/>');
+
 			this.element
 					.hide()
-					.appendTo("body")
 					.addClass(this.options.cssClassName)
-					.append('<div class="arrow" style="margin:0;"/>');
-			this._arrow = this.element.find(".arrow");
-			this._arrowWidth = this._arrow.outerWidth(true);
-			this._arrowHeight = this._arrow.outerHeight(true);
+					.append(arrow)
+					.appendTo("body");
+
+			this._arrow = arrow;
+
+			var size = this._arrowSize[this.options.cssClassName];
+
+			if (!size) {
+				size = this._arrowSize[this.options.cssClassName] = {
+					width: this._arrow.outerWidth(true),
+					height: this._arrow.outerHeight(true)
+				};
+			}
+
+			this._arrowWidth = size.width;
+			this._arrowHeight = size.height;
 		},
 
 		_makeVArrow: function(arrow, anchorX, label) {
@@ -173,7 +180,8 @@
 		},
 
 		_parsePageX: function(_pageX) {
-			var win = $(window);
+		    var win = $(window);
+		    var studioPageContent = $('#studioPageContent');
 			var pageX = (/^\s*(\d+|left|right|center)/i).exec(_pageX);
 			if (!pageX) {pageX = "center";}
 			var pX = parseInt(pageX[1], 10);
@@ -184,9 +192,10 @@
 					return 0;
 				} else if ("right" === pageX[1]) {
 					return win.width();
-				} else {
-					return Math.round((win.width() - this.element.outerWidth(true)) * 0.5);
-				}
+			    } else {
+			        var center = win.width() < studioPageContent.width() ? Math.round((studioPageContent.width() - this.element.outerWidth(true)) * 0.5) : Math.round((win.width() - this.element.outerWidth(true)) * 0.5);
+			        return center;
+			    }
 			}
 			return 0;
 		},
@@ -288,8 +297,16 @@
 			this._visible = true;
 		},
 
+        hide: function() {
+            this.element.hide();
+        },
+
+        show: function() {
+            this.element.show();
+        },
+
 		close: function() {
-			if(this.element.is(":visible")) {
+			if (this.element[0].style.display != "none") {
 				this.element.hide();
 			}
 			this._visible = false;
@@ -424,7 +441,7 @@
 				$(window.document).bind("mousedown", t, t._outerClick);
 			}
 
-			$.each(t.options.items, function(i,_item) {
+            $.each(t.options.items, function(i,_item) {
 				if (_item === t.options.divider || 
 						_item.label === t.options.divider) {
 					$("<div class='divider'/>").appendTo(t.element);
@@ -436,7 +453,7 @@
 							.click({itemIndex: i, item: _item}, function(e) {t._itemClick(e);})
 							.appendTo(t.element);
 				}
-			});
+            });
 		},
 
 		_outerClick: function(event) {

@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -45,15 +45,25 @@ namespace ASC.Web.Studio.UserControls.Users.UserProfile
             get { return "~/UserControls/Users/UserProfile/AccountLinkControl.ascx"; }
         }
 
+        public static List<string> AuthProviders = new List<string>
+            {
+                ProviderConstants.Google,
+                ProviderConstants.Facebook,
+                ProviderConstants.Twitter,
+                ProviderConstants.LinkedIn,
+                ProviderConstants.MailRu,
+                ProviderConstants.VK,
+                ProviderConstants.Yandex,
+                ProviderConstants.GosUslugi
+            };
+
         public static bool IsNotEmpty
         {
             get
             {
-                return
-                    !string.IsNullOrEmpty(GoogleLoginProvider.GoogleOAuth20ClientId)
-                    || !string.IsNullOrEmpty(FacebookLoginProvider.FacebookOAuth20ClientId)
-                    || !string.IsNullOrEmpty(TwitterLoginProvider.TwitterKey)
-                    || !string.IsNullOrEmpty(LinkedInLoginProvider.LinkedInOAuth20ClientId);
+                return AuthProviders
+                    .Select(ProviderManager.GetLoginProvider)
+                    .Any(loginProvider => loginProvider!= null && loginProvider.IsEnabled);
             }
         }
 
@@ -69,8 +79,8 @@ namespace ASC.Web.Studio.UserControls.Users.UserProfile
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            Page.RegisterStyle("~/usercontrols/users/userprofile/css/accountlink_style.less")
-                .RegisterBodyScripts("~/usercontrols/users/userprofile/js/accountlinker.js");
+            Page.RegisterStyle("~/UserControls/Users/UserProfile/css/accountlink_style.less")
+                .RegisterBodyScripts("~/UserControls/Users/UserProfile/js/accountlinker.js");
             InitProviders();
 
             Page.RegisterInlineScript(String.Format(@" AccountLinkControl_Providers = {0};
@@ -94,17 +104,14 @@ namespace ASC.Web.Studio.UserControls.Users.UserProfile
 
             var fromOnly = string.IsNullOrWhiteSpace(HttpContext.Current.Request["fromonly"]) ? string.Empty : HttpContext.Current.Request["fromonly"].ToLower();
 
-            if (!string.IsNullOrEmpty(GoogleLoginProvider.GoogleOAuth20ClientId) && (string.IsNullOrEmpty(fromOnly) || fromOnly == "google" || fromOnly == "openid"))
-                AddProvider(ProviderConstants.Google, linkedAccounts);
+            foreach (var provider in AuthProviders.Where(provider => string.IsNullOrEmpty(fromOnly) || fromOnly == provider || (provider == "google" && fromOnly == "openid")))
+            {
+                if (InviteView && provider.ToLower() == "twitter") continue;
 
-            if (!string.IsNullOrEmpty(FacebookLoginProvider.FacebookOAuth20ClientId) && (string.IsNullOrEmpty(fromOnly) || fromOnly == "facebook"))
-                AddProvider(ProviderConstants.Facebook, linkedAccounts);
-
-            if (!string.IsNullOrEmpty(TwitterLoginProvider.TwitterKey) && (string.IsNullOrEmpty(fromOnly) || fromOnly == "twitter"))
-                AddProvider(ProviderConstants.Twitter, linkedAccounts);
-
-            if (!string.IsNullOrEmpty(LinkedInLoginProvider.LinkedInOAuth20ClientId) && (string.IsNullOrEmpty(fromOnly) || fromOnly == "linkedin"))
-                AddProvider(ProviderConstants.LinkedIn, linkedAccounts);
+                var loginProvider = ProviderManager.GetLoginProvider(provider);
+                if (loginProvider != null && loginProvider.IsEnabled)
+                    AddProvider(provider, linkedAccounts);
+            }
         }
 
         private void AddProvider(string provider, IEnumerable<LoginProfile> linkedAccounts)
@@ -115,7 +122,7 @@ namespace ASC.Web.Studio.UserControls.Users.UserProfile
                     Provider = provider,
                     Url = VirtualPathUtility.ToAbsolute("~/login.ashx")
                           + "?auth=" + provider
-                          + (SettingsView || InviteView || !MobileDetector.IsMobile
+                          + (SettingsView || InviteView || (!MobileDetector.IsMobile && !Request.DesktopApp())
                                  ? ("&mode=popup&callback=" + ClientCallback)
                                  : ("&mode=Redirect&returnurl=" + HttpUtility.UrlEncode(new Uri(Request.GetUrlRewriter(), "auth.aspx").ToString())))
                 });
@@ -124,11 +131,6 @@ namespace ASC.Web.Studio.UserControls.Users.UserProfile
         private static AccountLinker GetLinker()
         {
             return new AccountLinker("webstudio");
-        }
-
-        public IEnumerable<AccountInfo> GetLinkableProviders()
-        {
-            return Infos.Where(x => x.Provider.ToLower() != "twitter");
         }
     }
 

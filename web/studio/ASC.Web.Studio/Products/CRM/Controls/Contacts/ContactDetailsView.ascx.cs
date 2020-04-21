@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,23 +24,17 @@
 */
 
 
-#region Import
-
 using System;
 using System.Text;
 using System.Web;
 using ASC.Core;
 using ASC.CRM.Core;
 using ASC.CRM.Core.Entities;
-using ASC.Thrdparty.Configuration;
+using ASC.FederatedLogin.LoginProviders;
 using ASC.Web.Core;
 using ASC.Web.Core.Mobile;
-using ASC.Web.Core.Utility.Skins;
 using ASC.Web.CRM.Classes;
-using ASC.Web.CRM.Configuration;
-using ASC.Web.CRM.SocialMedia;
-
-#endregion
+using ASC.Web.Studio.Utility;
 
 namespace ASC.Web.CRM.Controls.Contacts
 {
@@ -68,6 +62,8 @@ namespace ASC.Web.CRM.Controls.Contacts
 
         protected bool MobileVer = false;
 
+        protected string HelpLink { get; set; }
+
         #endregion
 
         #region Events
@@ -75,6 +71,7 @@ namespace ASC.Web.CRM.Controls.Contacts
         protected void Page_Load(object sender, EventArgs e)
         {
             MobileVer = MobileDetector.IsMobile;
+            HelpLink = CommonLinkUtility.GetHelpLink();
 
             ExecFullCardView();
             ExecTasksView();
@@ -84,9 +81,9 @@ namespace ASC.Web.CRM.Controls.Contacts
             if (TargetContact is Company)
                 ExecPeopleContainerView();
 
-            Page.RegisterStyle("~/products/projects/app_themes/default/css/allprojects.less")
-                .RegisterBodyScripts("~/products/projects/js/base.js")
-                .RegisterBodyScripts("~/products/projects/js/projects.js");
+            Page.RegisterStyle("~/Products/Projects/App_Themes/default/css/allprojects.less")
+                .RegisterBodyScripts("~/Products/Projects/js/base.js")
+                .RegisterBodyScripts("~/Products/Projects/js/projects.js");
             RegisterScript();
         }
 
@@ -135,8 +132,8 @@ namespace ASC.Web.CRM.Controls.Contacts
 
                 TargetContact.ID,
                 (TargetContact is Company).ToString().ToLower(),
-                WebItemSecurity.IsAvailableForUser(WebItemManager.ProjectsProductID.ToString(), SecurityContext.CurrentAccount.ID).ToString().ToLower(),
-                (!string.IsNullOrEmpty(KeyStorage.Get(SocialMediaConstants.ConfigKeyTwitterDefaultAccessToken))).ToString().ToLower(),
+                WebItemSecurity.IsAvailableForMe(WebItemManager.ProjectsProductID).ToString().ToLower(),
+                (!string.IsNullOrEmpty(TwitterLoginProvider.TwitterDefaultAccessToken)).ToString().ToLower(),
                 (int)TargetContact.ShareType,
                 ShowEventLinkToPanel ? "" : "jq('#eventLinkToPanel').hide();"
             );

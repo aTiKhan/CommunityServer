@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -34,7 +34,9 @@ using ASC.Api.Collections;
 using ASC.Api.Exceptions;
 using ASC.CRM.Core;
 using ASC.CRM.Core.Entities;
+using ASC.ElasticSearch;
 using ASC.MessagingSystem;
+using ASC.Web.CRM.Core.Search;
 
 namespace ASC.Api.CRM
 {
@@ -278,6 +280,8 @@ namespace ASC.Api.CRM
 
             var result = ToCustomFieldWrapper(customField);
             DaoFactory.CustomFieldDao.DeleteField(fieldid);
+
+            FactoryIndexer<FieldsWrapper>.DeleteAsync(customField);
 
             var messageAction = GetCustomFieldDeletedAction(ToEntityType(entityType));
             MessageService.Send(Request, messageAction, MessageTarget.Create(customField.ID), result.Label);

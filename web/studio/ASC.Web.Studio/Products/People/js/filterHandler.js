@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -30,7 +30,7 @@
             nonetrigger: true,
             hintDefaultDisable: true,
             sorters: [
-                        { id: 'by-name', dsc: params.sortorder }
+                        { id: params.sortby, dsc: params.sortorder }
                      ],
             filters: [
                     {
@@ -42,16 +42,20 @@
                         params: params.groupId ? { id: params.groupId} : null
                     },
                     {
-                        id: 'selected-status-active',
-                        params: params.status ? { value: params.status} : null
+                        id: 'selected-employee-status-active',
+                        params: params.employeestatus ? { value: params.employeestatus } : null
                     },
                     {
-                        id: 'selected-status-pending',
-                        params: params.status ? { value: params.status} : null
+                        id: 'selected-employee-status-disabled',
+                        params: params.employeestatus ? { value: params.employeestatus } : null
                     },
                     {
-                        id: 'selected-status-disabled',
-                        params: params.status ? { value: params.status} : null
+                        id: 'selected-activation-status-active',
+                        params: params.activationstatus ? { value: params.activationstatus } : null
+                    },
+                    {
+                        id: 'selected-activation-status-pending',
+                        params: params.activationstatus ? { value: params.activationstatus } : null
                     },
                     {
                         id: 'selected-type-admin',
@@ -67,7 +71,7 @@
                     }
                   ]
         });
-        if (params.groupId || params.status || params.type) {
+        if (params.groupId || params.employeestatus || params.activationstatus || params.type) {
             jq('#peopleFilter').addClass("has-filters");
         }
     }

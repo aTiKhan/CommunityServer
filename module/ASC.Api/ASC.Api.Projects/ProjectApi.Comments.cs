@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -194,7 +194,8 @@ namespace ASC.Api.Projects
             if (string.IsNullOrEmpty(type) || !(new List<string> { "message", "task" }).Contains(type.ToLower()))
                 throw new ArgumentException();
 
-            var comment = type.ToLower().Equals("message")
+            var isMessageComment = type.ToLower().Equals("message");
+            var comment = isMessageComment
                 ? new Comment {Content = content, TargetUniqID = ProjectEntity.BuildUniqId<Message>(entityid)}
                 : new Comment {Content = content, TargetUniqID = ProjectEntity.BuildUniqId<Task>(entityid)};
             
@@ -207,7 +208,7 @@ namespace ASC.Api.Projects
 
             comment = commentEngine.SaveOrUpdateComment(entity, comment);
 
-            MessageService.Send(Request, MessageAction.TaskCommentCreated, MessageTarget.Create(comment.ID), entity.Project.Title, entity.Title);
+            MessageService.Send(Request, isMessageComment ? MessageAction.DiscussionCommentCreated : MessageAction.TaskCommentCreated, MessageTarget.Create(comment.ID), entity.Project.Title, entity.Title);
 
             return GetCommentInfo(null, comment, entity);
         }

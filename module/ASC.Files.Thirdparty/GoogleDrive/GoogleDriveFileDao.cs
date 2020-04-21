@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -45,11 +45,6 @@ namespace ASC.Files.Thirdparty.GoogleDrive
         {
         }
 
-        public void Dispose()
-        {
-            GoogleDriveProviderInfo.Dispose();
-        }
-
         public void InvalidateCache(object fileId)
         {
             var driveId = MakeDriveId(fileId);
@@ -76,6 +71,11 @@ namespace ASC.Files.Thirdparty.GoogleDrive
                               .FirstOrDefault(file => file.Name.Equals(title, StringComparison.InvariantCultureIgnoreCase)));
         }
 
+        public File GetFileStable(object fileId, int fileVersion)
+        {
+            return ToFile(GetDriveEntry(fileId));
+        }
+
         public List<File> GetFileHistory(object fileId)
         {
             return new List<File> { GetFile(fileId) };
@@ -87,31 +87,22 @@ namespace ASC.Files.Thirdparty.GoogleDrive
             return fileIds.Select(GetDriveEntry).Select(ToFile).ToList();
         }
 
-        public List<File> GetFilesForShare(object[] fileIds)
+        public List<File> GetFilesForShare(object[] fileIds, FilterType filterType, bool subjectGroup, Guid subjectID, string searchText, bool searchInContent)
         {
-            return GetFiles(fileIds);
-        }
+            if (fileIds == null || fileIds.Length == 0 || filterType == FilterType.FoldersOnly) return new List<File>();
 
-        public List<object> GetFiles(object parentId)
-        {
-            return GetDriveEntries(parentId, false).Select(entry => (object)MakeId(entry.Id)).ToList();
-        }
+            var files = GetFiles(fileIds).AsEnumerable();
 
-        public List<File> GetFiles(object parentId, OrderBy orderBy, FilterType filterType, Guid subjectID, string searchText, bool withSubfolders = false)
-        {
-            if (filterType == FilterType.FoldersOnly) return new List<File>();
-
-            //Get only files
-            var files = GetDriveEntries(parentId, false).Select(ToFile);
             //Filter
+            if (subjectID != Guid.Empty)
+            {
+                files = files.Where(x => subjectGroup
+                                             ? CoreContext.UserManager.IsUserInGroup(x.CreateBy, subjectID)
+                                             : x.CreateBy == subjectID);
+            }
+
             switch (filterType)
             {
-                case FilterType.ByUser:
-                    files = files.Where(x => x.CreateBy == subjectID);
-                    break;
-                case FilterType.ByDepartment:
-                    files = files.Where(x => CoreContext.UserManager.IsUserInGroup(x.CreateBy, subjectID));
-                    break;
                 case FilterType.FoldersOnly:
                     return new List<File>();
                 case FilterType.DocumentsOnly:
@@ -128,6 +119,71 @@ namespace ASC.Files.Thirdparty.GoogleDrive
                     break;
                 case FilterType.ArchiveOnly:
                     files = files.Where(x => FileUtility.GetFileTypeByFileName(x.Title) == FileType.Archive);
+                    break;
+                case FilterType.MediaOnly:
+                    files = files.Where(x =>
+                        {
+                            FileType fileType;
+                            return (fileType = FileUtility.GetFileTypeByFileName(x.Title)) == FileType.Audio || fileType == FileType.Video;
+                        });
+                    break;
+                case FilterType.ByExtension:
+                    if (!string.IsNullOrEmpty(searchText))
+                        files = files.Where(x => FileUtility.GetFileExtension(x.Title).Contains(searchText));
+                    break;
+            }
+
+            if (!string.IsNullOrEmpty(searchText))
+                files = files.Where(x => x.Title.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) != -1);
+
+            return files.ToList();
+        }
+
+        public List<object> GetFiles(object parentId)
+        {
+            return GetDriveEntries(parentId, false).Select(entry => (object)MakeId(entry.Id)).ToList();
+        }
+
+        public List<File> GetFiles(object parentId, OrderBy orderBy, FilterType filterType, bool subjectGroup, Guid subjectID, string searchText, bool searchInContent, bool withSubfolders = false)
+        {
+            if (filterType == FilterType.FoldersOnly) return new List<File>();
+
+            //Get only files
+            var files = GetDriveEntries(parentId, false).Select(ToFile);
+
+            //Filter
+            if (subjectID != Guid.Empty)
+            {
+                files = files.Where(x => subjectGroup
+                                             ? CoreContext.UserManager.IsUserInGroup(x.CreateBy, subjectID)
+                                             : x.CreateBy == subjectID);
+            }
+
+            switch (filterType)
+            {
+                case FilterType.FoldersOnly:
+                    return new List<File>();
+                case FilterType.DocumentsOnly:
+                    files = files.Where(x => FileUtility.GetFileTypeByFileName(x.Title) == FileType.Document);
+                    break;
+                case FilterType.PresentationsOnly:
+                    files = files.Where(x => FileUtility.GetFileTypeByFileName(x.Title) == FileType.Presentation);
+                    break;
+                case FilterType.SpreadsheetsOnly:
+                    files = files.Where(x => FileUtility.GetFileTypeByFileName(x.Title) == FileType.Spreadsheet);
+                    break;
+                case FilterType.ImagesOnly:
+                    files = files.Where(x => FileUtility.GetFileTypeByFileName(x.Title) == FileType.Image);
+                    break;
+                case FilterType.ArchiveOnly:
+                    files = files.Where(x => FileUtility.GetFileTypeByFileName(x.Title) == FileType.Archive);
+                    break;
+                case FilterType.MediaOnly:
+                    files = files.Where(x =>
+                    {
+                        FileType fileType;
+                        return (fileType = FileUtility.GetFileTypeByFileName(x.Title)) == FileType.Audio || fileType == FileType.Video;
+                    });
                     break;
                 case FilterType.ByExtension:
                     if (!string.IsNullOrEmpty(searchText))
@@ -149,6 +205,9 @@ namespace ASC.Files.Thirdparty.GoogleDrive
                     files = orderBy.IsAsc ? files.OrderBy(x => x.Title) : files.OrderByDescending(x => x.Title);
                     break;
                 case SortedByType.DateAndTime:
+                    files = orderBy.IsAsc ? files.OrderBy(x => x.ModifiedOn) : files.OrderByDescending(x => x.ModifiedOn);
+                    break;
+                case SortedByType.DateAndTimeCreation:
                     files = orderBy.IsAsc ? files.OrderBy(x => x.CreateOn) : files.OrderByDescending(x => x.CreateOn);
                     break;
                 default:
@@ -172,14 +231,11 @@ namespace ASC.Files.Thirdparty.GoogleDrive
             if (driveFile == null) throw new ArgumentNullException("file", Web.Files.Resources.FilesCommonResource.ErrorMassage_FileNotFound);
             if (driveFile is ErrorDriveEntry) throw new Exception(((ErrorDriveEntry)driveFile).Error);
 
-            var fileStream = GoogleDriveProviderInfo.Storage.DownloadStream(driveFile);
-            if (fileStream != null)
-            {
-                if (fileStream.CanSeek)
-                    file.ContentLength = fileStream.Length; // hack for google drive
+            var fileStream = GoogleDriveProviderInfo.Storage.DownloadStream(driveFile, (int)offset);
 
-                if (fileStream.CanSeek && offset > 0)
-                    fileStream.Seek(offset, SeekOrigin.Begin);
+            if (!driveFile.Size.HasValue && fileStream != null && fileStream.CanSeek)
+            {
+                file.ContentLength = fileStream.Length; // hack for google drive
             }
 
             return fileStream;
@@ -216,6 +272,11 @@ namespace ASC.Files.Thirdparty.GoogleDrive
             if (parentDriveId != null) GoogleDriveProviderInfo.CacheReset(parentDriveId, false);
 
             return ToFile(newDriveFile);
+        }
+
+        public File ReplaceFileVersion(File file, Stream fileStream)
+        {
+            return SaveFile(file, fileStream);
         }
 
         public void DeleteFile(object fileId)
@@ -455,12 +516,12 @@ namespace ASC.Files.Thirdparty.GoogleDrive
         {
         }
 
-        public List<File> GetFiles(object[] parentIds, string searchText = "", bool searchSubfolders = false)
+        public List<File> GetFiles(object[] parentIds, FilterType filterType, bool subjectGroup, Guid subjectID, string searchText, bool searchInContent)
         {
             return new List<File>();
         }
 
-        public IEnumerable<File> Search(string text, FolderType folderType)
+        public IEnumerable<File> Search(string text, bool bunch)
         {
             return null;
         }

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -44,7 +44,6 @@ namespace ASC.Notify.Patterns
             private set;
         }
 
-
         public TagValue(string tag, object value)
         {
             if (string.IsNullOrEmpty(tag)) throw new ArgumentNullException("tag");
@@ -59,6 +58,28 @@ namespace ASC.Notify.Patterns
         public AdditionalSenderTag(string senderName)
             : base("__AdditionalSender", senderName)
         {
+        }
+    }
+
+    public class TagActionValue : ITagValue
+    {
+        private readonly Func<string> action;
+
+        public string Tag
+        {
+            get;
+            private set;
+        }
+
+        public object Value
+        {
+            get { return action(); }
+        }
+
+        public TagActionValue(string name, Func<string> action)
+        {
+            Tag = name;
+            this.action = action;
         }
     }
 }

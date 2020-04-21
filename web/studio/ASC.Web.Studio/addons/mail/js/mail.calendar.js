@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -22,6 +22,7 @@
  * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
  *
 */
+
 
 window.mailCalendar = (function ($) {
 
@@ -74,6 +75,17 @@ window.mailCalendar = (function ($) {
         if (comp.name !== "vcalendar")
             throw "Unsupported ical type (Only VCALENDAR)";
 
+        var vtimezones = comp.getAllSubcomponents("vtimezone");
+        //Add all timezones in iCalendar object to TimezonService
+        //if they are not already registered.
+        vtimezones.forEach(function (vtimezone) {
+
+            if (!(window.ICAL.TimezoneService.has(
+                vtimezone.getFirstPropertyValue("tzid")))) {
+                window.ICAL.TimezoneService.register(vtimezone);
+            }
+        });
+
         var vevent = comp.getFirstSubcomponent("vevent");
         if (!vevent)
             throw "VEVENT not found";
@@ -125,7 +137,9 @@ window.mailCalendar = (function ($) {
             fromOrganizer: false,
             fromAttendee: false,
             alienEvent: true,
-            timeZone: calendarEventInfo && calendarEventInfo.timeZone ? calendarEventInfo.timeZone : null,
+            timeZone: calendarEventInfo && calendarEventInfo.timeZone ? calendarEventInfo.timeZone : {
+                offset: ASC.Resources.Master.CurrentTenantTimeZone.UtcOffset
+            },
             calendarName: calendarEventInfo && calendarEventInfo.calendarName ? calendarEventInfo.calendarName : null,
             calendarId: calendarEventInfo && calendarEventInfo.calendarId ? calendarEventInfo.calendarId : -1,
             eventId: calendarEventInfo && calendarEventInfo.eventId ? calendarEventInfo.eventId : null
@@ -147,8 +161,8 @@ window.mailCalendar = (function ($) {
         }
 
         window.moment.locale(ASC.Resources.Master.TwoLetterISOLanguageName);
-        var start = window.moment(event.startDate.toJSDate());
-        var end = window.moment(event.endDate.toJSDate());
+        var start = window.moment(new Date(event.startDate.toUnixTime() * 1000));
+        var end = window.moment(new Date(event.endDate.toUnixTime() * 1000));
 
         icalInfo.dtStartAllDay = event.startDate.isDate;
         icalInfo.dtStart = icalInfo.timeZone && !icalInfo.dtStartAllDay ? start.utcOffset(icalInfo.timeZone.offset) : start;

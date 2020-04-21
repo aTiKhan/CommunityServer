@@ -1,4 +1,30 @@
-﻿window.ASC = window.ASC || {};
+/*
+ *
+ * (c) Copyright Ascensio System Limited 2010-2020
+ *
+ * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
+ * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
+ * In accordance with Section 7(a) of the GNU GPL its Section 15 shall be amended to the effect that 
+ * Ascensio System SIA expressly excludes the warranty of non-infringement of any third-party rights.
+ *
+ * THIS PROGRAM IS DISTRIBUTED WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR
+ * FITNESS FOR A PARTICULAR PURPOSE. For more details, see GNU GPL at https://www.gnu.org/copyleft/gpl.html
+ *
+ * You can contact Ascensio System SIA by email at sales@onlyoffice.com
+ *
+ * The interactive user interfaces in modified source and object code versions of ONLYOFFICE must display 
+ * Appropriate Legal Notices, as required under Section 5 of the GNU GPL version 3.
+ *
+ * Pursuant to Section 7 § 3(b) of the GNU GPL you must retain the original ONLYOFFICE logo which contains 
+ * relevant author attributions when distributing the software. If the display of the logo in its graphic 
+ * form is not reasonably feasible for technical reasons, you must include the words "Powered by ONLYOFFICE" 
+ * in every copy of the program you distribute. 
+ * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
+ *
+*/
+
+
+window.ASC = window.ASC || {};
 
 window.ASC.TMTalk = window.ASC.TMTalk || {};
 
@@ -9,7 +35,7 @@ window.ASC.TMTalk.connectionManager = (function () {
     isConnected = false,
     JID = '',
     servicePath = '',
-    clientInactivity = 90,
+    clientInactivity = 30,
     wait = 30,
     hold = 2,
     resourcePriority = '0',
@@ -99,10 +125,12 @@ window.ASC.TMTalk.connectionManager = (function () {
     };
   })();
 
+  var conflict;
   var init = function (servicepath, jid, priority, inactivity) {
     if (isInit === true) {
       return undefined;
     }
+    this.conflict = false;
     isInit = true;
     // TODO
     if (typeof jid === 'string') {
@@ -185,14 +213,10 @@ window.ASC.TMTalk.connectionManager = (function () {
         if (response && typeof response.value === 'string' && response.value) {
             ASC.TMTalk.connectionManager.connect(null, response.value);
         } else {
-            if (reconnectCount < reconnectionAttempts) {
-                var lastStatusId = ASC.TMTalk.properties.item(ASC.TMTalk.contactsContainer.constants.propertyStatusId);
-                lastStatusId = isFinite(+lastStatusId) ? +lastStatusId : ASC.TMTalk.connectionManager.onlineStatusId;
-                setTimeout(function () {
-                    reconnectCount++;
-                    ASC.TMTalk.connectionManager.status(lastStatusId);
-                }, reconnectTimeout);
-            }
+            eventManager.call(customEvents.connecting);
+            setTimeout(function () {
+                ASC.TMTalk.connectionManager.status(Strophe.Status.CONNECTING);
+            }, reconnectTimeout);
         }
     });
   };
@@ -236,7 +260,7 @@ window.ASC.TMTalk.connectionManager = (function () {
       var statusInd = 0;
       statusInd = statuses.length;
       while (statusInd--) {
-        if ((statuses[statusInd].id === status || statuses[statusInd].name === status) && !statuses[statusInd].isCurrent) {
+        if ((statuses[statusInd].id === status || statuses[statusInd].name === status)) {
           newStatus = statuses[statusInd];
           break;
         }
@@ -789,6 +813,7 @@ window.ASC.TMTalk.connectionManager = (function () {
     } catch (e) {
         console.error(e.message);
     }
+
     return true;
   };
 
@@ -804,8 +829,10 @@ window.ASC.TMTalk.connectionManager = (function () {
       if (query === null) {
         return undefined;
       }
-      if (query.getAttribute('count')) {
-        ASC.TMTalk.messagesManager.loadHistory(iq);
+      if (query.getAttribute('count') || query.getAttribute('text')) {
+          var startIndex = query.getAttribute('startindex');
+
+          ASC.TMTalk.messagesManager.loadHistory(iq, ASC.TMTalk.Config.fullText && startIndex == null || parseInt(startIndex) === 0, query.getAttribute('text'));
       }
       if (query.getAttribute('from') && query.getAttribute('to')) {
         ASC.TMTalk.messagesManager.loadHistoryByFilter(iq, query.getAttribute('from'), query.getAttribute('to'));
@@ -1038,13 +1065,30 @@ window.ASC.TMTalk.connectionManager = (function () {
         .tree()
     );
   };
-  var getMessagesByRange = function(jid, startindex, count) {
+  var getMessagesByRange = function(jid, startindex, count, text) {
       connectionManager.send(
           $iq({ id: getMessageId(), from: connectionManager.jid, to: jid, type: 'get' })
-          .c('query', { xmlns: Strophe.NS.HISTORY, count: count, startindex: startindex })
+          .c('query', { xmlns: Strophe.NS.HISTORY, count: count, startindex: startindex, text: Encoder.htmlEncode(text) })
           .tree()
       );
   };
+    
+  var clearUnreadMessage = function (jid, to) {
+      connectionManager.send(
+          $iq({ id: getMessageId(), from: connectionManager.jid, to: to, type: 'get' })
+          .c('query', { xmlns: 'urn:xmpp:chat-markers:0'})
+          .tree()
+      );
+  };
+
+  var searchMessage = function (jid, text) {
+      connectionManager.send(
+        $iq({ id: getMessageId(), from: connectionManager.jid, to: jid, type: 'get' })
+          .c('query', { xmlns: Strophe.NS.HISTORY, text: Encoder.htmlEncode(text) })
+          .tree()
+      );
+  };
+
   var setSubject = function (jid, subject) {
     connectionManager.send(
       $msg({id : getMessageId(), to : jid, type : 'groupchat'})
@@ -1086,6 +1130,8 @@ window.ASC.TMTalk.connectionManager = (function () {
   return {
     init    : init,
 
+    conflict: conflict,
+
     bind          : bind,
     unbind        : unbind,
     addIqHandler  : addIqHandler,
@@ -1125,7 +1171,10 @@ window.ASC.TMTalk.connectionManager = (function () {
 
     getMessagesByDate   : getMessagesByDate,
     getMessagesByNumber : getMessagesByNumber,
-    getMessagesByRange  : getMessagesByRange,
+    getMessagesByRange: getMessagesByRange,
+    clearUnreadMessage: clearUnreadMessage,
+
+    searchMessage: searchMessage,
 
     setSubject  : setSubject,
 

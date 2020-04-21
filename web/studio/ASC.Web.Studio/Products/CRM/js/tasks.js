@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -52,44 +52,59 @@ ASC.CRM.myTaskContactFilter = {
 
     createFilterByContact: function (filter) {
         var o = document.createElement('div');
+        o.classList.add("default-value");
         o.innerHTML = [
-      '<div class="default-value">',
-        '<span class="title">',
-          filter.title,
-        '</span>',
-        '<span class="selector-wrapper">',
-          '<span class="contact-selector"></span>',
-        '</span>',
-        '<span class="btn-delete">&times;</span>',
-      '</div>'
+            '<span class="title">',
+              filter.title,
+            '</span>',
+            '<span class="selector-wrapper">',
+              '<span class="contact-selector"></span>',
+            '</span>',
+            '<span class="btn-delete">&times;</span>',
         ].join('');
         return o;
     },
 
     customizeFilterByContact: function ($container, $filteritem, filter) {
-        if (jq('#' + ASC.CRM.myTaskContactFilter.headerContainerId).parent().is("#" + ASC.CRM.myTaskContactFilter.hiddenContainerId)) {
-            jq("#" + ASC.CRM.myTaskContactFilter.headerContainerId)
+        var $filterSwitcher = jq("#" + ASC.CRM.myTaskContactFilter.headerContainerId);
+
+        if ($filterSwitcher.parent().is("#" + ASC.CRM.myTaskContactFilter.hiddenContainerId)) {
+            $filterSwitcher
                 .off("showList")
                 .on("showList", function (event, item) {
                     ASC.CRM.myTaskContactFilter.onSelectContact(event, item);
+                    $filteritem.removeClass("default-value");
                 });
-            jq('#' + ASC.CRM.myTaskContactFilter.headerContainerId).next().andSelf().appendTo($filteritem.find('span.contact-selector:first'));
+
+            $filterSwitcher.next().andSelf().appendTo($filteritem.find('span.contact-selector:first'));
+
+            if (!filter.isset) {
+                setTimeout(function () {
+                    if ($filteritem.hasClass("default-value")) {
+                        $filterSwitcher.click();
+                    }
+                }, 0);
+            }
         }
     },
 
     destroyFilterByContact: function ($container, $filteritem, filter) {
-        if (!jq('#' + ASC.CRM.myTaskContactFilter.headerContainerId).parent().is("#" + ASC.CRM.myTaskContactFilter.hiddenContainerId)) {
-            jq("#" + ASC.CRM.myTaskContactFilter.headerContainerId).off("showList");
-            jq('#' + ASC.CRM.myTaskContactFilter.headerContainerId).find(".inner-text .value").text(ASC.CRM.Resources.CRMCommonResource.Select);
-            jq('#' + ASC.CRM.myTaskContactFilter.headerContainerId).next().andSelf().appendTo(jq('#' + ASC.CRM.myTaskContactFilter.hiddenContainerId));
-            jq('#' + ASC.CRM.myTaskContactFilter.headerContainerId).contactadvancedSelector("reset");
+        var $filterSwitcher = jq('#' + ASC.CRM.myTaskContactFilter.headerContainerId);
+
+        if (!$filterSwitcher.parent().is("#" + ASC.CRM.myTaskContactFilter.hiddenContainerId)) {
+            $filterSwitcher.off("showList");
+            $filterSwitcher.find(".inner-text .value").text(ASC.CRM.Resources.CRMCommonResource.Select);
+            $filterSwitcher.next().andSelf().appendTo(jq('#' + ASC.CRM.myTaskContactFilter.hiddenContainerId));
+            $filterSwitcher.contactadvancedSelector("reset");
         }
     },
 
     processFilter: function ($container, $filteritem, filtervalue, params) {
         if (params && params.id && isFinite(params.id)) {
-            jq("#" + ASC.CRM.myTaskContactFilter.headerContainerId).find(".inner-text .value").text(params.displayName);
-            jq("#" + ASC.CRM.myTaskContactFilter.headerContainerId).contactadvancedSelector("select", [params.id]);
+            var $filterSwitcher = jq('#' + ASC.CRM.myTaskContactFilter.headerContainerId);
+            $filterSwitcher.find(".inner-text .value").text(params.displayName);
+            $filterSwitcher.contactadvancedSelector("select", [params.id]);
+            $filteritem.removeClass("default-value");
         }
     }
 };
@@ -387,7 +402,7 @@ ASC.CRM.ListTaskView = new function() {
 
         var now = new Date(),
             todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0),
-            todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 0, 0),
+            todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 0),
 
             nowString = Teamlab.serializeTimestamp(now),
             todayStartString = Teamlab.serializeTimestamp(todayStart),
@@ -402,7 +417,7 @@ ASC.CRM.ListTaskView = new function() {
                             '<br/><br/><a href="' + ASC.Resources.Master.FilterHelpCenterLink + '" target="_blank">',
                             '</a>'),
                 hintDefaultDisable: true,
-                maxfilters  : 3,
+                maxfilters  : -1,
                 colcount    : 2,
                 maxlength   : "100",
                 store       : true,
@@ -713,6 +728,7 @@ ASC.CRM.ListTaskView = new function() {
                 jq("#task_" + task.id).animate({ opacity: "hide" }, 500);
                 //ASC.CRM.Common.changeCountInTab("delete", "tasks");
 
+                ASC.CRM.UpdateCRMCaldavCalendar(task, 2);
                 setTimeout(function() {
                     jq("#task_" + task.id).remove();
                     ASC.CRM.ListTaskView.Total -= 1;
@@ -766,7 +782,7 @@ ASC.CRM.ListTaskView = new function() {
             }
         },
 
-        init: function (exportErrorCookieKey, parentSelector) {
+        init: function (parentSelector) {
             if (jq(parentSelector).length == 0) return;
             ASC.CRM.Common.setDocumentTitle(ASC.CRM.Resources.CRMTaskResource.Tasks);
             jq(parentSelector).removeClass("display-none");
@@ -786,22 +802,6 @@ ASC.CRM.ListTaskView = new function() {
             ASC.CRM.ListTaskView.isTabActive = false;
             ASC.CRM.ListTaskView.Total = 0;
             ASC.CRM.ListTaskView.advansedFilter = null;
-
-            var exportErrorText = jq.cookies.get(exportErrorCookieKey);
-            if (exportErrorText != null && exportErrorText != "") {
-                jq.cookies.del(exportErrorCookieKey);
-                jq.tmpl("template-blockUIPanel", {
-                    id: "exportToCsvError",
-                    headerTest: ASC.CRM.Resources.CRMCommonResource.Alert,
-                    questionText: "",
-                    innerHtmlText: ['<div>', exportErrorText, '</div>'].join(''),
-                    CancelBtn: ASC.CRM.Resources.CRMCommonResource.Close,
-                    progressText: ""
-                }).insertAfter("#taskFilterContainer");
-
-                PopupKeyUpActionProvider.EnableEsc = false;
-                StudioBlockUIManager.blockUI("#exportToCsvError", 500, 400, 0);
-            }
 
             _initEmptyScreen();
 
@@ -888,6 +888,8 @@ ASC.CRM.ListTaskView = new function() {
                 jq("#tasksAdvansedFilter .btn-toggle-sorter").trackEvent(ga_Categories.tasks, ga_Actions.filterClick, 'sort');
                 jq("#tasksAdvansedFilter .advansed-filter-input").trackEvent(ga_Categories.tasks, ga_Actions.filterClick, "search_text", "enter");
             });
+            
+            ASC.CRM.PartialExport.init(ASC.CRM.ListTaskView.advansedFilter, "task");
         },
 
         isFirstLoad: true,
@@ -978,7 +980,7 @@ ASC.CRM.ListTaskView = new function() {
                     case "fromToDate":
                         settings.fromDate = new Date(item.params.from);
                         settings.toDate = new Date(item.params.to);
-                        settings.toDate = new Date(settings.toDate.getFullYear(), settings.toDate.getMonth(), settings.toDate.getDate(), 23, 59, 0, 0);
+                        settings.toDate = new Date(settings.toDate.getFullYear(), settings.toDate.getMonth(), settings.toDate.getDate(), 23, 59, 59, 0);
                         break;
                     default:
                         if (item.hasOwnProperty("apiparamname") && item.params.hasOwnProperty("value") && item.params.value != null) {
@@ -1168,62 +1170,24 @@ ASC.CRM.TaskActionView = new function() {
 
     var _initTaskResponsibleSelector = function(contact, task) {
 
-        if (typeof (task) === "object" && task != null) {
-            _initTaskResponsibleByResponsible(task.responsible);
-        } else if (typeof (contact) === "object" && contact != null) {
-            if (contact.isPrivate) {
-                _initTaskResponsibleByContact(contact);
-            } else {
-                _clearTaskResponsible();
-            }
-        } else {
-            _clearTaskResponsible();
-        }
-    };
+        var $selector = jq("#taskActionViewAdvUsrSrContainer");
+        var allUsers = ($selector.data("items") || []).map(function(item) { return item.id; });
 
+        $selector.useradvancedSelector("undisable", allUsers);
 
-    var _initTaskResponsibleByContact = function(contact) {
-        jq("#taskActionViewAdvUsrSrContainer").useradvancedSelector("reset");
+        if (contact && contact.isPrivate && contact.accessList) {
+            var accessList = contact.accessList.map(function (item) { return item.id; });
+            var adminList = ASC.CRM.Data.crmAdminList.map(function (item) { return item.id; });
+            var userList = accessList.concat(adminList);
+            var disabledList = allUsers.filter(function (item) { return !userList.includes(item); });
 
-        var allUsers = [],
-            accessList = [],
-            items = jq("#taskActionViewAdvUsrSrContainer").data("items") || [];
-
-        for (var i = 0, n = items.length; i < n; i++) {
-            allUsers.push(items[i].id);
+            $selector.useradvancedSelector("disable", disabledList);
         }
 
-        for (var i = 0, n = contact.accessList.length; i < n; i++) {
-            accessList.push(contact.accessList[i].id);
-        }
+        var selected = task && task.responsible && task.responsible.activationStatus != 2 ? task.responsible : Teamlab.profile;
 
-        for (var i = 0, n = ASC.CRM.Data.crmAdminList.length; i < n; i++) {
-            accessList.push(ASC.CRM.Data.crmAdminList[i].id);
-        }
-
-        for (var i = 0, n = allUsers.length; i < n; i++) {
-            var hasAccess = false;
-            for (var j = 0, m = accessList.length; j < m; j++) {
-                if (allUsers[i] == accessList[j]) {
-                    hasAccess = true;
-                    break;
-                }
-            }
-            if (!hasAccess) {
-                jq("#taskActionViewAdvUsrSrContainer").useradvancedSelector("disable", allUsers[i]);
-            }
-        }
-    };
-
-    var _clearTaskResponsible = function () {
-        jq("#taskActionViewAdvUsrSrContainer").useradvancedSelector("reset");
-        jq("#taskActionViewAdvUsrSrContainer").useradvancedSelector("select", [Teamlab.profile.id]);
-    };
-
-    var _initTaskResponsibleByResponsible = function (responsible) {
-        jq("#taskActionViewAdvUsrSrContainer").useradvancedSelector("reset");
-        jq("#taskActionViewAdvUsrSrContainer").attr("data-responsible-id", responsible.activationStatus != 2 ? responsible.id : "");
-        jq("#taskActionViewAdvUsrSrContainer .taskResponsibleLabel").text(Encoder.htmlDecode(responsible.displayName));
+        $selector.useradvancedSelector("select", [selected.id]);
+        $selector.useradvancedSelector("reset");
     };
 
     var _initTaskCategorySelector = function () {
@@ -1356,6 +1320,7 @@ ASC.CRM.TaskActionView = new function() {
     return {
         CallbackMethods: {
             add_task: function (params, task) {
+                ASC.CRM.UpdateCRMCaldavCalendar(task, 0);
                 var isTab = typeof (ASC.CRM.ListTaskView) == "undefined" || typeof (ASC.CRM.ListTaskView.advansedFilter) == "undefined";
                 if (typeof (ASC.CRM.ListTaskView) != "undefined" && typeof (ASC.CRM.ListTaskView.TaskList) != "undefined") {
                     var newTask = task;
@@ -1387,7 +1352,8 @@ ASC.CRM.TaskActionView = new function() {
                 jq.unblockUI();
             },
 
-            edit_task: function(params, task) {
+            edit_task: function (params, task, oldResponsible) {
+                ASC.CRM.UpdateCRMCaldavCalendar(task, (task.isClosed ? 2 : 1), oldResponsible);
                 var newTask = task;
 
                 ASC.CRM.ListTaskView.taskItemFactory(newTask);
@@ -1463,6 +1429,11 @@ ASC.CRM.TaskActionView = new function() {
                            HTMLParent: "#addTaskPanel .connectWithContactContainer"
                        });
 
+            window.taskContactSelector.SelectItemEvent = function (contact, params) {
+                window.taskContactSelector.setContact(params.input, contact.id, contact.displayName, contact.smallFotoUrl);
+                window.taskContactSelector.showInfoContent(params.input);
+                _initTaskResponsibleSelector(contact);
+            };
         },
 
         showTaskPanel: function(taskID, entityType, entityID, contact, params) {
@@ -1520,11 +1491,13 @@ ASC.CRM.TaskActionView = new function() {
             }
 
             if (taskID != 0) {
+                var taskIndex = ASC.CRM.ListTaskView.findIndexOfTaskByID(taskID);
+                var oldResponsible = ASC.CRM.ListTaskView.TaskList[taskIndex].responsible.id;
                 ASC.CRM.ListTaskView.TaskList.splice(index, 1);
 
                 Teamlab.updateCrmTask({}, taskID, dataTask,
                 {
-                    success: ASC.CRM.TaskActionView.CallbackMethods.edit_task,
+                    success: function (params, task) { ASC.CRM.TaskActionView.CallbackMethods.edit_task(params, task, oldResponsible); },
                     error: function (params, error) {
                         var taskErrorBox = jq("#addTaskPanel .error-popup");
                         taskErrorBox.text(error[0]);
@@ -1569,7 +1542,7 @@ ASC.CRM.TaskActionView = new function() {
                 return false;
             }
 
-            var callbackFunc = function (params, tasks) { };
+            var callbackFunc = function (params, tasks) { jq.unblockUI(); };
             if (typeof (params) === "object" && params.hasOwnProperty("success") && typeof (params.success) === "function") {
                 callbackFunc = params.success;
             }

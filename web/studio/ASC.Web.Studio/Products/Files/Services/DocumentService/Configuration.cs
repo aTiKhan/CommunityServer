@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -34,15 +34,18 @@ using System.Runtime.Serialization.Json;
 using System.Text;
 using System.Web;
 using ASC.Core;
-using ASC.Core.Common.Settings;
+using ASC.Core.Common.Configuration;
 using ASC.Core.Users;
+using ASC.FederatedLogin.LoginProviders;
 using ASC.Files.Core;
-using ASC.Thrdparty.Configuration;
 using ASC.Web.Core.Files;
+using ASC.Web.Core.Utility.Skins;
 using ASC.Web.Core.WhiteLabel;
 using ASC.Web.Files.Classes;
+using ASC.Web.Files.Helpers;
 using ASC.Web.Files.Resources;
 using ASC.Web.Files.Services.WCFService;
+using ASC.Web.Files.ThirdPartyApp;
 using ASC.Web.Files.Utils;
 using ASC.Web.Studio.Utility;
 using File = ASC.Files.Core.File;
@@ -150,6 +153,8 @@ namespace ASC.Web.Files.Services.DocumentService
         [DataContract(Name = "document", Namespace = "")]
         public class DocumentConfig
         {
+            public string SharedLinkKey;
+
             public DocumentConfig()
             {
                 Info = new InfoConfig();
@@ -158,6 +163,7 @@ namespace ASC.Web.Files.Services.DocumentService
 
             private string _key = string.Empty;
             private string _fileUri;
+            private string _title = null;
 
 
             [DataMember(Name = "fileType")]
@@ -183,20 +189,20 @@ namespace ASC.Web.Files.Services.DocumentService
             [DataMember(Name = "title")]
             public string Title
             {
-                set { }
-                get { return Info.File.Title; }
+                set { _title = value; }
+                get { return _title ?? Info.File.Title; }
             }
 
             [DataMember(Name = "url")]
             public string Url
             {
-                set { _fileUri = value; }
+                set { _fileUri = DocumentServiceConnector.ReplaceCommunityAdress(value); }
                 get
                 {
                     if (!string.IsNullOrEmpty(_fileUri))
                         return _fileUri;
-
-                    _fileUri = DocumentServiceConnector.ReplaceCommunityAdress(PathProvider.GetFileStreamUrl(Info.File));
+                    var last = Permissions.Edit || Permissions.Review || Permissions.Comment;
+                    _fileUri = DocumentServiceConnector.ReplaceCommunityAdress(PathProvider.GetFileStreamUrl(Info.File, SharedLinkKey, last));
                     return _fileUri;
                 }
             }
@@ -213,6 +219,7 @@ namespace ASC.Web.Files.Services.DocumentService
                 private string _breadCrumbs;
 
 
+                [Obsolete("Use owner (since v5.4)")]
                 [DataMember(Name = "author")]
                 public string Aouthor
                 {
@@ -220,6 +227,7 @@ namespace ASC.Web.Files.Services.DocumentService
                     get { return File.CreateByString; }
                 }
 
+                [Obsolete("Use uploaded (since v5.4)")]
                 [DataMember(Name = "created")]
                 public string Created
                 {
@@ -244,6 +252,20 @@ namespace ASC.Web.Files.Services.DocumentService
 
                         return _breadCrumbs;
                     }
+                }
+
+                [DataMember(Name = "owner")]
+                public string Owner
+                {
+                    set { }
+                    get { return File.CreateByString; }
+                }
+
+                [DataMember(Name = "uploaded")]
+                public string Uploaded
+                {
+                    set { }
+                    get { return File.CreateOnString; }
                 }
 
                 [DataMember(Name = "sharingSettings", EmitDefaultValue = false)]
@@ -271,14 +293,21 @@ namespace ASC.Web.Files.Services.DocumentService
             [DataContract(Name = "permissions", Namespace = "")]
             public class PermissionsConfig
             {
+                [Obsolete("Since DS v5.5")]
                 [DataMember(Name = "changeHistory")]
                 public bool ChangeHistory = false;
+
+                [DataMember(Name = "comment")]
+                public bool Comment = true;
 
                 [DataMember(Name = "download")]
                 public bool Download = true;
 
                 [DataMember(Name = "edit")]
                 public bool Edit = true;
+
+                [DataMember(Name = "fillForms")]
+                public bool FillForms = true;
 
                 [DataMember(Name = "print")]
                 public bool Print = true;
@@ -324,6 +353,29 @@ namespace ASC.Web.Files.Services.DocumentService
             private readonly UserInfo _userInfo;
             private EmbeddedConfig _embeddedConfig;
 
+            [DataMember(Name = "actionLink", EmitDefaultValue = false)]
+            public ActionLinkConfig ActionLink;
+
+            public string ActionLinkString
+            {
+                get { return null; }
+                set
+                {
+                    try
+                    {
+                        using (var ms = new MemoryStream(Encoding.UTF8.GetBytes(value)))
+                        {
+                            var serializer = new DataContractJsonSerializer(typeof (ActionLinkConfig));
+                            ActionLink = (ActionLinkConfig)serializer.ReadObject(ms);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        ActionLink = null;
+                    }
+                }
+            }
+
             [DataMember(Name = "callbackUrl", EmitDefaultValue = false)]
             public string CallbackUrl;
 
@@ -363,6 +415,7 @@ namespace ASC.Web.Files.Services.DocumentService
                 get { return _userInfo.GetCulture().Name; }
             }
 
+            //todo: remove old feild after release 5.2+
             [DataMember(Name = "mergeFolderUrl", EmitDefaultValue = false)]
             public string MergeFolderUrl;
 
@@ -372,6 +425,9 @@ namespace ASC.Web.Files.Services.DocumentService
                 set { }
                 get { return ModeWrite ? "edit" : "view"; }
             }
+
+            [DataMember(Name = "saveAsUrl", EmitDefaultValue = false)]
+            public string SaveAsUrl;
 
             [DataMember(Name = "sharingSettingsUrl", EmitDefaultValue = false)]
             public string SharingSettingsUrl;
@@ -407,6 +463,36 @@ namespace ASC.Web.Files.Services.DocumentService
             }
 
             #region Nested Classes
+
+            [DataContract(Name = "actionLink", Namespace = "")]
+            public class ActionLinkConfig
+            {
+                [DataMember(Name = "action", EmitDefaultValue = false)]
+                public ActionConfig Action;
+
+
+                [DataContract(Name = "action", Namespace = "")]
+                public class ActionConfig
+                {
+                    [DataMember(Name = "type", EmitDefaultValue = false)]
+                    public string Type;
+
+                    [DataMember(Name = "data", EmitDefaultValue = false)]
+                    public string Data;
+                }
+
+
+                public static string Serialize(ActionLinkConfig actionLinkConfig)
+                {
+                    using (var ms = new MemoryStream())
+                    {
+                        var serializer = new DataContractJsonSerializer(typeof (ActionLinkConfig));
+                        serializer.WriteObject(ms, actionLinkConfig);
+                        ms.Seek(0, SeekOrigin.Begin);
+                        return Encoding.UTF8.GetString(ms.GetBuffer(), 0, (int)ms.Length);
+                    }
+                }
+            }
 
             [DataContract(Name = "embedded", Namespace = "")]
             public class EmbeddedConfig
@@ -448,14 +534,17 @@ namespace ASC.Web.Files.Services.DocumentService
                     get
                     {
                         var plugins = new List<string>();
-                        if (!string.IsNullOrEmpty(KeyStorage.Get("easyBibappkey")))
+
+                        var easyBibHelper = ConsumerFactory.Get<EasyBibHelper>();
+                        if (!string.IsNullOrEmpty(easyBibHelper.AppKey))
                         {
                             plugins.Add(CommonLinkUtility.GetFullAbsolutePath("ThirdParty/plugin/easybib/config.json"));
                         }
 
-                        if (!string.IsNullOrEmpty(KeyStorage.Get("wpClientId")) &&
-                            !string.IsNullOrEmpty(KeyStorage.Get("wpClientSecret")) &&
-                            !string.IsNullOrEmpty(KeyStorage.Get("wpRedirectUrl")))
+                        var wordpressLoginProvider = ConsumerFactory.Get<WordpressLoginProvider>();
+                        if (!string.IsNullOrEmpty(wordpressLoginProvider.ClientID) &&
+                            !string.IsNullOrEmpty(wordpressLoginProvider.ClientSecret) &&
+                            !string.IsNullOrEmpty(wordpressLoginProvider.RedirectUri))
                         {
                             plugins.Add(CommonLinkUtility.GetFullAbsolutePath("ThirdParty/plugin/wordpress/config.json"));
                         }
@@ -485,7 +574,7 @@ namespace ASC.Web.Files.Services.DocumentService
                 public bool About
                 {
                     set { }
-                    get { return !CoreContext.Configuration.Standalone; }
+                    get { return !CoreContext.Configuration.Standalone && !CoreContext.Configuration.CustomMode; }
                 }
 
                 [DataMember(Name = "customer")]
@@ -509,6 +598,19 @@ namespace ASC.Web.Files.Services.DocumentService
                     }
                 }
 
+                [DataMember(Name = "forcesave", EmitDefaultValue = false)]
+                public bool Forcesave
+                {
+                    set { }
+                    get
+                    {
+                        return FileUtility.CanForcesave
+                               && !_configuration.Document.Info.File.ProviderEntry
+                               && ThirdPartySelector.GetAppByFileId(_configuration.Document.Info.File.ID.ToString()) == null
+                               && FilesSettings.Forcesave;
+                    }
+                }
+
                 [DataMember(Name = "goback", EmitDefaultValue = false)]
                 public GobackConfig Goback
                 {
@@ -518,23 +620,32 @@ namespace ASC.Web.Files.Services.DocumentService
                         if (_configuration.Type == EditorType.Embedded || _configuration.Type == EditorType.External) return null;
                         if (!SecurityContext.IsAuthenticated) return null;
                         if (GobackUrl != null)
+                        {
                             return new GobackConfig
                                 {
                                     Url = GobackUrl,
                                 };
+                        }
 
                         using (var folderDao = Global.DaoFactory.GetFolderDao())
                         {
                             try
                             {
                                 var parent = folderDao.GetFolder(_configuration.Document.Info.File.FolderID);
+                                var fileSecurity = Global.GetFilesSecurity();
                                 if (_configuration.Document.Info.File.RootFolderType == FolderType.USER
                                     && !Equals(_configuration.Document.Info.File.RootFolderId, Global.FolderMy)
-                                    && !Global.GetFilesSecurity().CanRead(parent))
-                                    return new GobackConfig
-                                        {
-                                            Url = PathProvider.GetFolderUrl(Global.FolderShare),
-                                        };
+                                    && !fileSecurity.CanRead(parent))
+                                {
+                                    if (fileSecurity.CanRead(_configuration.Document.Info.File))
+                                    {
+                                        return new GobackConfig
+                                            {
+                                                Url = PathProvider.GetFolderUrl(Global.FolderShare),
+                                            };
+                                    }
+                                    return null;
+                                }
 
                                 return new GobackConfig
                                     {
@@ -549,8 +660,39 @@ namespace ASC.Web.Files.Services.DocumentService
                     }
                 }
 
+                [DataMember(Name = "loaderLogo", EmitDefaultValue = false)]
+                public string LoaderLogo
+                {
+                    set { }
+                    get
+                    {
+                        return CoreContext.Configuration.CustomMode
+                                   ? CommonLinkUtility.GetFullAbsolutePath(WebImageSupplier.GetAbsoluteWebPath("loader.svg").ToLower())
+                                   : null;
+                    }
+                }
+
+                [DataMember(Name = "loaderName", EmitDefaultValue = false)]
+                public string LoaderName
+                {
+                    set { }
+                    get
+                    {
+                        return CoreContext.Configuration.CustomMode
+                                   ? " "
+                                   : null;
+                    }
+                }
+
                 [DataMember(Name = "logo")]
                 public LogoConfig Logo;
+
+                [DataMember(Name = "reviewDisplay", EmitDefaultValue = false)]
+                public string ReviewDisplay
+                {
+                    set { }
+                    get { return _configuration.EditorConfig.ModeWrite ? null : "markup"; }
+                }
 
 
                 [DataContract(Name = "customer", Namespace = "")]

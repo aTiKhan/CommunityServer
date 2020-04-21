@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -26,7 +26,9 @@
 
 using System;
 using System.Runtime.Serialization;
+using ASC.Core;
 using ASC.Core.Common.Settings;
+using ASC.Files.Core;
 
 namespace ASC.Web.Files.Classes
 {
@@ -49,6 +51,24 @@ namespace ASC.Web.Files.Classes
         [DataMember(Name = "ConvertNotify")]
         public bool ConvertNotifySetting { get; set; }
 
+        [DataMember(Name = "SortedBy")]
+        public SortedByType DefaultSortedBySetting { get; set; }
+
+        [DataMember(Name = "SortedAsc")]
+        public bool DefaultSortedAscSetting { get; set; }
+
+        [DataMember(Name = "HideConfirmConvertSave")]
+        public bool HideConfirmConvertSaveSetting { get; set; }
+
+        [DataMember(Name = "HideConfirmConvertOpen")]
+        public bool HideConfirmConvertOpenSetting { get; set; }
+
+        [DataMember(Name = "Forcesave")]
+        public bool ForcesaveSetting { get; set; }
+
+        [DataMember(Name = "StoreForcesave")]
+        public bool StoreForcesaveSetting { get; set; }
+
         public override ISettings GetDefault()
         {
             return new FilesSettings
@@ -58,6 +78,12 @@ namespace ASC.Web.Files.Classes
                     StoreOriginalFilesSetting = true,
                     UpdateIfExistSetting = false,
                     ConvertNotifySetting = true,
+                    DefaultSortedBySetting = SortedByType.DateAndTime,
+                    DefaultSortedAscSetting = false,
+                    HideConfirmConvertSaveSetting = false,
+                    HideConfirmConvertOpenSetting = false,
+                    ForcesaveSetting = false,
+                    StoreForcesaveSetting = false
                 };
         }
 
@@ -81,7 +107,9 @@ namespace ASC.Web.Files.Classes
         {
             set
             {
-                new FilesSettings { EnableThirdpartySetting = value }.Save();
+                var setting = Load();
+                setting.EnableThirdpartySetting = value;
+                setting.Save();
             }
             get { return Load().EnableThirdpartySetting; }
         }
@@ -117,6 +145,67 @@ namespace ASC.Web.Files.Classes
                 setting.SaveForCurrentUser();
             }
             get { return LoadForCurrentUser().ConvertNotifySetting; }
+        }
+
+        public static bool HideConfirmConvertSave
+        {
+            set
+            {
+                var setting = LoadForCurrentUser();
+                setting.HideConfirmConvertSaveSetting = value;
+                setting.SaveForCurrentUser();
+            }
+            get { return LoadForCurrentUser().HideConfirmConvertSaveSetting; }
+        }
+
+        public static bool HideConfirmConvertOpen
+        {
+            set
+            {
+                var setting = LoadForCurrentUser();
+                setting.HideConfirmConvertOpenSetting = value;
+                setting.SaveForCurrentUser();
+            }
+            get { return LoadForCurrentUser().HideConfirmConvertOpenSetting; }
+        }
+
+        public static OrderBy DefaultOrder
+        {
+            set
+            {
+                var setting = LoadForCurrentUser();
+                setting.DefaultSortedBySetting = value.SortedBy;
+                setting.DefaultSortedAscSetting = value.IsAsc;
+                setting.SaveForCurrentUser();
+            }
+            get
+            {
+                var setting = LoadForCurrentUser();
+                return new OrderBy(setting.DefaultSortedBySetting, setting.DefaultSortedAscSetting);
+            }
+        }
+
+        public static bool Forcesave
+        {
+            set
+            {
+                var setting = LoadForCurrentUser();
+                setting.ForcesaveSetting = value;
+                setting.SaveForCurrentUser();
+            }
+            get { return LoadForCurrentUser().ForcesaveSetting; }
+        }
+
+        public static bool StoreForcesave
+        {
+            set
+            {
+                if (CoreContext.Configuration.Personal) throw new NotSupportedException();
+                var setting = Load();
+                setting.StoreForcesaveSetting = value;
+                setting.Save();
+            }
+            get { return !CoreContext.Configuration.Personal && Load().StoreForcesaveSetting; }
         }
     }
 }

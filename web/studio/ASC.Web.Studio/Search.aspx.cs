@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -58,7 +58,7 @@ namespace ASC.Web.Studio
             var productID = !string.IsNullOrEmpty(Request["productID"]) ? new Guid(Request["productID"]) : Guid.Empty;
             var moduleID = !string.IsNullOrEmpty(Request["moduleID"]) ? new Guid(Request["moduleID"]) : Guid.Empty;
 
-            SearchText = Request["search"] ?? "";
+            SearchText = (Request["search"] ?? "").Trim();
 
             var searchResultsData = new List<SearchResult>();
             if (!string.IsNullOrEmpty(SearchText))

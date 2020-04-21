@@ -1,4 +1,30 @@
-﻿if (typeof window.console === 'undefined') {
+/*
+ *
+ * (c) Copyright Ascensio System Limited 2010-2020
+ *
+ * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
+ * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
+ * In accordance with Section 7(a) of the GNU GPL its Section 15 shall be amended to the effect that 
+ * Ascensio System SIA expressly excludes the warranty of non-infringement of any third-party rights.
+ *
+ * THIS PROGRAM IS DISTRIBUTED WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR
+ * FITNESS FOR A PARTICULAR PURPOSE. For more details, see GNU GPL at https://www.gnu.org/copyleft/gpl.html
+ *
+ * You can contact Ascensio System SIA by email at sales@onlyoffice.com
+ *
+ * The interactive user interfaces in modified source and object code versions of ONLYOFFICE must display 
+ * Appropriate Legal Notices, as required under Section 5 of the GNU GPL version 3.
+ *
+ * Pursuant to Section 7 § 3(b) of the GNU GPL you must retain the original ONLYOFFICE logo which contains 
+ * relevant author attributions when distributing the software. If the display of the logo in its graphic 
+ * form is not reasonably feasible for technical reasons, you must include the words "Powered by ONLYOFFICE" 
+ * in every copy of the program you distribute. 
+ * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
+ *
+*/
+
+
+if (typeof window.console === 'undefined') {
   window.console = {};
 }
 
@@ -73,13 +99,14 @@ window.TMTalk = (function ($) {
     eventManager = new CustomEvent(customEvents);
 
   var init = function () {
+
     if (isInit === true) {
       return undefined;
     }
     isInit = true;
 
     // TODO
-    properties.focused = true;
+    //properties.focused = true;
     originalTitle = document.title;
     if (!window.name) {
       try {window.name = ASC.Controls.JabberClient.winName} catch (err) {}
@@ -149,6 +176,10 @@ window.TMTalk = (function ($) {
     ASC.TMTalk.indicator.bind(ASC.TMTalk.indicator.events.start, onStartIndicator);
     ASC.TMTalk.indicator.bind(ASC.TMTalk.indicator.events.show, onShowIndicator);
     ASC.TMTalk.indicator.bind(ASC.TMTalk.indicator.events.stop, onStopIndicator);
+      
+    if (document.getElementById('talkHtmlSoundsContainer') == null) {
+        ASC.TMTalk.sounds.initHtml();
+    }
   };
 
   var bind = function (eventName, handler, params) {
@@ -233,10 +264,37 @@ window.TMTalk = (function ($) {
     if (currentRoomData !== null && currentRoomData.type === 'chat') {
       ASC.TMTalk.notifications.hide(currentRoomData.id);
     }
+
   };
+    var openRoom = function(key, inBackground) {
+        setTimeout(function() {
+            ASC.TMTalk.contactsContainer.openRoom(key, inBackground);
+        }, 300);
+    };
+    var reopenOpenedRooms = function (openedRooms) {
+        for (key in openedRooms) {
+            if (ASC.TMTalk.contactsManager.getContact(key) != null) {
+                if (openedRooms[key].type == 'chat') {
+                    if (ASC.TMTalk.roomsManager.getRoomDataById(key) == null) {
+                        openRoom(key, openedRooms[key].inBackground);
+                    }
+                }
+            } else {
+                setTimeout(function () {
+                    reopenOpenedRooms(openedRooms);
+                }, 300);
+                break;
+            }
+        }
+    };
 
   var onClientConnected = function () {
-    $(document.body).addClass('connected');
+      $(document.body).addClass('connected');
+      var openedRooms = localStorageManager.getItem("openedRooms");
+
+      if (openedRooms != undefined) {
+          reopenOpenedRooms(openedRooms);
+      }
   };
 
   var onClientDisconnected = function () {
@@ -739,24 +797,25 @@ window.TMTalk = (function ($) {
     //$(document.body).addClass('focused');
 
     if (ASC.TMTalk.flashPlayer.isCorrect) {
-      var
-        o = document.createElement('div'),
-        soundsContainerId = 'talkSoundsContainer-' + Math.floor(Math.random() * 1000000);
+        var o = document.createElement('div'),
+            soundsContainerId = 'talkSoundsContainer-' + Math.floor(Math.random() * 1000000);
 
-      o.setAttribute('id', soundsContainerId);
-      document.body.appendChild(o);
-      swfobject.embedSWF(
-        ASC.TMTalk.properties.item('sounds') ? ASC.TMTalk.properties.item('sounds') : ASC.TMTalk.Config.sounds,
-        soundsContainerId,
-        1,
-        1,
-        '9.0.0',
-        ASC.TMTalk.properties.item('expressInstall'),
-        {apiInit : function (id) {ASC.TMTalk.sounds.init(id);}, apiId : soundsContainerId},
-        {allowScriptAccess : 'always', wmode : 'transparent'},
-        {styleclass : 'soundsContainer', wmode: 'transparent'}
-      );
-      ASC.TMTalk.sounds.init(soundsContainerId);
+        o.setAttribute('id', soundsContainerId);
+        document.body.appendChild(o);
+        swfobject.embedSWF(
+            ASC.TMTalk.properties.item('sounds') ? ASC.TMTalk.properties.item('sounds') : ASC.TMTalk.Config.sounds,
+            soundsContainerId,
+            1,
+            1,
+            '9.0.0',
+            ASC.TMTalk.properties.item('expressInstall'),
+            { apiInit: function(id) { ASC.TMTalk.sounds.init(id); }, apiId: soundsContainerId },
+            { allowScriptAccess: 'always', wmode: 'transparent' },
+            { styleclass: 'soundsContainer', wmode: 'transparent' }
+        );
+        ASC.TMTalk.sounds.init(soundsContainerId);
+    } else {
+        ASC.TMTalk.sounds.initHtml();
     }
 
     $('#talkWrapper').show();
@@ -793,7 +852,7 @@ window.TMTalk = (function ($) {
     var mainContainerHeight = windowHeight - mcHeightOffset;
     mainContainer.style.height = mainContainerHeight + 'px';
     //$mainContainer.height(windowHeight - mcHeightOffset);
-    contactsContainer.style.height = mainContainerHeight - contactToolbarContainer.offsetHeight - ccHeightOffset + 80 +'px';
+    contactsContainer.style.height = mainContainerHeight;
     //$contactsContainer.height($mainContainer.height() - $contactToolbarContainer.height() - ccHeightOffset);
 
     var
@@ -927,7 +986,7 @@ window.TMTalk = (function ($) {
 
         var
           containerHeight = windowHeight - mcHeightOffset,
-          contactsContainerHeight = containerHeight - contactToolbarContainer.offsetHeight - ccHeightOffset+40,
+          contactsContainerHeight = containerHeight,
           roomsContainerHeight = containerHeight - roomsContainer.offsetTop - ($roomsContainer.hasClass('history') ? 2 : meseditorContainer.offsetHeight + rcHeightOffset) + 
                                 ($roomsContainer.hasClass('multichat') ? 32 : 0);
 

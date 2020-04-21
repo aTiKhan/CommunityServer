@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -43,6 +43,8 @@ namespace ASC.Projects.Engine
         public IRecipientProvider RecipientProvider { get; set; }
         public INotifyAction NotifyAction { get; set; }
         public FileEngine FileEngine { get; set; }
+        public ProjectSecurity ProjectSecurity { get; set; }
+
         public bool DisableNotifications { get; set; }
 
         public ProjectEntityEngine(INotifyAction notifyAction, bool disableNotifications)

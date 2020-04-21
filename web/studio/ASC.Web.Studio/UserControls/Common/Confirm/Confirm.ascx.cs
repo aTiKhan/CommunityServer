@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -34,7 +34,7 @@ namespace ASC.Web.Studio.UserControls.Common
     {
         public static string Location
         {
-            get { return "~/usercontrols/common/confirm/confirm.ascx"; }
+            get { return "~/UserControls/Common/Confirm/Confirm.ascx"; }
         }
 
         public Confirm()
@@ -46,14 +46,13 @@ namespace ASC.Web.Studio.UserControls.Common
         public string Value { get; set; }
         public string SelectTitle { get; set; }
         public string AdditionalID { get; set; }
-        public string SelectJSCallback { get; set; }
 
         protected void Page_Load(object sender, EventArgs e)
         {
             _studioConfirm.Options.IsPopup = true;
-            _confirmEnterCode.Value = String.Format("StudioConfirm.Select('{0}',{1});", AdditionalID, SelectJSCallback);
+            _confirmEnterCode.Value = String.Format("StudioConfirm.Select('{0}');", AdditionalID);
 
-            Page.RegisterBodyScripts("~/usercontrols/common/confirm/js/confirm.js");
+            Page.RegisterBodyScripts("~/UserControls/Common/Confirm/js/confirm.js");
         }
     }
 }

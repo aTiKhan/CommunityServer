@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -27,6 +27,7 @@
 using System;
 using System.Web.UI;
 using ASC.Core;
+using ASC.Web.Core;
 using ASC.Web.Studio.UserControls.Statistics;
 using ASC.Web.Studio.Utility;
 using ASC.Core.Users;
@@ -50,8 +51,8 @@ namespace ASC.Web.Studio.UserControls.Management
         protected void Page_Load(object sender, EventArgs e)
         {
             // Move to CommonBodyScripts.ascx.cs
-        //    Page.RegisterBodyScripts("~/usercontrols/management/invitepanel/js/invitepanel.js")
-            Page.RegisterStyle("~/usercontrols/management/invitepanel/css/invitepanel.less");
+            //    Page.RegisterBodyScripts("~/UserControls/Management/InvitePanel/js/invitepanel.js")
+            Page.RegisterStyle("~/UserControls/Management/InvitePanel/css/invitepanel.less");
 
             GeneratedUserLink = GenerateLink(EmployeeType.User);
             GeneratedVisitorLink = GenerateLink(EmployeeType.Visitor);
@@ -59,8 +60,11 @@ namespace ASC.Web.Studio.UserControls.Management
 
         public static string GenerateLink(EmployeeType employeeType)
         {
-            return CommonLinkUtility.GetConfirmationUrl(string.Empty, ConfirmType.LinkInvite, (int)employeeType, SecurityContext.CurrentAccount.ID)
-                   + String.Format("&emplType={0}", (int)employeeType);
+            if (CoreContext.UserManager.GetUsers(SecurityContext.CurrentAccount.ID).IsAdmin()
+                || WebItemSecurity.IsProductAdministrator(WebItemManager.PeopleProductID, SecurityContext.CurrentAccount.ID))
+                return CommonLinkUtility.GetConfirmationUrl(string.Empty, ConfirmType.LinkInvite, (int)employeeType, SecurityContext.CurrentAccount.ID)
+                       + String.Format("&emplType={0}", (int)employeeType);
+            return null;
         }
     }
 }

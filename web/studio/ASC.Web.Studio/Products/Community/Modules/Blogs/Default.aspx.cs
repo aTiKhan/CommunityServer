@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -28,7 +28,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Web;
-using System.Web.UI.WebControls;
 using ASC.Blogs.Core;
 using ASC.Blogs.Core.Domain;
 using ASC.Blogs.Core.Resources;
@@ -40,8 +39,6 @@ using ASC.Web.Core.Utility.Skins;
 using ASC.Web.Studio.Controls.Common;
 using ASC.Web.Studio.Utility;
 using System.Globalization;
-using ASC.Web.Studio.Utility.HtmlUtility;
-using ASC.Web.Core.Users;
 
 namespace ASC.Web.Community.Blogs
 {
@@ -189,7 +186,7 @@ namespace ASC.Web.Community.Blogs
                     {
                         ImgSrc = WebImageSupplier.GetAbsoluteWebPath("blog_icon.png", ASC.Blogs.Core.Constants.ModuleId),
                         Header = BlogsResource.EmptyScreenBlogCaption,
-                        Describe = BlogsResource.EmptyScreenBlogText
+                        Describe = currentUser.IsVisitor() ? BlogsResource.EmptyScreenBlogTextVisitor : BlogsResource.EmptyScreenBlogText
                     };
 
                 if (CommunitySecurity.CheckPermissions(new PersonalBlogSecObject(currentUser), ASC.Blogs.Core.Constants.Action_AddPost)
@@ -215,7 +212,7 @@ namespace ASC.Web.Community.Blogs
                     PageUrl = string.Format(
                         CultureInfo.CurrentCulture,
                         "{0}?{1}",
-                        VirtualPathUtility.ToAbsolute("~/products/community/modules/blogs/"),
+                        VirtualPathUtility.ToAbsolute("~/Products/Community/Modules/Blogs/"),
                         QueryString("page")
                         //BlogsPageSize
                         ),

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -48,8 +48,8 @@ namespace ASC.Web.Files.Controls
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            Page.RegisterStyle(FilesLinkUtility.FilesBaseAbsolutePath + "controls/desktop/desktop.css");
-            Page.RegisterBodyScripts("~/products/files/controls/desktop/desktop.js");
+            Page.RegisterStyle(FilesLinkUtility.FilesBaseAbsolutePath + "Controls/Desktop/desktop.css");
+            Page.RegisterBodyScripts("~/Products/Files/Controls/Desktop/desktop.js");
 
             desktopWelcomeDialog.Options.IsPopup = true;
             Setting = AdditionalWhiteLabelSettings.Instance;

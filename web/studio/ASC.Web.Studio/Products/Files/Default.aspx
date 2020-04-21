@@ -21,33 +21,6 @@
        };
     %>
     <meta name="apple-itunes-app" content="app-id=944896972, app-argument=<%= HttpUtility.HtmlEncode(uri) %>" />
-
-    <% if (Desktop)
-       { %>
-    <script type="text/javascript">
-        if (window.AscDesktopEditor) {
-            var regDesktop = function () {
-                try {
-                    var data = {
-                        displayName: Teamlab.profile.displayName,
-                        domain: new RegExp("^http(s)?:\/\/[^\/]+\/").exec(location)[0],
-                        email: Teamlab.profile.email,
-                    };
-
-                    window.AscDesktopEditor.execCommand("portal:login", JSON.stringify(data));
-                } catch (e) {
-                    console.log(e);
-                }
-            };
-
-            if (window.addEventListener) {
-                window.addEventListener("load", regDesktop);
-            } else if (window.attachEvent) {
-                window.attachEvent("onload", regDesktop);
-            }
-        }
-    </script>
-    <% } %>
 </asp:Content>
 
 <asp:Content runat="server" ContentPlaceHolderID="BTSidePanel">
@@ -55,12 +28,12 @@
         <asp:PlaceHolder ID="CommonSideHolder" runat="server"></asp:PlaceHolder>
     </div>
 
-    <% if (CoreContext.Configuration.Personal && SetupInfo.DisplayPersonalBanners)
+    <% if (!Desktop && CoreContext.Configuration.Personal && SetupInfo.DisplayPersonalBanners)
        { %>
     <a href="#more" class="morefeatures-link banner-link gray-text"><%= string.Format(FilesUCResource.MoreFeatures, "<br>", "<span>", "</span>") %></a>
     <% } %>
 
-    <% if (DisplayAppsBanner && (!CoreContext.Configuration.Personal || (CoreContext.Configuration.Personal && SetupInfo.DisplayPersonalBanners)))
+    <% if (!Desktop && DisplayAppsBanner && (!CoreContext.Configuration.Personal || (CoreContext.Configuration.Personal && SetupInfo.DisplayPersonalBanners)))
        { %>
     <a href="https://itunes.apple.com/app/onlyoffice-documents/id944896972?mt=8" target="_blank"
         class="mobile-app-banner banner-link gray-text"><%= string.Format(FilesUCResource.AppStore, "<br>", "<span>", "</span>") %></a>
@@ -75,14 +48,6 @@
 
     <div id="settingCommon">
         <span class="header-base"><%= FilesUCResource.SettingUpdateIfExist %></span>
-
-        <br />
-        <br />
-        <input type="checkbox" id="cbxUpdateIfExist" class="update-if-exist on-off-checkbox" <%= FilesSettings.UpdateIfExist ? "checked=\"checked\"" : string.Empty %> />
-        <label for="cbxUpdateIfExist">
-            <%= string.Format(FilesUCResource.ConfirmUpdateIfExist, "<br/><span class=\"text-medium-describe\">", "</span>") %>
-        </label>
-
         <% if (FileConverter.EnableAsUploaded)
            { %>
         <br />
@@ -92,13 +57,38 @@
             <%= FilesUCResource.ConfirmStoreOriginalUploadCbxLabelText %>
         </label>
         <% } %>
-
         <br />
         <br />
         <input type="checkbox" id="cbxDeleteConfirm" class="on-off-checkbox" <%= FilesSettings.ConfirmDelete ? "checked=\"checked\"" : string.Empty %> />
         <label for="cbxDeleteConfirm">
             <%= FilesUCResource.ConfirmDelete %>
         </label>
+
+        <br />
+        <br />
+        <br />
+        <span class="header-base"><%= FilesUCResource.SettingVersions %></span>
+        <br />
+        <br />
+        <input type="checkbox" id="cbxUpdateIfExist" class="update-if-exist on-off-checkbox" <%= FilesSettings.UpdateIfExist ? "checked=\"checked\"" : string.Empty %> />
+        <label for="cbxUpdateIfExist">
+            <%= string.Format(FilesUCResource.ConfirmUpdateIfExist, "<br/><span class=\"text-medium-describe\">", "</span>") %>
+        </label>
+        <br />
+        <br />
+        <input type="checkbox" id="cbxForcesave" class="on-off-checkbox" <%= FilesSettings.Forcesave ? "checked='checked'" : "" %> />
+        <label for="cbxForcesave">
+            <%= FilesUCResource.SettingForcesave %>
+        </label>
+        <% if (Global.IsAdministrator) 
+           { %>
+        <br />
+        <br />
+        <input type="checkbox" id="cbxStoreForcesave" class="on-off-checkbox" <%= FilesSettings.StoreForcesave ? "checked='checked'" : "" %> />
+        <label for="cbxStoreForcesave">
+            <%= FilesUCResource.SettingStoreForcesave %>
+        </label>
+        <% } %>
 
         <% if (Global.IsAdministrator && !CoreContext.Configuration.Personal && ThirdpartyConfiguration.SupportInclusion && !Desktop) 
            { %>

@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2017
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -33,6 +33,7 @@ using ASC.Core.Billing;
 using ASC.Core.Tenants;
 using ASC.Core.Users;
 using ASC.Web.Core;
+using ASC.Web.Core.WhiteLabel;
 using ASC.Web.Studio.Core;
 using ASC.Web.Studio.UserControls.Statistics;
 using ASC.Web.Studio.Utility;
@@ -65,13 +66,13 @@ namespace ASC.Web.Studio.UserControls.Management
                 && !TariffSettings.HideNotify
                 && !CoreContext.UserManager.GetUsers(SecurityContext.CurrentAccount.ID).IsVisitor())
             {
-                Page.RegisterStyle("~/usercontrols/management/tariffsettings/css/tariffnotify.less");
+                Page.RegisterStyle("~/UserControls/Management/TariffSettings/css/tariffnotify.less");
 
                 Notify = GetTariffNotify();
 
                 if (CanClose)
                 {
-                    Page.RegisterBodyScripts("~/usercontrols/management/tariffsettings/js/tariffnotify.js");
+                    Page.RegisterBodyScripts("~/UserControls/Management/TariffSettings/js/tariffnotify.js");
                     AjaxPro.Utility.RegisterTypeForAjax(GetType());
                 }
             }
@@ -94,7 +95,20 @@ namespace ASC.Web.Studio.UserControls.Management
             if (notifySize > 0 && maxTotalSize - usedSize < notifySize)
             {
                 var head = string.Format(Resource.PersonalTariffExceedLimit, FileSizeComment.FilesSizeToString(maxTotalSize));
-                var text = String.Format(Resource.PersonalTariffExceedLimitInfoText, "<a target=\"_blank\" href=\"https://support.onlyoffice.com\">", "</a>", "</br>");
+
+                string text;
+
+                if (CoreContext.Configuration.CustomMode)
+                {
+                    text = string.Format(Resource.PersonalTariffExceedLimitInfoText, string.Empty, string.Empty, "</br>");
+                }
+                else
+                {
+                    var settings = MailWhiteLabelSettings.Instance;
+                    var supportLink = string.Format("<a target=\"_blank\" href=\"{0}\">", settings.SupportUrl);
+                    text = string.Format(Resource.PersonalTariffExceedLimitInfoText, supportLink, "</a>", "</br>");
+                }
+
                 return new Tuple<string, string>(head, text);
             }
 

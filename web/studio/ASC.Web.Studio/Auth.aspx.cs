@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -123,11 +123,20 @@ namespace ASC.Web.Studio
             Page.Title = TenantName;
 
             Master.DisabledSidePanel = true;
+            if (Request.DesktopApp())
+            {
+                Master.DisabledTopStudioPanel = true;
+            }
+
             withHelpBlock = false;
             if (CoreContext.Configuration.Personal)
             {
-                Master.TopStudioPanel.TopLogo = WebImageSupplier.GetAbsoluteWebPath("personal_logo/logo_personal_auth.png");
-                AutorizeDocuments.Controls.Add(LoadControl(AuthorizeDocs.Location));
+                Master.TopStudioPanel.TopLogo = TenantLogoManager.IsRetina(Request)
+                                                        ? WebImageSupplier.GetAbsoluteWebPath("personal_logo/logo_personal_auth-@2x.png") 
+                                                        : WebImageSupplier.GetAbsoluteWebPath("personal_logo/logo_personal_auth.png");
+                AutorizeDocuments.Controls.Add(CoreContext.Configuration.CustomMode
+                                                   ? LoadControl(AuthorizeDocs.LocationCustomMode)
+                                                   : LoadControl(AuthorizeDocs.Location));
             }
             else
             {
@@ -144,6 +153,7 @@ namespace ASC.Web.Studio
         {
             //logout
             CookiesManager.ClearCookies(CookiesType.AuthKey);
+            CookiesManager.ClearCookies(CookiesType.SocketIO);
             SecurityContext.Logout();
         }
 

@@ -1,4 +1,30 @@
-﻿ASC.Projects.Tab = function (moduleName, count, divID, $container, link, isVisibleSelector, emptyScreen) {
+/*
+ *
+ * (c) Copyright Ascensio System Limited 2010-2020
+ *
+ * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
+ * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
+ * In accordance with Section 7(a) of the GNU GPL its Section 15 shall be amended to the effect that 
+ * Ascensio System SIA expressly excludes the warranty of non-infringement of any third-party rights.
+ *
+ * THIS PROGRAM IS DISTRIBUTED WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR
+ * FITNESS FOR A PARTICULAR PURPOSE. For more details, see GNU GPL at https://www.gnu.org/copyleft/gpl.html
+ *
+ * You can contact Ascensio System SIA by email at sales@onlyoffice.com
+ *
+ * The interactive user interfaces in modified source and object code versions of ONLYOFFICE must display 
+ * Appropriate Legal Notices, as required under Section 5 of the GNU GPL version 3.
+ *
+ * Pursuant to Section 7 § 3(b) of the GNU GPL you must retain the original ONLYOFFICE logo which contains 
+ * relevant author attributions when distributing the software. If the display of the logo in its graphic 
+ * form is not reasonably feasible for technical reasons, you must include the words "Powered by ONLYOFFICE" 
+ * in every copy of the program you distribute. 
+ * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
+ *
+*/
+
+
+ASC.Projects.Tab = function (moduleName, count, divID, $container, link, isVisibleSelector, emptyScreen) {
     this.title = moduleName;
     this.count = count;
     this.divID = divID;
@@ -38,7 +64,7 @@ ASC.Projects.Tab.prototype.select = function () {
                 self.emptyScreen.button.onclick();
             });
 
-        var currentHash = ASC.Controls.AnchorController.getAnchor();
+        var currentHash = location.hash.substring(1);
 
         if (currentHash === this.emptyScreen.button.hash && $addFirstElement.length > 0) {
             $addFirstElement.click();
@@ -50,7 +76,7 @@ ASC.Projects.Tab.prototype.select = function () {
     }
 
     if (this.link.indexOf("#") === 0) {
-        location.hash = this.link;
+        ASC.Projects.Common.setHash(this.link);
     }
 
     this.rewrite();
@@ -133,14 +159,14 @@ ASC.Projects.DescriptionTab = (function () {
         return self;
     }
 
-    function pushStatus(title, id, handler) {
-        description.status.items.push({ title: title, handler: handler, id: id.toString() });
+    function setStatuses(statuses) {
+        description.status.items = statuses;
 
         return self;
     }
 
-    function setCurrentStatus(id) {
-        description.status.current = description.status.items.find(function (item) { return item.id == id });
+    function setCurrentStatus(currentStatus) {
+        description.status.current = currentStatus;
         return self;
     }
 
@@ -158,7 +184,7 @@ ASC.Projects.DescriptionTab = (function () {
     return {
         init: init,
         push: pushData,
-        pushStatus: pushStatus,
+        setStatuses: setStatuses,
         resetStatus: resetStatus,
         setStatusRight: setStatusRight,
         setCurrentStatus: setCurrentStatus,
@@ -280,12 +306,12 @@ ASC.Projects.DescriptionPanel = (function() {
             hide();
         });
 
-        $panel.on(clickEvent, '.project .value', function () {
+        $panel.on(clickEvent, '.project .value .link', function () {
             hide(false);
             filter.add('project', jq(this).attr("projectId"), ['tag', 'milestone', 'myprojects']);
         });
 
-        $panel.on(clickEvent, '.milestone .value', function () {
+        $panel.on(clickEvent, '.milestone .value .link', function () {
             filter.add('milestone', jq(this).attr('milestone'));
         });
     }
@@ -321,6 +347,8 @@ ASC.Projects.DescriptionPanel = (function() {
                 if (checkProperty(projectId)) {
                     descriptionObj.project = jq.htmlEncodeLight(obj.projectTitle);
                     descriptionObj.projectId = obj.projectId;
+                    var p = ASC.Projects.Common.getProjectById(projectId);
+                    descriptionObj.projectStatus = typeof p !== "undefined" ? p.status : undefined;
                 }
 
                 if (checkProperty(createdBy)) {
@@ -341,6 +369,8 @@ ASC.Projects.DescriptionPanel = (function() {
                 if (checkProperty(obj.milestone)) {
                     descriptionObj.milestone = Encoder.htmlEncode("[" + obj.milestone.displayDateDeadline + "] " + obj.milestone.title);
                     descriptionObj.milestoneId = obj.milestone.id;
+                    var m = ASC.Projects.Common.getMilestoneById(obj.milestone.id);
+                    descriptionObj.milestoneStatus = typeof m !== "undefined" ? m.status : undefined;
                 }
 
                 panelContent.html(jq.tmpl("projects_descriptionPanelContent", descriptionObj));
@@ -368,7 +398,7 @@ ASC.Projects.DescriptionPanel = (function() {
     };
 
     function checkProperty(prop) {
-        return typeof prop != 'undefined' && jq.trim(prop) !== "" && prop != null;
+        return typeof prop !== 'undefined' && jq.trim(prop) !== "" && prop != null;
     }
 
     function showDescPanelByObject($targetObject) {
@@ -447,6 +477,7 @@ ASC.Projects.GroupActionPanel = (function () {
         clickEvent = "click",
         unlockAction = "unlockAction",
         indeterminate = "indeterminate",
+        disable = "disable",
         currentActions,
         currentGetItemByCheckbox;
 
@@ -465,14 +496,35 @@ ASC.Projects.GroupActionPanel = (function () {
         $groupActionMenu = jq("#groupActionMenu");
 
         for (var i = currentActions.length - 1; i >= 0; i--) {
-            var actionsHandler = function(actionsItem) {
-                return function () {
-                    if (!jq(this).hasClass(unlockAction)) return;
-                    actionsItem.handler(getCheckedItems().map(function (item) {return item.id; }));
-                };
-            }(currentActions[i]);
+            var action = currentActions[i];
+            var $action = jq("#" + action.id);
 
-            jq("#" + currentActions[i].id).on("click", actionsHandler);
+            if (action.multi) {
+                $action.on(clickEvent, function (event) {
+                    if (!$action.hasClass(unlockAction)) {
+                        event.stopPropagation();
+                    }
+                });
+
+                jq.dropdownToggle(
+                    {
+                        switcherSelector: "#" + action.id,
+                        dropdownID: action.id + "Selector",
+                        position: "fixed",
+                        simpleToggle: true
+                    });
+
+                for (var k = 0; k < action.multi.length; k++) {
+                    addActionHandler(action.multi[k], function () {
+                        return !$action.hasClass(unlockAction) && jq(this).find("a").hasClass(disable);
+                    });
+                }
+
+            } else {
+                addActionHandler(action, function() {
+                    return !this.classList.contains(unlockAction);
+                });
+            }
         }
 
         $counterSelectedItems = $groupActionMenu ? $groupActionMenu.find(".menu-action-checked-count") : [];
@@ -494,7 +546,7 @@ ASC.Projects.GroupActionPanel = (function () {
                 var $checkboxes = $container.find(".checkbox input");
                 var $rows = $container.find("tr");
 
-                if ($selectAll.is(":" + checkedAttr) && countChecked === 0) {
+                if ($selectAll.is(":" + checkedAttr) && !$selectAll.is(":" + indeterminate) && countChecked === 0) {
                     countChecked = $checkboxes.length;
                     $checkboxes.each(function (id, item) { item.checked = true; });
                     $rows.addClass(checkedRowClass);
@@ -543,6 +595,17 @@ ASC.Projects.GroupActionPanel = (function () {
         }
     };
 
+    function addActionHandler(action, isDisabled) {
+        var actionsHandler = function (actionsItem) {
+            return function () {
+                if (isDisabled.call(this)) return;
+                actionsItem.handler(getCheckedItems().map(function (item) { return item.id; }));
+            };
+        }(action);
+
+        jq("#" + action.id).on("click", actionsHandler);
+    }
+
     function onCheck() {
         var $input = jq(this);
         var allCounts = $container.find(".checkbox input").length;
@@ -551,14 +614,9 @@ ASC.Projects.GroupActionPanel = (function () {
             countChecked++;
             $input.parents(withCheckbox).addClass(checkedRowClass);
 
-            if (countChecked === allCounts) {
-                $selectAll.prop(checkedAttr, true);
-            }
-
         } else {
             countChecked--;
             $input.parents(withCheckbox).removeClass(checkedRowClass);
-            $selectAll.prop(checkedAttr, false);
         }
 
         if (countChecked > 0) {
@@ -567,7 +625,8 @@ ASC.Projects.GroupActionPanel = (function () {
             lockActionButtons();
         }
 
-        $selectAll.prop(indeterminate, countChecked > 0 && !$selectAll.prop(checkedAttr));
+        $selectAll.prop(checkedAttr, countChecked > 0);
+        $selectAll.prop(indeterminate, countChecked > 0 && countChecked < allCounts);
 
         changeSelectedItemsCounter();
     }
@@ -599,7 +658,27 @@ ASC.Projects.GroupActionPanel = (function () {
 
         for (var j = currentActions.length; j--;) {
             var action = currentActions[j];
-            if (items.every(action.checker)) {
+            var unlock;
+
+            if (action.multi) {
+                jq("#" + action.id + "Selector a").removeClass(disable);
+
+                for(var k = 0; k < action.multi.length; k++) {
+                    var multiAction = action.multi[k];
+                    var multiActionChecked = items.every(multiAction.checker);
+                    var $item = jq("#" + multiAction.id + " a");
+                    if(multiActionChecked) {
+                        unlock = true;
+                    } else {
+                        $item.addClass(disable);
+                    }
+                }
+
+            } else {
+                unlock = items.every(action.checker);
+            }
+
+            if (unlock) {
                 jq("#" + action.id).addClass(unlockAction);
             } else {
                 jq("#" + action.id).removeClass(unlockAction);
@@ -638,12 +717,14 @@ ASC.Projects.StatusList = (function () {
         currentListStatusObjid,
         activeClass = "active";
 
-    var currentSettings;
+    var currentSettings, profileId;
 
     var $statusListContainer, $commonListContainer;
 
     function init(settings, $clc) {
         if (!settings) return;
+        
+        profileId = Teamlab.profile.id;
 
         currentSettings = settings;
         var panelId = "#statusChangePanel";
@@ -658,15 +739,16 @@ ASC.Projects.StatusList = (function () {
 
         for (var i = 0; i < settings.statuses.length; i++) {
 
-            var handler = function(statusItemId) {
-                return function() {
-                    currentSettings.handler(currentListStatusObjid, statusItemId);
+            var handler = function (statusItemId, statusId) {
+                return function () {
+                    if (jq(this).hasClass(activeClass)) return;
+                    currentSettings.handler(currentListStatusObjid, statusItemId, statusId);
                 };
-            }(settings.statuses[i].id);
+            }(settings.statuses[i].id, settings.statuses[i].statusType);
 
             jq("#statusItem_" + settings.statuses[i].id).on("click", handler);
         }
-
+        
         jq('body')
             .off("click.body3")
             .on("click.body3", function() {
@@ -704,10 +786,32 @@ ASC.Projects.StatusList = (function () {
 
 
         $statusListContainer.find('li').show().removeClass(activeClass);
-        $statusListContainer.find('#statusItem_' + status).addClass(activeClass);
+
+        if (status < 0) {
+            status = -status;
+        }
+
+        $statusListContainer.find('#statusItem_' + getByData(item).id).addClass(activeClass);
         if (status === 1) {
             $statusListContainer.find('.paused').hide();
         }
+
+        var project = typeof (item.projectId) !== "undefined" ? ASC.Projects.Master.Projects.find(function (p) { return p.id === item.projectId; }) : item;
+
+        if (!project) {
+            project = ASC.Projects.Common.getProjectByIdFromCache(item.projectId);
+        }
+
+        if (item.createdBy.id !== profileId && !ASC.Projects.Master.IsModuleAdmin && project.responsibleId !== profileId) {
+            var statuses = currentSettings.statuses;
+            for(var j = 0; j < statuses.length; j++) {
+                var statusJ = statuses[j];
+                if(statusJ.available === false) {
+                    $statusListContainer.find("." + statusJ.cssClass).hide();
+                }
+            }
+        }
+
 
         $statusListContainer.show();
         return false;
@@ -726,5 +830,18 @@ ASC.Projects.StatusList = (function () {
         });
     }
 
-    return { init: init, getById: getById };
+    function getDefaultById(id) {
+        return currentSettings.statuses.find(function(item) {
+            return item.statusType === id && item.isDefault;
+        });
+    }
+
+    function getByData(data) {
+        var id = typeof data.customTaskStatus !== 'undefined' ? data.customTaskStatus : data.status;
+        var result = getById(id);
+
+        return result || getDefaultById(data.status);
+    }
+
+    return { init: init, getById: getById, getByData: getByData };
 })();

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -63,7 +63,7 @@ namespace ASC.Web.Files.Masters.ClientScripts
                                 URL_OAUTH_DROPBOXV2 = Dropbox.Location.ToLower(),
                                 URL_OAUTH_SKYDRIVE = OneDrive.Location.ToLower(),
                                 URL_OAUTH_DOCUSIGN = Studio.ThirdParty.DocuSign.Location.ToLower(),
-                                URL_OAUTH_DOCUSIGN_LINK = DocuSignLoginProvider.DocuSignHost,
+                                URL_OAUTH_DOCUSIGN_LINK = DocuSignLoginProvider.Instance.DocuSignHost,
 
                                 URL_BASE = FilesLinkUtility.FilesBaseAbsolutePath,
                                 URL_WCFSERVICE = PathProvider.GetFileServicePath,
@@ -90,7 +90,9 @@ namespace ASC.Web.Files.Masters.ClientScripts
                                         FileShare.Read,
                                         FileShare.Restrict,
                                         FileShare.Varies,
-                                        FileShare.Review
+                                        FileShare.Review,
+                                        FileShare.FillForms,
+                                        FileShare.Comment
                                     },
 
                                 FilterType = new
@@ -105,7 +107,8 @@ namespace ASC.Web.Files.Masters.ClientScripts
                                         FilterType.ArchiveOnly,
                                         FilterType.ByUser,
                                         FilterType.ByDepartment,
-                                        FilterType.ByExtension
+                                        FilterType.ByExtension,
+                                        FilterType.MediaOnly
                                     },
 
                                 ConflictResolveType = new
@@ -116,6 +119,7 @@ namespace ASC.Web.Files.Masters.ClientScripts
                                     },
 
                                 DocuSignFormats = DocuSignHelper.SupportedFormats,
+                                SetupInfo.AvailableFileSize,
                             })
                 };
         }

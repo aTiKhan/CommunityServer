@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -27,6 +27,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using ASC.Core.Tenants;
 using ASC.Data.Backup.Tasks.Data;
 
@@ -81,17 +82,17 @@ namespace ASC.Data.Backup.Tasks.Modules
             get { return _tableRelations; }
         }
 
-        protected override bool TryPrepareRow(IDbConnection connection, ColumnMapper columnMapper, TableInfo table, DataRowInfo row, out Dictionary<string, object> preparedRow)
+        protected override bool TryPrepareRow(bool dump, DbConnection connection, ColumnMapper columnMapper, TableInfo table, DataRowInfo row, out Dictionary<string, object> preparedRow)
         {
             if (table.Name == "tenants_tenants" && string.IsNullOrEmpty(Convert.ToString(row["payment_id"])))
             {
                 var oldTenantID = Convert.ToInt32(row["id"]);
                 columnMapper.SetMapping("tenants_tenants", "payment_id", row["payment_id"], Core.CoreContext.Configuration.GetKey(oldTenantID));
             }
-            return base.TryPrepareRow(connection, columnMapper, table, row, out preparedRow);
+            return base.TryPrepareRow(dump, connection, columnMapper, table, row, out preparedRow);
         }
 
-        protected override bool TryPrepareValue(IDbConnection connection, ColumnMapper columnMapper, TableInfo table, string columnName, ref object value)
+        protected override bool TryPrepareValue(DbConnection connection, ColumnMapper columnMapper, TableInfo table, string columnName, ref object value)
         {
             //we insert tenant as suspended so it can't be accessed before restore operation is finished
             if (table.Name.Equals("tenants_tenants", StringComparison.InvariantCultureIgnoreCase) && 

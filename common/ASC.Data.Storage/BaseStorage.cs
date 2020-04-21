@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Web;
 using ASC.Core;
 using ASC.Data.Storage.Configuration;
@@ -76,7 +77,7 @@ namespace ASC.Data.Storage
             var headerAttr = string.Empty;
             if (headers != null)
             {
-                headerAttr = string.Join("&", headers);
+                headerAttr = string.Join("&", headers.Select(HttpUtility.UrlEncode));
             }
 
             if (expire == TimeSpan.Zero || expire == TimeSpan.MinValue || expire == TimeSpan.MaxValue)
@@ -95,12 +96,12 @@ namespace ASC.Data.Storage
                 {
                     currentTenantId = currentTenant.TenantId;
                 }
-                else if (!TennantPath.TryGetTenant(_tenant, out currentTenantId))
+                else if (!TenantPath.TryGetTenant(_tenant, out currentTenantId))
                 {
                     currentTenantId = 0;
                 }
 
-                var auth = EmailValidationKeyProvider.GetEmailKey(currentTenantId, path.Replace('/', Path.DirectorySeparatorChar) + "." + headerAttr + "." + expireString);
+                var auth = EmailValidationKeyProvider.GetEmailKey(currentTenantId, path.Replace('/', Path.DirectorySeparatorChar).Replace('\\', Path.DirectorySeparatorChar) + "." + headerAttr + "." + expireString);
                 query = string.Format("{0}{1}={2}&{3}={4}",
                                       path.Contains("?") ? "&" : "?",
                                       Constants.QUERY_EXPIRE,

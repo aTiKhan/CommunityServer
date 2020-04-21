@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -141,8 +141,8 @@ ASC.Projects.MilestoneContainer = (function () {
             x = x - 21;
             y = y + 20;
         } else {
-            x = x - 164;
-            y = y + 29;
+            x = x - $panel.outerWidth() + jq(obj).outerWidth();
+            y = y + jq(obj).outerHeight();
         }
 
         $panel.css("left", x + "px");
@@ -262,7 +262,7 @@ ASC.Projects.EditMilestoneContainer = (function () {
             jq("#newMilestoneTitle").focus();
         });
 
-        jq("#newMilestoneTitle").bind('keydown', function (e) {
+        jq("body").on('keydown', '#newMilestoneTitle', function (e) {
             $addMilestoneContainer.removeClass("red-border");
             var targetId = $addMilestoneContainer.attr('target');
             if (e.which === 13) {
@@ -281,7 +281,7 @@ ASC.Projects.EditMilestoneContainer = (function () {
             }
         });
 
-        $addMilestoneContainer.find(".button").on('click', function () {
+        jq("body").on('click', "#addMilestoneContainer .button", function () {
             var targetId = $addMilestoneContainer.attr('target');
             var milestoneTitle = jq("#newMilestoneTitle");
 
@@ -609,11 +609,17 @@ ASC.Projects.CreateProjectStructure = (function () {
         var pmName = jq("#projectManagerSelector").attr("data-id") ? jq("#projectManagerSelector").html() : "";
         var listEntities = jq(".milestone .mainInfo .chooseResponsible .link.dotline, .task .chooseResponsible .link[guid], #addTaskContainer .chooseResponsible .link[guid], #addMilestoneContainer .chooseResponsible .link");
 
+        var check = false;
+
         for (var i = 0; i < listEntities.length; i++) {
-            if (!responsibleInTeam(jq(listEntities[i]), selectedTeam)) {
+            var $listEntity = jq(listEntities[i]);
+            if (!responsibleInTeam($listEntity, selectedTeam)) {
                 if (pmId) {
-                    jq(listEntities[i]).attr("guid", pmId);
-                    jq(listEntities[i]).html(pmName);
+                    $listEntity.attr("guid", pmId);
+                    $listEntity.html(pmName);
+                    if (jq(listEntities[i]).parents("#addMilestoneContainer").length === 0) {
+                        check = true;
+                    }
                 }
                 else {
                     var resp = selectedTeam.find(function (item) { return !item.isVisitor; });
@@ -627,7 +633,13 @@ ASC.Projects.CreateProjectStructure = (function () {
                 jq(listEntities[i]).parent().css("display", "inline-block");
             }
         }
+
+        if (check) {
+            jq(document).trigger("chooseResp");
+        }
     };
+    var $projectManagerSelector,
+        $projectTeamSelector;
 
     var init = function (str) {
         isInit = true;
@@ -643,8 +655,8 @@ ASC.Projects.CreateProjectStructure = (function () {
         $milestoneActionsPanel = jq("#milestoneActions");
 
         $addMilestone = jq("#addMilestone");
-        var $projectManagerSelector = jq("#projectManagerSelector"),
-           $projectTeamSelector = jq("#projectTeamSelector");
+        $projectManagerSelector = jq("#projectManagerSelector"),
+            $projectTeamSelector = jq("#projectTeamSelector");
 
         $projectManagerSelector.useradvancedSelector({
             withGuests: false,
@@ -752,6 +764,7 @@ ASC.Projects.CreateProjectStructure = (function () {
             var member = jq(target).find(".link.dotline");
 
             if (guid !== "nobody" && guid !== "") {
+                jq(document).trigger("chooseResp");
                 jq(member).attr("guid", guid);
             } else {
                 jq(member).removeAttr("guid");
@@ -825,7 +838,7 @@ ASC.Projects.CreateProjectStructure = (function () {
             $addMilestoneContainer.find("#newMilestoneTitle").focus();
         });
 
-        jq("#newMilestoneTitle").bind('keydown', function (e) {
+        jq("body").on('keydown', '#newMilestoneTitle', function (e) {
             $addMilestoneContainer.removeClass("red-border");
             var targetId = $addMilestoneContainer.attr('target');
             if (e.which === 13) {
@@ -844,7 +857,7 @@ ASC.Projects.CreateProjectStructure = (function () {
             }
         });
 
-        $addMilestoneContainer.find(".button").on("click", function () {
+        jq("body").on('click', "#addMilestoneContainer .button", function () {
             var milestoneTitle = jq("#newMilestoneTitle");
             var targetId = $addMilestoneContainer.attr('target');
 
@@ -894,6 +907,10 @@ ASC.Projects.CreateProjectStructure = (function () {
                 jq.tmpl("projects_templatesCreateMilestoneTmpl", milestone).appendTo("#listAddedMilestone");
                 milestoneTitle.val("");
                 milestoneTitle.focus();
+
+                if (milestone.chooseRep.id) {
+                    jq(document).trigger("chooseResp");
+                }
             }
             return true;
         });
@@ -919,12 +936,16 @@ ASC.Projects.CreateProjectStructure = (function () {
         });
 
         jq("#milestoneActions .actionList #removeMilestone").bind('click', function () {
+            $addMilestone.after($addMilestoneContainer);
             $addTaskContainer.hide();
             $addTaskContainer.appendTo("#noAssignTaskContainer");
             $milestoneActionsPanel.hide();
             var target = jq(this).parents('.studio-action-panel').attr('target');
             jq("#" + target).removeClass("open");
             jq("#" + target).remove();
+            if (jq("#listAddedMilestone .milestone").length == 0 && jq("#listNoAssignListTask .task").length == 0 && selectedTeam.length === 0) {
+                jq(document).trigger("unchooseResp");
+            }
         });
 
         jq("#milestoneActions .actionList #addTaskInMilestone").bind('click', function () {
@@ -1056,6 +1077,10 @@ ASC.Projects.CreateProjectStructure = (function () {
 
                 taskTitle.val("");
                 taskTitle.focus();
+
+                if (task.chooseRep && task.chooseRep.id) {
+                    jq(document).trigger("chooseResp");
+                }
             }
 
         });
@@ -1073,6 +1098,10 @@ ASC.Projects.CreateProjectStructure = (function () {
                     jq(targetParent).parents('.milestone').children('.milestoneTasksContainer').hide();
                     jq(targetParent).closest(".milestone").find(".addTask").removeClass("hide");
                 }
+            }
+
+            if (jq("#listAddedMilestone .milestone").length == 0 && jq("#listNoAssignListTask .task").length == 0 && selectedTeam.length === 0) {
+                jq(document).trigger("unchooseResp");
             }
         });
 
@@ -1106,14 +1135,21 @@ ASC.Projects.CreateProjectStructure = (function () {
     }
 
     function onChooseProjectTeam(e, members) {
-        selectedTeam = members;
+        selectedTeam = members.map(function (item) {
+            return Object.assign(Object.assign({}, window.UserManager.getUser(item.id)), item);
+        });
+
         if (pmId || notOnlyVisitors()) {
             showChooseResponsible();
         }
     };
     
     function onChooseProjectManager(e, item) {
+        if (pmId) {
+            $projectTeamSelector.useradvancedSelector("undisable", [pmId]);
+        }
         pmId = item.id;
+        $projectTeamSelector.useradvancedSelector("disable", [pmId]);
         showChooseResponsible();
     };
     

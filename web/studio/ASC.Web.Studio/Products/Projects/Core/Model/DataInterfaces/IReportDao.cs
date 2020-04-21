@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,14 +24,9 @@
 */
 
 
-#region Usings
-
 using System;
 using System.Collections.Generic;
-using ASC.Projects.Core.Domain;
 using ASC.Projects.Core.Domain.Reports;
-
-#endregion
 
 namespace ASC.Projects.Core.DataInterfaces
 {
@@ -46,5 +41,13 @@ namespace ASC.Projects.Core.DataInterfaces
         ReportTemplate SaveTemplate(ReportTemplate template);
 
         void DeleteTemplate(int id);
+
+        ReportFile Save(ReportFile template);
+
+        IEnumerable<ReportFile> Get();
+
+        ReportFile GetByFileId(int fileid);
+
+        void Remove(ReportFile report);
     }
 }

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,10 +25,10 @@
 
 
 using System;
+using System.Collections;
 using System.Diagnostics;
 using ASC.Core;
 using ASC.Core.Users;
-using System.Collections;
 
 namespace ASC.Projects.Core.Domain
 {
@@ -58,6 +58,8 @@ namespace ASC.Projects.Core.Domain
         public bool IsAdmin { get; set; }
 
         public bool IsManager { get; set; }
+
+        public bool IsRemovedFromTeam { get; set; }
 
         public ProjectTeamSecurity ProjectTeamSecurity
         {
@@ -103,7 +105,7 @@ namespace ASC.Projects.Core.Domain
 
         public Participant()
         {
-            
+
         }
 
         public Participant(Guid userID)

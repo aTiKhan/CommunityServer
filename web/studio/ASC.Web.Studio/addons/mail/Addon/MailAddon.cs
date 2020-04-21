@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,6 +24,7 @@
 */
 
 
+using System.Linq;
 using ASC.Web.Core;
 using ASC.Web.Core.WebZones;
 using ASC.Web.Mail.Resources;
@@ -31,6 +32,7 @@ using System;
 using System.Web;
 using System.Web.Configuration;
 using System.Web.UI;
+using ASC.Data.Storage;
 
 namespace ASC.Web.Mail
 {
@@ -77,8 +79,10 @@ namespace ASC.Web.Mail
                 {
                     DisabledIconFileName = "mail_disabled.png",
                     IconFileName = "mail.png",
-                    LargeIconFileName = "product_logolarge.png",
-                    SpaceUsageStatManager = new Configuration.MailSpaceUsageStatManager()
+                    LargeIconFileName = "product_logolarge.svg",
+                    SpaceUsageStatManager = new Configuration.MailSpaceUsageStatManager(),
+                    AdminOpportunities = () => MailResource.AddonAdminOpportunities.Split('|').ToList(),
+                    UserOpportunities = () => MailResource.AddonUserOpportunities.Split('|').ToList(),
                 };
         }
 
@@ -133,11 +137,13 @@ namespace ASC.Web.Mail
 
             return string.Format(@"<li class=""top-item-box mail"">
                                      <a class=""inner-text mailActiveBox"" href=""{0}"" title=""{1}"">
+                                       <svg><use base=""{2}"" href=""/skins/default/images/svg/top-studio-menu.svg#svgTopStudioMenumail""></use></svg>
                                        <span id=""TPUnreadMessagesCount"" class=""inner-label""></span>
                                      </a>
                                    </li>",
                                  VirtualPathUtility.ToAbsolute(BaseVirtualPath + "/"),
-                                 MailResource.MailTitle);
+                                 MailResource.MailTitle,
+                                 WebPath.GetPath("/"));
         }
 
         public Control LoadCustomNavigationControl(Page page)

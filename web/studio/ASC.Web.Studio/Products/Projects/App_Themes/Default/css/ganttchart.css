@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -52,6 +52,7 @@
 .gantt-chart-top-panel, .addition {
     margin: 0;
     background-color: #f2f2f2;
+    position: relative;
 }
 .gantt-chart-top-panel {
     padding:24px;
@@ -380,12 +381,16 @@
     margin-top: 16px;
 }
 /*---change status combobox---*/
-#statusListContainer.studio-action-panel {
+#statusListContainer.studio-action-panel, #statusListTaskContainer.studio-action-panel {
     padding: 8px 20px 8px 6px;
 }
 .studio-action-panel #statusList li.dropdown-item {
     padding-left: 22px;
     background: url('../images/projects_entity_statuses.png') no-repeat 2px center;
+}
+
+.studio-action-panel #statusListTask li.dropdown-item {
+    padding-left: 22px;
 }
 .studio-action-panel #statusList li.dropdown-item.open {
     background-position: 0 -58px;
@@ -1075,7 +1080,8 @@ div.gantt-splitter:hover:after{
 .icon-private:after {
     position: absolute;
     content: "";
-	background: url("../images/small-icons.png") -1px -36px no-repeat;
+	background: url('../../../../../skins/default/images/svg/projects/lockorange.svg') no-repeat;
+    background-size:85% 85%;
 	width: 16px;
 	height: 16px;
 	top: 25%;

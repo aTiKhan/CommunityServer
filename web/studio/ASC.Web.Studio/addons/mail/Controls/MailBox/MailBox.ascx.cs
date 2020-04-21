@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,20 +25,16 @@
 
 
 using System;
-using System.IO;
-using System.Net;
-using System.Text.RegularExpressions;
 using System.Web;
+using System.Web.UI;
+using ASC.Web.Files.Controls;
 using ASC.Web.Mail.Resources;
 using ASC.Web.Studio.Controls.Common;
 using ASC.Web.Studio.Core;
-using ASC.Web.Studio.Utility;
-//using ASC.Web.Studio.UserControls.Common.DocumentsPopup;
-using ASC.Web.Studio.UserControls.Management;
 
 namespace ASC.Web.Mail.Controls
 {
-  public partial class MailBox : System.Web.UI.UserControl
+  public partial class MailBox : UserControl
   {
     public static string Location { get { return "~/addons/mail/Controls/MailBox/MailBox.ascx"; } }
     public const int EntryCountOnPage_def = 25;
@@ -47,24 +43,30 @@ namespace ASC.Web.Mail.Controls
     protected void Page_Load(object sender, EventArgs e)
     {
         Page.RegisterBodyScripts("~/js/uploader/jquery.fileupload.js",
-                                 "~/usercontrols/common/ckeditor/ckeditor-connector.js",
-                                 "~/products/files/js/common.js",
-                                 "~/products/files/js/templatemanager.js",
-                                 "~/products/files/js/servicemanager.js",
-                                 "~/products/files/js/ui.js",
-                                 "~/products/files/js/eventhandler.js",
-                                 "~/products/files/controls/emptyfolder/emptyfolder.js",
-                                 "~/products/files/controls/fileselector/fileselector.js",
-                                 "~/products/files/controls/tree/tree.js"
+                                 "~/UserControls/Common/ckeditor/ckeditor-connector.js",
+                                 "~/Products/Files/js/common.js",
+                                 "~/Products/Files/js/templatemanager.js",
+                                 "~/Products/Files/js/servicemanager.js",
+                                 "~/Products/Files/js/ui.js",
+                                 "~/Products/Files/js/eventhandler.js",
+                                 "~/Products/Files/Controls/EmptyFolder/emptyfolder.js",
+                                 "~/Products/Files/Controls/FileSelector/fileselector.js",
+                                 "~/Products/Files/Controls/Tree/tree.js",
+                                 "~/Products/Files/Controls/ConvertFile/confirmconvert.js"
             )
-            .RegisterStyle("~/products/files/controls/fileselector/fileselector.css",
-                           "~/products/files/controls/thirdparty/thirdparty.css",
-                           "~/products/files/controls/contentlist/contentlist.css",
-                           "~/products/files/controls/emptyfolder/emptyfolder.css",
-                           "~/products/files/controls/tree/tree.css"
+            .RegisterStyle("~/Products/Files/Controls/FileSelector/fileselector.css",
+                           "~/Products/Files/Controls/ThirdParty/thirdparty.css",
+                           "~/Products/Files/Controls/ContentList/contentlist.css",
+                           "~/Products/Files/Controls/EmptyFolder/emptyfolder.css",
+                           "~/Products/Files/Controls/Tree/tree.css",
+                           "~/Products/Files/Controls/ConvertFile/confirmconvert.css"
             );
 
+        ControlPlaceHolder.Controls.Add(LoadControl(Studio.UserControls.Common.MediaPlayer.Location));
+
         TagsPageHolder.Controls.Add(LoadControl(TagsPage.Location) as TagsPage);
+        TagsPageHolder.Controls.Add(LoadControl(UserFoldersPage.Location) as UserFoldersPage);
+        TagsPageHolder.Controls.Add(LoadControl(FiltersPage.Location) as FiltersPage);
         TagsPageHolder.Controls.Add(LoadControl(AccountsPage.Location) as AccountsPage);
         TagsPageHolder.Controls.Add(LoadControl(ContactsPage.Location) as ContactsPage);
         TagsPageHolder.Controls.Add(LoadControl(CommonSettingsPage.Location) as CommonSettingsPage);
@@ -87,9 +89,12 @@ namespace ASC.Web.Mail.Controls
 
         QuestionPopup.Options.IsPopup = true;
 
-        var fileSelector = (Files.Controls.FileSelector) LoadControl(Files.Controls.FileSelector.Location);
+        var fileSelector = (FileSelector) LoadControl(FileSelector.Location);
         fileSelector.DialogTitle = MailResource.SelectFolderDialogTitle;
+        fileSelector.OnlyFolder = true;
         fileholder.Controls.Add(fileSelector);
+
+        fileholder.Controls.Add(LoadControl(ConfirmConvert.Location));
     }
 
     protected String RenderRedirectUpload()

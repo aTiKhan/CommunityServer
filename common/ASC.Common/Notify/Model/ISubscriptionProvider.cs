@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -28,6 +28,7 @@
 
 using System;
 using System.Linq;
+using ASC.Common.Logging;
 using ASC.Notify.Recipients;
 
 #endregion
@@ -83,7 +84,7 @@ namespace ASC.Notify.Model
             }
             catch (Exception exception)
             {
-                log4net.LogManager.GetLogger(typeof(SubscriptionProviderHelper)).Error(exception);
+                LogManager.GetLogger("ASC").Error(exception);
             }
 
             return result;

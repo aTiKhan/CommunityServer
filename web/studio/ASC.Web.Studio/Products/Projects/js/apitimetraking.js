@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -44,6 +44,7 @@ ASC.Projects.TimeTraking = (function($) {
     var teamlab = Teamlab;
     var $hours, $minutes, $seconds, $startButton, $resetButton, $textareaTimeDesc, $openTasks, $closedTasks;
     var clickEvent = "click", disableClass = "disable", errorClass = "error", successClass = "success", disabledAttr = "disabled", stopClass = "stop";
+    var prjTasks;
 
     var init = function () {
         $inputMinutes = $("#inputTimeMinutes");
@@ -151,22 +152,37 @@ ASC.Projects.TimeTraking = (function($) {
         $('#timerTime #selectUserProjects').bind('change', function() {
             var prjid = parseInt($("#selectUserProjects option:selected").val());
 
-            teamlab.getPrjTeam({}, prjid, {
-                before: function() {
-                    $("#teamList").attr(disabledAttr, disabledAttr);
-                    $("#selectUserTasks").attr(disabledAttr, disabledAttr);
-                },
-                success: onGetTeam,
-                after: function() {
-                    $("#teamList").removeAttr(disabledAttr);
-                    $("#selectUserTasks").removeAttr(disabledAttr); ;
-                }
+            var onCompleteObj = function (cb) {
+                return {
+                    success: cb,
+                    error: cb
+                };
+            };
+
+            var asyncMethods = [];
+
+            asyncMethods.push(function (cb) {
+                teamlab.getPrjTasks({}, {
+                    success: onGetTasks,
+                    filter: { sortBy: 'title', sortOrder: 'ascending', projectId: prjid }
+                });
             });
 
-            teamlab.getPrjTasks({}, {
-                success: onGetTasks,
-                filter: { sortBy: 'title', sortOrder: 'ascending', projectId: prjid }
+            asyncMethods.push(function (cb) {
+                teamlab.getProjectTeamExcluded(prjid, {
+                    before: function () {
+                        $("#teamList").attr(disabledAttr, disabledAttr);
+                        $("#selectUserTasks").attr(disabledAttr, disabledAttr);
+                    },
+                    success: onGetTeam,
+                    after: function () {
+                        $("#teamList").removeAttr(disabledAttr);
+                        $("#selectUserTasks").removeAttr(disabledAttr);
+                    }
+                });
             });
+
+            async.parallel(asyncMethods);
         });
 
         $startButton.bind(clickEvent, function () {
@@ -239,6 +255,13 @@ ASC.Projects.TimeTraking = (function($) {
                 hours = h + m / 60;
             }
 
+            if (!$.isDateFormat($inputDate.val().trim())) {
+                $errorPanel.addClass(errorClass).removeClass(successClass);
+                $errorPanel.text(resources.IncorrectDate).show();
+                unlockStartAndAddButtons();
+                return;
+            }
+
             var data = { hours: hours, note: description, personId: personid, projectId: prjid };
             data.date = $inputDate.datepicker('getDate');
             data.date.setHours(0);
@@ -254,6 +277,16 @@ ASC.Projects.TimeTraking = (function($) {
                 $inputMinutes.val("0" + min);
             }
         });
+
+        function checkKey(e) {
+            if (e.which != 8 && e.which != 0 && (e.which < 48 || e.which > 57)) {
+                e.stopPropagation();
+                return false;
+            }
+        }
+
+        $inputMinutes.keypress(checkKey);
+        $inputHours.keypress(checkKey);
     };
 
     function isInt(input) {
@@ -329,7 +362,6 @@ ASC.Projects.TimeTraking = (function($) {
     };
 
     function resetTimer() {
-        unlockElements();
         pauseTimer();
 
         var zeroText = '00';
@@ -346,6 +378,7 @@ ASC.Projects.TimeTraking = (function($) {
         clickPauseFlag = false;
 
         $startButton.removeClass(stopClass).attr("title", $startButton.attr("data-title-start"));
+        unlockElements();
     };
 
     function lockElements(onlyManualInput) {
@@ -359,8 +392,12 @@ ASC.Projects.TimeTraking = (function($) {
     };
 
     function unlockElements() {
-        $inputHours.removeAttr(disabledAttr);
-        $inputMinutes.removeAttr(disabledAttr);
+        var t = getCurrentTime();
+        if (t.h === 0 && t.m === 0 && t.s === 0) {
+            $inputHours.removeAttr(disabledAttr);
+            $inputMinutes.removeAttr(disabledAttr);
+        }
+
         $inputDate.removeAttr(disabledAttr);
         $textareaTimeDesc.removeAttr(disabledAttr);
     };
@@ -406,11 +443,16 @@ ASC.Projects.TimeTraking = (function($) {
         teamList.find('option').remove();
         
         team = ASC.Projects.Common.excludeVisitors(team);
-        
+
+        team = team.filter(function (item) {
+            return !item.isRemovedFromTeam ||
+                prjTasks.some(function (t) {
+                    return t.responsibles.some(function (r) { return r.id === item.id; });
+                });
+        });
+
         team.forEach(function (item) {
-            if (item.displayName !== "profile removed") {
-                teamList.append('<option value="' + item.id + '" id="optionUser_' + item.id + '">' + item.displayName + '</option>');
-            }
+            teamList.append('<option value="' + item.id + '" id="optionUser_' + item.id + '">' + item.displayName + '</option>');
         });
         
         if (teamList.find('option').length === 0) {
@@ -423,6 +465,7 @@ ASC.Projects.TimeTraking = (function($) {
     function onGetTasks(params, tasks) {
         $('#selectUserTasks option').remove();
 
+        prjTasks = tasks; 
         tasks.forEach(function (item) {
             var opt = '<option value="' + item.id + '" id="optionUser_' + item.id + '">' + $.htmlEncodeLight(item.title) + '</option>';
             if (item.status === 1) {
@@ -462,7 +505,7 @@ ASC.Projects.TimeTrakingEdit = (function ($) {
         errorPanel,
         resources = ASC.Projects.Resources.ProjectsJSResource;
 
-    var teamlab = Teamlab;
+    var teamlab = Teamlab, prjTask;
 
     function initPopup() {
         if (isInit) return;
@@ -526,7 +569,7 @@ ASC.Projects.TimeTrakingEdit = (function ($) {
             teamlab.updatePrjTime({ oldTime: oldTime, timeid: timeid },
                 timeid,
                 {
-                    hours: h + m / 60,
+                    hours: h + m / 60 + oldTime.seconds /3600,
                     date: teamlab.serializeTimestamp($('#timeTrakingPopup #timeTrakingDate').datepicker('getDate')),
                     note: $('#timeTrakingPopup #timeDescription').val(),
                     personId: $('#teamList option:selected').attr('value')
@@ -570,7 +613,11 @@ ASC.Projects.TimeTrakingEdit = (function ($) {
         return typeof input === "number";
     };
     
-    var showPopup = function (prjid, taskid, taskName, timeId, time, date, description, responsible) {
+    var showPopup = function (prjid, task, timeId, time, date, description, responsible) {
+        prjTask = task;
+
+        var taskid = task.id;
+        var taskName = task.title;
         $timerDate = $("#timeTrakingDate");
         timeCreator = responsible;
         $popupContainer.attr('timeid', timeId);
@@ -596,7 +643,7 @@ ASC.Projects.TimeTrakingEdit = (function ($) {
                 appendListOptions(ASC.Projects.Common.excludeVisitors(ASC.Projects.Master.Team));
             }
         } else {
-            teamlab.getPrjProjectTeamPersons({}, prjid, { success: onGetTeamByProject });
+            teamlab.getProjectTeamExcluded(prjid, { success: onGetTeamByProject });
         }
 
         StudioBlockUIManager.blockUI($popupContainer, 550, 400, 0, "absolute");
@@ -627,7 +674,12 @@ ASC.Projects.TimeTrakingEdit = (function ($) {
     function onGetTeamByProject(params, data) {
         var team = data;
         if (team.length) {
-            appendListOptions(ASC.Projects.Common.excludeVisitors(team));
+            team = ASC.Projects.Common.excludeVisitors(team);
+
+            team = team.filter(function (item) {
+                return !item.isRemovedFromTeam || prjTask.responsibles.some(function (r) { return r.id === item.id; });
+            });
+            appendListOptions(team);
         }
     };
     return {

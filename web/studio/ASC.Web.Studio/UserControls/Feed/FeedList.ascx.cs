@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -34,14 +34,9 @@ namespace ASC.Web.Studio.UserControls.Feed
 {
     public partial class FeedList : UserControl
     {
-        private static Guid User
-        {
-            get { return SecurityContext.CurrentAccount.ID; }
-        }
-
         protected void Page_Load(object sender, EventArgs e)
         {
-            Page.RegisterBodyScripts("~/usercontrols/feed/js/feed.js", "~/usercontrols/feed/js/feed.filter.js")
+            Page.RegisterBodyScripts("~/UserControls/Feed/js/feed.js", "~/UserControls/Feed/js/feed.filter.js")
                 .RegisterStyle("~/UserControls/Feed/css/feed.less")
                 .RegisterInlineScript(@"ASC.Feed.init('"+ AccessRights() + "');");
         }
@@ -53,13 +48,12 @@ namespace ASC.Web.Studio.UserControls.Feed
 
         public static string AccessRights()
         {
-            return string.Join(",", new[]
-                {
-                    WebItemSecurity.IsAvailableForUser(WebItemManager.CommunityProductID.ToString(), User).ToString(),
-                    WebItemSecurity.IsAvailableForUser(WebItemManager.CRMProductID.ToString(), User).ToString(),
-                    WebItemSecurity.IsAvailableForUser(WebItemManager.ProjectsProductID.ToString(), User).ToString(),
-                    WebItemSecurity.IsAvailableForUser(WebItemManager.DocumentsProductID.ToString(), User).ToString()
-                });
+            return string.Join(",", 
+                    WebItemSecurity.IsAvailableForMe(WebItemManager.CommunityProductID).ToString(),
+                    WebItemSecurity.IsAvailableForMe(WebItemManager.CRMProductID).ToString(),
+                    WebItemSecurity.IsAvailableForMe(WebItemManager.ProjectsProductID).ToString(),
+                    WebItemSecurity.IsAvailableForMe(WebItemManager.DocumentsProductID).ToString()
+                );
         }
     }
 }

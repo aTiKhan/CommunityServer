@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,14 +25,18 @@
 
 
 using System;
+using System.Globalization;
+using System.IO;
+using System.Net;
+using System.Security;
 using System.Security.Authentication;
-using System.Threading;
 using System.Web;
 using System.Web.UI;
 using ASC.ActiveDirectory;
 using ASC.ActiveDirectory.Base.Settings;
 using ASC.ActiveDirectory.ComplexOperations;
 using ASC.Common.Caching;
+using ASC.Common.Logging;
 using ASC.Core;
 using ASC.Core.Tenants;
 using ASC.Core.Users;
@@ -43,12 +47,15 @@ using ASC.Security.Cryptography;
 using ASC.Web.Core;
 using ASC.Web.Studio.Core;
 using ASC.Web.Studio.Core.SMS;
+using ASC.Web.Studio.Core.TFA;
 using ASC.Web.Studio.Masters;
 using ASC.Web.Studio.UserControls.Users.UserProfile;
 using ASC.Web.Studio.Utility;
-using log4net;
+using Newtonsoft.Json.Linq;
 using Resources;
+using SecurityContext = ASC.Core.SecurityContext;
 using SsoSettingsV2 = ASC.Web.Studio.UserControls.Management.SingleSignOnSettings.SsoSettingsV2;
+
 
 namespace ASC.Web.Studio.UserControls.Common
 {
@@ -57,6 +64,8 @@ namespace ASC.Web.Studio.UserControls.Common
         protected string LoginMessage;
         private string _errorMessage;
         private readonly ICache cache = AscCache.Memory;
+        protected bool ShowRecaptcha;
+        protected string Culture = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
 
         protected bool EnableLdap
         {
@@ -110,10 +119,7 @@ namespace ASC.Web.Studio.UserControls.Common
 
         protected string SsoLabel
         {
-            get
-            {
-                return EnableSso ? SsoSettingsV2.Load().SpLoginLabel : SsoSettingsV2.SSO_SP_LOGIN_LABEL;
-            }
+            get { return EnableSso ? SsoSettingsV2.Load().SpLoginLabel : SsoSettingsV2.SSO_SP_LOGIN_LABEL; }
         }
 
         protected bool IsSaml
@@ -124,6 +130,11 @@ namespace ASC.Web.Studio.UserControls.Common
         protected bool EnableSession
         {
             get { return TenantCookieSettings.Load().IsDefault(); }
+        }
+
+        protected bool RecaptchaEnable
+        {
+            get { return !string.IsNullOrEmpty(SetupInfo.RecaptchaPublicKey) && !string.IsNullOrEmpty(SetupInfo.RecaptchaPrivateKey); }
         }
 
         protected string ErrorMessage
@@ -155,8 +166,14 @@ namespace ASC.Web.Studio.UserControls.Common
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            Page.RegisterStyle("~/usercontrols/common/authorize/css/authorize.less")
-                .RegisterBodyScripts("~/usercontrols/common/authorize/js/authorize.js");
+            Page.RegisterStyle("~/UserControls/Common/Authorize/css/authorize.less")
+                .RegisterBodyScripts("~/UserControls/Common/Authorize/js/authorize.js");
+
+            if (RecaptchaEnable)
+            {
+                Page
+                    .RegisterBodyScripts("~/usercontrols/common/authorize/js/recaptchacontroller.js");
+            }
 
             Login = "";
             Password = "";
@@ -167,7 +184,7 @@ namespace ASC.Web.Studio.UserControls.Common
 
             if (SetupInfo.ThirdPartyAuthEnabled && AccountLinkControl.IsNotEmpty)
             {
-                var accountLink = (AccountLinkControl) LoadControl(AccountLinkControl.Location);
+                var accountLink = (AccountLinkControl)LoadControl(AccountLinkControl.Location);
                 accountLink.Visible = true;
                 accountLink.ClientCallback = "authCallback";
                 accountLink.SettingsView = false;
@@ -205,7 +222,8 @@ namespace ASC.Web.Studio.UserControls.Common
             {
                 if (!AuthProcess(thirdPartyProfile, withAccountLink)) return;
 
-                var refererURL = (string) Session["refererURL"];
+                CookiesManager.ClearCookies(CookiesType.SocketIO);
+                var refererURL = (string)Session["refererURL"];
                 if (string.IsNullOrEmpty(refererURL))
                 {
                     Response.Redirect(CommonLinkUtility.GetDefault(), true);
@@ -217,12 +235,15 @@ namespace ASC.Web.Studio.UserControls.Common
                 }
             }
             ProcessConfirmedEmailCondition();
+            ProcessConfirmedEmailLdap();
         }
 
         private bool AuthProcess(LoginProfile thirdPartyProfile, bool withAccountLink)
         {
             var authMethod = AuthMethod.Login;
-            var smsLoginUrl = string.Empty;
+            var tfaLoginUrl = string.Empty;
+            var loginCounter = 0;
+            ShowRecaptcha = false;
             try
             {
                 if (thirdPartyProfile != null)
@@ -269,17 +290,39 @@ namespace ASC.Web.Studio.UserControls.Common
                     throw new InvalidCredentialException("password");
                 }
 
-                if (string.IsNullOrEmpty(HashId))
+                if (string.IsNullOrEmpty(HashId) && !SetupInfo.IsSecretEmail(Login))
                 {
-                    int counter;
+                    int.TryParse(cache.Get<String>("loginsec/" + Login), out loginCounter);
 
-                    int.TryParse(cache.Get<String>("loginsec/" + Login), out counter);
+                    loginCounter++;
 
-                    if (++counter%5 == 0)
+                    if (!RecaptchaEnable)
                     {
-                        Thread.Sleep(TimeSpan.FromSeconds(10));
+                        if (loginCounter > SetupInfo.LoginThreshold)
+                        {
+                            throw new BruteForceCredentialException();
+                        }
                     }
-                    cache.Insert("loginsec/" + Login, counter.ToString(), DateTime.UtcNow.Add(TimeSpan.FromMinutes(1)));
+                    else
+                    {
+                        if (loginCounter > SetupInfo.LoginThreshold - 1)
+                        {
+                            ShowRecaptcha = true;
+                        }
+                        if (loginCounter > SetupInfo.LoginThreshold)
+                        {
+                            var ip = Request.Headers["X-Forwarded-For"] ?? Request.UserHostAddress;
+
+                            var recaptchaResponse = Request["g-recaptcha-response"];
+                            if (String.IsNullOrEmpty(recaptchaResponse)
+                                || !ValidateRecaptcha(recaptchaResponse, ip))
+                            {
+                                throw new RecaptchaException();
+                            }
+                        }
+                    }
+
+                    cache.Insert("loginsec/" + Login, loginCounter.ToString(CultureInfo.InvariantCulture), DateTime.UtcNow.Add(TimeSpan.FromMinutes(1)));
                 }
 
                 var userInfo = GetUser(out authMethod);
@@ -300,7 +343,12 @@ namespace ASC.Web.Studio.UserControls.Common
                 if (StudioSmsNotificationSettings.IsVisibleSettings
                     && StudioSmsNotificationSettings.Enable)
                 {
-                    smsLoginUrl = Studio.Confirm.SmsConfirmUrl(userInfo);
+                    tfaLoginUrl = Studio.Confirm.SmsConfirmUrl(userInfo);
+                }
+                else if (TfaAppAuthSettings.IsVisibleSettings
+                         && TfaAppAuthSettings.Enable)
+                {
+                    tfaLoginUrl = Studio.Confirm.TfaConfirmUrl(userInfo);
                 }
                 else
                 {
@@ -315,11 +363,31 @@ namespace ASC.Web.Studio.UserControls.Common
                         );
                 }
             }
-            catch (InvalidCredentialException)
+            catch (InvalidCredentialException ex)
             {
                 Auth.ProcessLogout();
+                MessageAction messageAction;
 
-                ErrorMessage = authMethod == AuthMethod.ThirdParty ? Resource.LoginWithAccountNotFound : Resource.InvalidUsernameOrPassword;
+                if (ex is BruteForceCredentialException)
+                {
+                    ErrorMessage = Resource.LoginWithBruteForce;
+                    messageAction = MessageAction.LoginFailBruteForce;
+                }
+                else if (ex is RecaptchaException)
+                {
+                    ErrorMessage = Resource.RecaptchaInvalid;
+                    messageAction = MessageAction.LoginFailRecaptcha;
+                }
+                else if (authMethod == AuthMethod.ThirdParty)
+                {
+                    ErrorMessage = Resource.LoginWithAccountNotFound;
+                    messageAction = MessageAction.LoginFailSocialAccountNotFound;
+                }
+                else
+                {
+                    ErrorMessage = Resource.InvalidUsernameOrPassword;
+                    messageAction = MessageAction.LoginFailInvalidCombination;
+                }
 
                 var loginName = !string.IsNullOrWhiteSpace(Login)
                                     ? Login
@@ -327,16 +395,14 @@ namespace ASC.Web.Studio.UserControls.Common
                                           ? HashId
                                           : AuditResource.EmailNotSpecified;
 
-                var messageAction = authMethod == AuthMethod.ThirdParty
-                                        ? MessageAction.LoginFailSocialAccountNotFound
-                                        : MessageAction.LoginFailInvalidCombination;
-
                 MessageService.Send(HttpContext.Current.Request, loginName, messageAction);
 
-                if (authMethod == AuthMethod.ThirdParty && thirdPartyProfile != null) Response.Redirect("~/auth.aspx?m=" + HttpUtility.UrlEncode(_errorMessage), true);
+                if (authMethod == AuthMethod.ThirdParty && thirdPartyProfile != null)
+                    Response.Redirect("~/auth.aspx?m=" + HttpUtility.UrlEncode(_errorMessage), true);
+
                 return false;
             }
-            catch (System.Security.SecurityException)
+            catch (SecurityException)
             {
                 Auth.ProcessLogout();
                 ErrorMessage = Resource.ErrorDisabledProfile;
@@ -358,10 +424,16 @@ namespace ASC.Web.Studio.UserControls.Common
                 return false;
             }
 
-            if (!string.IsNullOrEmpty(smsLoginUrl))
+            if (loginCounter > 0)
             {
-                Response.Redirect(smsLoginUrl, true);
+                cache.Insert("loginsec/" + Login, (--loginCounter).ToString(CultureInfo.InvariantCulture), DateTime.UtcNow.Add(TimeSpan.FromMinutes(1)));
             }
+
+            if (!string.IsNullOrEmpty(tfaLoginUrl))
+            {
+                Response.Redirect(tfaLoginUrl, true);
+            }
+
             return true;
         }
 
@@ -408,6 +480,84 @@ namespace ASC.Web.Studio.UserControls.Common
 
             Login = confirmedEmail;
             LoginMessage = String.Format("<div class=\"confirmBox\">{0} {1}</div>", Resource.MessageEmailConfirmed, Resource.MessageAuthorize);
+        }
+
+        private void ProcessConfirmedEmailLdap()
+        {
+            if (IsPostBack) return;
+
+            var login = (Request.QueryString["ldap-login"] ?? "").Trim();
+
+            if (String.IsNullOrEmpty(login)) return;
+
+            Login = login;
+            LoginMessage = String.Format("<div class=\"confirmBox\">{0}<br>{1} {2}</div>",
+                                         Resource.MessageEmailConfirmed,
+                                         Resource.MessageAuthorizeLdap,
+                                         LdapCurrentDomain.Load().CurrentDomain);
+        }
+
+
+        public class BruteForceCredentialException : InvalidCredentialException
+        {
+            public BruteForceCredentialException()
+            {
+            }
+
+            public BruteForceCredentialException(string message)
+                : base(message)
+            {
+            }
+        }
+
+        public class RecaptchaException : InvalidCredentialException
+        {
+            public RecaptchaException()
+            {
+            }
+
+            public RecaptchaException(string message)
+                : base(message)
+            {
+            }
+        }
+
+        public static bool ValidateRecaptcha(string response, string ip)
+        {
+            try
+            {
+                var data = string.Format("secret={0}&remoteip={1}&response={2}", SetupInfo.RecaptchaPrivateKey, ip, response);
+
+                var webRequest = (HttpWebRequest)WebRequest.Create(SetupInfo.RecaptchaVerifyUrl);
+                webRequest.Method = WebRequestMethods.Http.Post;
+                webRequest.ContentType = "application/x-www-form-urlencoded";
+                webRequest.ContentLength = data.Length;
+                using (var writer = new StreamWriter(webRequest.GetRequestStream()))
+                {
+                    writer.Write(data);
+                }
+
+                using (var webResponse = webRequest.GetResponse())
+                using (var reader = new StreamReader(webResponse.GetResponseStream()))
+                {
+                    var resp = reader.ReadToEnd();
+                    var resObj = JObject.Parse(resp);
+
+                    if (resObj["success"] != null && resObj.Value<bool>("success"))
+                    {
+                        return true;
+                    }
+                    if (resObj["error-codes"] != null && resObj["error-codes"].HasValues)
+                    {
+                        return false;
+                    }
+                }
+            }
+            catch (Exception)
+            {
+            }
+
+            return false;
         }
     }
 }

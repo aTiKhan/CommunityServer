@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -34,13 +34,11 @@ using ASC.Web.Community.Blogs.Views;
 using ASC.Web.Community.Product;
 using ASC.Web.Studio.Core;
 using ASC.Web.Studio.Utility;
-using ASC.Web.Studio.Utility.HtmlUtility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Web;
-using System.Web.UI.WebControls;
 
 namespace ASC.Web.Community.Blogs
 {
@@ -82,7 +80,7 @@ namespace ASC.Web.Community.Blogs
 
         private void InitScript()
         {
-            Page.RegisterBodyScripts("~/usercontrols/common/ckeditor/ckeditor-connector.js");
+            Page.RegisterBodyScripts("~/UserControls/Common/ckeditor/ckeditor-connector.js");
 
             //Page.RegisterInlineScript("ckeditorConnector.load(function () {BlogsManager.blogsEditor = jq('#ckEditor').ckeditor({ toolbar : 'ComBlog', filebrowserUploadUrl: '" + RenderRedirectUpload() + @"'}).editor;});");
             Page.RegisterInlineScript("ckeditorConnector.load(function () {" +
@@ -210,7 +208,7 @@ namespace ASC.Web.Community.Blogs
                     UserID = SecurityContext.CurrentAccount.ID
                 };
 
-            var control = (ViewBlogView)LoadControl("~/products/community/modules/blogs/views/viewblogview.ascx");
+            var control = (ViewBlogView)LoadControl("~/Products/Community/Modules/Blogs/Views/ViewBlogView.ascx");
             control.IsPreview = true;
             control.post = post;
 

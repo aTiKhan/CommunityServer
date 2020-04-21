@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -44,7 +44,18 @@ jq(function () {
 
     jq(".languageMenu ul.options li.option").on("click", function () {
         var lng = jq(this).attr('data');
-        
+
+        if (!lng) {
+            jq("#languageMenu").hide();
+            var switcher = jq(".usrLang").next(".HelpCenterSwitcher");
+            if (switcher.length)
+                setTimeout(function() {
+                    switcher.helper({ BlockHelperID: 'NotFoundLanguage' });
+                }, 0);
+
+            return;
+        }
+
         AjaxPro.UserLangController.SaveUserLanguageSettings(lng, function (res) {
             jq("#languageMenu").hide();
             

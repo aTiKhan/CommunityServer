@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,6 +24,7 @@
 */
 
 
+using ASC.Core;
 using ASC.Web.Core;
 using ASC.Web.Core.Files;
 using ASC.Web.Core.Utility;
@@ -37,6 +38,8 @@ using System.Reflection;
 using System.Web;
 using System.Web.Http;
 using System.Xml;
+using ASC.Web.Studio.PublicResources;
+using SubscriptionManager = ASC.Web.Files.Classes.SubscriptionManager;
 
 namespace ASC.Web.Files.Configuration
 {
@@ -57,18 +60,26 @@ namespace ASC.Web.Files.Configuration
         {
             Global.Init();
 
+            Func<List<string>> adminOpportunities = () => (CoreContext.Configuration.CustomMode
+                                                               ? CustomModeResource.ProductAdminOpportunitiesCustomMode
+                                                               : FilesCommonResource.ProductAdminOpportunities).Split('|').ToList();
+
+            Func<List<string>> userOpportunities = () => (CoreContext.Configuration.CustomMode
+                                         ? CustomModeResource.ProductUserOpportunitiesCustomMode
+                                         : FilesCommonResource.ProductUserOpportunities).Split('|').ToList();
+
             _productContext =
                 new ProductContext
                     {
-                        MasterPageFile = FilesLinkUtility.FilesBaseVirtualPath + "masters/basictemplate.master",
+                        MasterPageFile = FilesLinkUtility.FilesBaseVirtualPath + "Masters/BasicTemplate.master",
                         DisabledIconFileName = "product_disabled_logo.png",
                         IconFileName = "product_logo.png",
-                        LargeIconFileName = "product_logolarge.png",
+                        LargeIconFileName = "product_logolarge.svg",
                         DefaultSortOrder = 10,
                         SubscriptionManager = new SubscriptionManager(),
                         SpaceUsageStatManager = new FilesSpaceUsageStatManager(),
-                        AdminOpportunities = () => FilesCommonResource.ProductAdminOpportunities.Split('|').ToList(),
-                        UserOpportunities = () => FilesCommonResource.ProductUserOpportunities.Split('|').ToList(),
+                        AdminOpportunities = adminOpportunities,
+                        UserOpportunities = userOpportunities,
                         CanNotBeDisabled = true,
                     };
             SearchHandlerManager.Registry(new SearchHandler());
@@ -162,15 +173,20 @@ namespace ASC.Web.Files.Configuration
             get { return FilesCommonResource.ProductName; }
         }
 
-
-        public override string ExtendedDescription
-        {
-            get { return FilesCommonResource.ProductDescriptionEx; }
-        }
-
         public override string Description
         {
-            get { return FilesCommonResource.ProductDescription; }
+            get
+            {
+                var id = SecurityContext.CurrentAccount.ID;
+
+                if (CoreContext.UserManager.IsUserInGroup(id, ASC.Core.Users.Constants.GroupVisitor.ID))
+                    return FilesCommonResource.ProductDescriptionShort;
+
+                if (CoreContext.UserManager.IsUserInGroup(id, ASC.Core.Users.Constants.GroupAdmin.ID) || CoreContext.UserManager.IsUserInGroup(id, ID))
+                    return FilesCommonResource.ProductDescriptionEx;
+
+                return FilesCommonResource.ProductDescription;
+            }
         }
 
         public override string StartURL

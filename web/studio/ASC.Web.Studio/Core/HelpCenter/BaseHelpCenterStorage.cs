@@ -1,4 +1,30 @@
-﻿using System;
+/*
+ *
+ * (c) Copyright Ascensio System Limited 2010-2020
+ *
+ * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
+ * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
+ * In accordance with Section 7(a) of the GNU GPL its Section 15 shall be amended to the effect that 
+ * Ascensio System SIA expressly excludes the warranty of non-infringement of any third-party rights.
+ *
+ * THIS PROGRAM IS DISTRIBUTED WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR
+ * FITNESS FOR A PARTICULAR PURPOSE. For more details, see GNU GPL at https://www.gnu.org/copyleft/gpl.html
+ *
+ * You can contact Ascensio System SIA by email at sales@onlyoffice.com
+ *
+ * The interactive user interfaces in modified source and object code versions of ONLYOFFICE must display 
+ * Appropriate Legal Notices, as required under Section 5 of the GNU GPL version 3.
+ *
+ * Pursuant to Section 7 § 3(b) of the GNU GPL you must retain the original ONLYOFFICE logo which contains 
+ * relevant author attributions when distributing the software. If the display of the logo in its graphic 
+ * form is not reasonably feasible for technical reasons, you must include the words "Powered by ONLYOFFICE" 
+ * in every copy of the program you distribute. 
+ * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
+ *
+*/
+
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
@@ -12,10 +38,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Configuration;
 using ASC.Common.Caching;
+using ASC.Common.Logging;
 using ASC.Common.Threading;
-using ASC.Common.Threading.Workers;
 using ASC.Web.Core.Client;
-using log4net;
 
 namespace ASC.Web.Studio.Core.HelpCenter
 {
@@ -56,6 +81,18 @@ namespace ASC.Web.Studio.Core.HelpCenter
                 Tasks.QueueTask(request.SendRequest, request.GetDistributedTask());
             }
         }
+
+        public static void Complete(string url)
+        {
+            lock (LockObj)
+            {
+                var task = Tasks.GetTasks().FirstOrDefault(r => r.GetProperty<string>("Url") == url);
+                if (task != null)
+                {
+                    Tasks.RemoveTask(task.Id);
+                }
+            }
+        }
     }
 
     public class BaseHelpCenterStorage<T> where T : BaseHelpCenterData, new()
@@ -66,8 +103,16 @@ namespace ASC.Web.Studio.Core.HelpCenter
         private string FilePath { get; set; }
         private string CacheKey { get; set; }
 
-        private static readonly ICache cache = AscCache.Memory;
-        private static readonly TimeSpan expirationTimeout = TimeSpan.FromDays(1);
+        private static readonly ICache cache;
+        private static readonly TimeSpan expirationTimeout;
+        private static readonly ILog Log;
+
+        static BaseHelpCenterStorage()
+        {
+            cache = AscCache.Memory;
+            expirationTimeout = TimeSpan.FromDays(1);
+            Log = LogManager.GetLogger("ASC.Web.HelpCenter");
+        }
 
         public BaseHelpCenterStorage(string basePath, string fileName, string cacheKey)
         {
@@ -75,9 +120,8 @@ namespace ASC.Web.Studio.Core.HelpCenter
             CacheKey = cacheKey;
         }
 
-        public T GetData(string baseUrl, string page, string helpLinkBlock)
+        public T GetData(string baseUrl, string url, string helpLinkBlock)
         {
-            var url = baseUrl + page;
             var helpCenterData = GetFromCacheOrFile(url);
             if (helpCenterData != null) return helpCenterData;
 
@@ -87,7 +131,11 @@ namespace ASC.Web.Studio.Core.HelpCenter
                 Url = url,
                 BaseUrl = baseUrl,
                 HelpLinkBlock = helpLinkBlock,
-                Starter = (r, html) => InitAndCacheData(r, html, helpCenterData)
+                Starter = (r, html) =>
+                {
+                    InitAndCacheData(r, html, helpCenterData);
+                    HelpDownloader.Complete(url);
+                }
             };
 
             HelpDownloader.Make(request);
@@ -95,9 +143,8 @@ namespace ASC.Web.Studio.Core.HelpCenter
             return null;
         }
 
-        public async Task<T> GetDataAsync(string baseUrl, string page, string helpLinkBlock, string resetCacheKey)
+        public async Task<T> GetDataAsync(string baseUrl, string url, string helpLinkBlock, string resetCacheKey)
         {
-            var url = baseUrl + page;
             var helpCenterData = GetFromCacheOrFile(url);
 
             if (helpCenterData == null)
@@ -132,7 +179,7 @@ namespace ASC.Web.Studio.Core.HelpCenter
             }
             catch (Exception e)
             {
-                LogManager.GetLogger("ASC.Web.HelpCenter").Error("Error GetVideoGuide", e);
+                Log.Error("Error GetVideoGuide", e);
             }
 
             if (data == null)
@@ -200,7 +247,7 @@ namespace ASC.Web.Studio.Core.HelpCenter
             }
             catch (Exception e)
             {
-                LogManager.GetLogger("ASC.Web.HelpCenter").Error("Error UpdateVideoGuide", e);
+                Log.Error("Error UpdateVideoGuide", e);
             }
         }
 
@@ -242,9 +289,14 @@ namespace ASC.Web.Studio.Core.HelpCenter
         public string BaseUrl { get; set; }
         public Action<HelpCenterRequest, string> Starter { get; set; }
         private static bool stopRequesting;
-        private static readonly ILog Log = LogManager.GetLogger("ASC.Web.HelpCenter");
+        private static readonly ILog Log;
 
         protected DistributedTask TaskInfo { get; private set; }
+
+        static HelpCenterRequest()
+        {
+            Log = LogManager.GetLogger("ASC.Web.HelpCenter");
+        }
 
         public HelpCenterRequest()
         {

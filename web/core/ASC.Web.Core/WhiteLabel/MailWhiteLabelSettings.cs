@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -105,7 +105,7 @@ namespace ASC.Web.Core.WhiteLabel
         {
             get
             {
-                var url = CommonLinkUtility.GetRegionalUrl(WebConfigurationManager.AppSettings["web.support-feedback"] ?? String.Empty, null).TrimEnd('/');
+                var url = CommonLinkUtility.GetRegionalUrl(WebConfigurationManager.AppSettings["web.support-feedback"] ?? String.Empty, null);
                 return !string.IsNullOrEmpty(url) ? url : "http://support.onlyoffice.com";
             }
         }
@@ -132,7 +132,7 @@ namespace ASC.Web.Core.WhiteLabel
         {
             get
             {
-                var url = CommonLinkUtility.GetRegionalUrl(WebConfigurationManager.AppSettings["web.demo-order"] ?? String.Empty, null).TrimEnd('/');
+                var url = CommonLinkUtility.GetRegionalUrl(WebConfigurationManager.AppSettings["web.demo-order"] ?? String.Empty, null);
                 return !string.IsNullOrEmpty(url) ? url : "http://www.onlyoffice.com/demo-order.aspx";
             }
         }

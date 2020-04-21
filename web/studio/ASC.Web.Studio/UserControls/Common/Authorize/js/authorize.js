@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,7 +25,13 @@
 
 
 var Authorize = new function () {
+
     jq(document).ready(function () {
+
+        if (jq("#recaptchaHiddenContainer").is(":visible")) {
+            RecaptchaController.InitRecaptcha(jq("#recaptchaHiddenContainer").attr("data-hl"));
+        }
+
         jq(jq("#login").val().length ? "#pwd" : "#login").focus();
 
         jq("#login,#pwd").keyup(function (event) {
@@ -42,6 +48,9 @@ var Authorize = new function () {
             if (code == 13) {
                 if (jq(this).is("#login") && !jq("#pwd").val().length) {
                     jq("#pwd").focus();
+                    return true;
+                }
+                if (jq('body').hasClass('desktop') && !!jq("#desktop_agree_to_terms").length && !(jq("#desktop_agree_to_terms").is(':checked'))) {
                     return true;
                 }
                 Authorize.Login();

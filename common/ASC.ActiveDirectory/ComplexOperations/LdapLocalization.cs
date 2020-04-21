@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,7 +24,6 @@
 */
 
 
-
 using System.Resources;
 
 namespace ASC.ActiveDirectory.ComplexOperations
@@ -32,10 +31,12 @@ namespace ASC.ActiveDirectory.ComplexOperations
     public class LdapLocalization
     {
         private readonly ResourceManager _resourceManager;
+        private readonly ResourceManager _notifyResourceManager;
 
-        public LdapLocalization(ResourceManager resourceManager = null)
+        public LdapLocalization(ResourceManager resourceManager = null, ResourceManager notifyResourceManager = null)
         {
             _resourceManager = resourceManager;
+            _notifyResourceManager = notifyResourceManager;
         }
 
         public string FirstName
@@ -115,6 +116,17 @@ namespace ASC.ActiveDirectory.ComplexOperations
             }
         }
 
+        public string LdapSettingsStatusGivingRights
+        {
+            get
+            {
+                const string def_key = "LdapSettingsStatusGivingRights";
+                const string def_val = "Setting user {0} as {1} admin";
+
+                return GetValueOrDefault(def_key, def_val);
+            }
+        }
+
         public string LdapSettingsErrorUsersNotFound
         {
             get
@@ -126,12 +138,34 @@ namespace ASC.ActiveDirectory.ComplexOperations
             }
         }
 
+        public string LdapSettingsStatusRemovingOldRights
+        {
+            get
+            {
+                const string def_key = "LdapSettingsStatusRemovingOldRights";
+                const string def_val = "Removing outdated access rights that have been loaded via LDAP earlier";
+
+                return GetValueOrDefault(def_key, def_val);
+            }
+        }
+
         public string LdapSettingsStatusRemovingOldUsers
         {
             get
             {
                 const string def_key = "LdapSettingsStatusRemovingOldUsers";
                 const string def_val = "Removing outdated user profiles that have been loaded via LDAP earlier";
+
+                return GetValueOrDefault(def_key, def_val);
+            }
+        }
+
+        public string LdapSettingsStatusSavingUserPhoto
+        {
+            get
+            {
+                const string def_key = "LdapSettingsStatusSavingUserPhoto";
+                const string def_val = "Saving photo";
 
                 return GetValueOrDefault(def_key, def_val);
             }
@@ -276,6 +310,28 @@ namespace ASC.ActiveDirectory.ComplexOperations
             {
                 const string def_key = "LdapSettingsErrorIncorrectLdapFilter";
                 const string def_val = "Invalid User Filter value.";
+
+                return GetValueOrDefault(def_key, def_val);
+            }
+        }
+
+        public string LdapSettingsErrorLostRights
+        {
+            get
+            {
+                const string def_key = "LdapSettingsErrorLostRights";
+                const string def_val = "You attempted to take away admin rights from yourself. Your admin rights was unaffected.";
+
+                return GetValueOrDefault(def_key, def_val);
+            }
+        }
+
+        public string LdapSettingsErrorRemovedYourself
+        {
+            get
+            {
+                const string def_key = "LdapSettingsErrorRemovedYourself";
+                const string def_val = "Your account has been unlinked from LDAP. You may need to set a password for your account because you won't be able to login using LDAP password.";
 
                 return GetValueOrDefault(def_key, def_val);
             }
@@ -493,6 +549,28 @@ namespace ASC.ActiveDirectory.ComplexOperations
             }
         }
 
+        public string LdapSettingsStatusUpdatingAccessRights
+        {
+            get
+            {
+                const string def_key = "LdapSettingsStatusUpdatingAccessRights";
+                const string def_val = "Updating users access rights";
+
+                return GetValueOrDefault(def_key, def_val);
+            }
+        }
+
+        public string LdapSettingsStatusUpdatingUserPhotos
+        {
+            get
+            {
+                const string def_key = "LdapSettingsStatusUpdatingUserPhotos";
+                const string def_val = "Updating user photos";
+
+                return GetValueOrDefault(def_key, def_val);
+            }
+        }
+
         public string LdapSettingsStatusDisconnecting
         {
             get
@@ -504,11 +582,28 @@ namespace ASC.ActiveDirectory.ComplexOperations
             }
         }
 
+        public string NotifyButtonJoin
+        {
+            get
+            {
+                const string def_key = "ButtonAccessYourPortal";
+                const string def_val = "Click here to join the portal";
+
+                return GetValueOrDefault(def_key, def_val);
+            }
+        }
+
         private string GetValueOrDefault(string key, string defaultValue)
         {
             try
             {
-                return _resourceManager != null ? _resourceManager.GetString(key) : defaultValue;
+                var val = _resourceManager != null ? _resourceManager.GetString(key) : null;
+                if (val == null && _notifyResourceManager != null)
+                {
+                    val = _notifyResourceManager.GetString(key);
+                }
+
+                return val != null ? val : defaultValue;
             }
             catch
             {

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -30,6 +30,7 @@ using System.Globalization;
 using System.Text;
 using System.Web;
 using ASC.Core;
+using ASC.Core.Users;
 using ASC.Notify.Model;
 using ASC.Notify.Recipients;
 using ASC.Web.Community.News.Code;
@@ -78,7 +79,7 @@ namespace ASC.Web.Community.News
 
         protected Uri FeedItemUrlWithParam
         {
-            get { return new Uri("~/products/community/modules/news/editnews.aspx?docID=" + Info.UserIdAttribute, UriKind.Relative); }
+            get { return new Uri("~/Products/Community/Modules/News/editnews.aspx?docID=" + Info.UserIdAttribute, UriKind.Relative); }
 
         }
 
@@ -134,7 +135,7 @@ namespace ASC.Web.Community.News
                     }
                     else
                     {
-                        Response.Redirect(VirtualPathUtility.ToAbsolute("~/products/community/modules/news/"));
+                        Response.Redirect(VirtualPathUtility.ToAbsolute("~/Products/Community/Modules/News/"));
                         ContentView.Visible = true;
                         FeedView.Visible = false;
                         FeedRepeater.Visible = true;
@@ -256,7 +257,9 @@ namespace ASC.Web.Community.News
 
                 string buttonLink;
                 string buttonName;
-                var emptyScreenControl = new EmptyScreenControl { Describe = NewsResource.EmptyScreenText };
+
+                var currentUser = CoreContext.UserManager.GetUsers(SecurityContext.CurrentAccount.ID);
+                var emptyScreenControl = new EmptyScreenControl { Describe = currentUser.IsVisitor() ? NewsResource.EmptyScreenTextVisitor : NewsResource.EmptyScreenText };
 
                 switch (feedType)
                 {
@@ -318,7 +321,7 @@ namespace ASC.Web.Community.News
                     pgNavigator.PageUrl = string.Format(
                         CultureInfo.CurrentCulture,
                         "{0}?search={1}&size={2}",
-                        VirtualPathUtility.ToAbsolute("~/products/community/modules/news/"),
+                        VirtualPathUtility.ToAbsolute("~/Products/Community/Modules/News/"),
                         Request["search"],
                         pageSize
                         );
@@ -329,14 +332,14 @@ namespace ASC.Web.Community.News
                                               string.Format(
                                                   CultureInfo.CurrentCulture,
                                                   "{0}?{1}&size={2}",
-                                                  VirtualPathUtility.ToAbsolute("~/products/community/modules/news/"),
+                                                  VirtualPathUtility.ToAbsolute("~/Products/Community/Modules/News/"),
                                                   (string.IsNullOrEmpty(Info.UserIdAttribute) ? string.Empty : "?" + Info.UserIdAttribute.Substring(1)),
                                                   pageSize
                                                   ) :
                                               string.Format(
                                                   CultureInfo.CurrentCulture,
                                                   "{0}?type={1}{2}&size={3}",
-                                                  VirtualPathUtility.ToAbsolute("~/products/community/modules/news/"),
+                                                  VirtualPathUtility.ToAbsolute("~/Products/Community/Modules/News/"),
                                                   Request["type"],
                                                   Info.UserIdAttribute,
                                                   pageSize);

@@ -41,7 +41,7 @@
                     </div>
 
                     <div class="user-info">
-                        <a class="linkHeader" href="<%= CommonLinkUtility.GetUserProfile(usr.ID) %>">
+                        <a class="linkHeader" href="<%= CommonLinkUtility.GetUserProfile(usr.ID) %>" title="<%= usr.DisplayUserName()%>">
                             <%= usr.DisplayUserName()%>
                         </a>
                         <div class="user-info-title gray-text"><%= usr.Title%></div>
@@ -61,15 +61,15 @@
     <% } %>
 
 
-    <div class="birthday-header birthday-content-splitter">
-        <%= BirthdaysResource.BirthdaysUpcomingTitle%>
-    </div>
 
     <asp:PlaceHolder ID="upcomingEmptyContent" runat="server"></asp:PlaceHolder>
 
 
     <% if (upcomingBirthdays != null && upcomingBirthdays.Count > 0) %>
     <% { %>
+    <div class="birthday-header birthday-content-splitter">
+        <%= BirthdaysResource.BirthdaysUpcomingTitle%>
+    </div>
     <table class="tableBase birthday-content-splitter" cellspacing="0" cellpadding="8">
         <colgroup>
             <col width="80px" />
@@ -93,7 +93,7 @@
                                 <img src="<%= UserPhotoManager.GetMediumPhotoURL(usr.ID) %>">
                             </div>
                             <div class="user-info">
-                                <a class="link bold" href="<%= CommonLinkUtility.GetUserProfile(usr.ID) %>">
+                                <a class="link bold" href="<%= CommonLinkUtility.GetUserProfile(usr.ID) %>" title="<%= usr.DisplayUserName()%>">
                                     <%= usr.DisplayUserName()%>
                                 </a>
                                 <div class="user-info-title <%= usr.ID == SecurityContext.CurrentAccount.ID ? "display-none" : "" %>">

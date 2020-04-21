@@ -1,4 +1,30 @@
-﻿window.ASC = window.ASC || {};
+/*
+ *
+ * (c) Copyright Ascensio System Limited 2010-2020
+ *
+ * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
+ * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
+ * In accordance with Section 7(a) of the GNU GPL its Section 15 shall be amended to the effect that 
+ * Ascensio System SIA expressly excludes the warranty of non-infringement of any third-party rights.
+ *
+ * THIS PROGRAM IS DISTRIBUTED WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR
+ * FITNESS FOR A PARTICULAR PURPOSE. For more details, see GNU GPL at https://www.gnu.org/copyleft/gpl.html
+ *
+ * You can contact Ascensio System SIA by email at sales@onlyoffice.com
+ *
+ * The interactive user interfaces in modified source and object code versions of ONLYOFFICE must display 
+ * Appropriate Legal Notices, as required under Section 5 of the GNU GPL version 3.
+ *
+ * Pursuant to Section 7 § 3(b) of the GNU GPL you must retain the original ONLYOFFICE logo which contains 
+ * relevant author attributions when distributing the software. If the display of the logo in its graphic 
+ * form is not reasonably feasible for technical reasons, you must include the words "Powered by ONLYOFFICE" 
+ * in every copy of the program you distribute. 
+ * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
+ *
+*/
+
+
+window.ASC = window.ASC || {};
 
 window.ASC.TMTalk = window.ASC.TMTalk || {};
 
@@ -48,7 +74,7 @@ window.ASC.TMTalk.meseditorContainer = (function ($) {
       return browser;
     })();
 
-  simpleEditor = simpleEditor || browser.ios || browser.android;
+  //simpleEditor = simpleEditor || browser.ios || browser.android;
 
   function trimS (str) {
     if (typeof str !== 'string' || str.length === 0) {
@@ -466,7 +492,7 @@ window.ASC.TMTalk.meseditorContainer = (function ($) {
             '<link rel="stylesheet" type="text/css" href="' + taStylePath + '" />',
           '</head>',
           '<body',
-            ' contentEditable="true"',
+            ' contentEditable="true" id="editable"',
             jQuery.browser.mozilla ? '' : ' onkeyup="return parent.ASC.TMTalk.meseditorContainer.keyUp(event)"',
             jQuery.browser.mozilla ? '' : ' onkeypress="return parent.ASC.TMTalk.meseditorContainer.keyPress(event)"',
             jQuery.browser.mozilla ? '' : ' onblur="parent.ASC.TMTalk.meseditorContainer.blur(event); return parent.TMTalk.blur(event)"',
@@ -757,9 +783,55 @@ window.ASC.TMTalk.meseditorContainer = (function ($) {
         }
   };
     
+  function isVisible(t, w) {
+      var wt = w.scrollTop();
+      var tt = t.offset().top;
+      var tb = tt + t.height();
+      return ((tb <= wt + w.height()) && (tt >= wt));
+  }
+    
   var keyDown = function (evt) {
       resizeMeseditorcontainer();
-    };
+      
+      //pageUp, pageDown hack for chrome
+      if (jQuery.browser.chrome && (evt.keyCode == 33 || evt.keyCode == 34)) {
+          var iframe = jq('#talkMeseditorContainer iframe');
+          var iframeHeight = iframe[1].offsetHeight;
+          var _doc = iframe.contents()[1];
+          var editableDiv = _doc.getElementById("editable");
+          var $editableDiv = jq(editableDiv);
+         
+          switch (evt.keyCode) {
+              case 33:
+                  $editableDiv.scrollTop($editableDiv.scrollTop() - iframeHeight);
+                  if (editableDiv.childNodes.length > 2) {
+                      for (var i = 1; i < editableDiv.childNodes.length; i++) {
+                          if (isVisible(jq(editableDiv.childNodes[i]), $editableDiv)) {
+                              _doc.getSelection().setPosition(editableDiv.childNodes[i], 0);
+                              break;
+                          }
+                      }
+                  }
+                  return false;
+              case 34:
+                  $editableDiv.scrollTop($editableDiv.scrollTop() + iframeHeight);
+                  
+                  if (editableDiv.childNodes.length > 2) {
+                      for (var i = 1; i < editableDiv.childNodes.length; i++) {
+                          
+                          if (isVisible(jq(editableDiv.childNodes[i]), $editableDiv)) {
+                              if (jq(editableDiv.childNodes[i]).offset().top > iframeHeight + jq(editableDiv).scrollTop()) {
+                                  _doc.getSelection().setPosition(editableDiv.childNodes[i - 1], 0);
+                                  break;
+                              }
+                          }
+                      }
+                  }
+                  return false;
+              default:
+        }
+      }
+  };
   var onscroll = function (evt) {
       resizeMeseditorcontainer();
   };

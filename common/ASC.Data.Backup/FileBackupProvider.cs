@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -29,8 +29,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
+using ASC.Common.Logging;
 using ASC.Data.Storage;
-using log4net;
 
 namespace ASC.Data.Backup
 {
@@ -173,7 +173,7 @@ namespace ASC.Data.Backup
 
         private string GetWebConfig(string[] configs)
         {
-            return configs.Where(c => "web.config".Equals(Path.GetFileName(c), StringComparison.InvariantCultureIgnoreCase)).SingleOrDefault();
+            return configs.Where(c => "Web.config".Equals(Path.GetFileName(c), StringComparison.InvariantCultureIgnoreCase)).SingleOrDefault();
         }
 
         public event EventHandler<ProgressChangedEventArgs> ProgressChanged;

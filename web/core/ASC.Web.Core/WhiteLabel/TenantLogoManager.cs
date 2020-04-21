@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -31,7 +31,6 @@ using System.Web;
 using System.Web.Configuration;
 using ASC.Common.Caching;
 using ASC.Core;
-using ASC.Core.Common.Settings;
 using ASC.Web.Studio.Utility;
 
 namespace ASC.Web.Core.WhiteLabel
@@ -39,7 +38,11 @@ namespace ASC.Web.Core.WhiteLabel
     public class TenantLogoManager
     {
         private static readonly ICache Cache = AscCache.Default;
-        private const string CacheKey = "letterlogodata";
+
+        private static string CacheKey
+        {
+            get { return "letterlogodata" + TenantProvider.CurrentTenantID; }
+        }
 
         public static bool WhiteLabelEnabled
         {
@@ -114,7 +117,6 @@ namespace ASC.Web.Core.WhiteLabel
             if (WhiteLabelEnabled)
             {
                 var tenantWhiteLabelSettings = TenantWhiteLabelSettings.Load();
-
                 return tenantWhiteLabelSettings.LogoText ?? TenantWhiteLabelSettings.DefaultLogoText;
             }
             return TenantWhiteLabelSettings.DefaultLogoText;
@@ -122,7 +124,6 @@ namespace ASC.Web.Core.WhiteLabel
 
         public static bool IsRetina(HttpRequest request)
         {
-            var isRetina = false;
             if (request != null)
             {
                 var cookie = request.Cookies["is_retina"];
@@ -131,11 +132,12 @@ namespace ASC.Web.Core.WhiteLabel
                     bool result;
                     if (Boolean.TryParse(cookie.Value, out result))
                     {
-                        isRetina = result;
+                        return result;
                     }
                 }
             }
-            return isRetina;
+
+            return !SecurityContext.IsAuthenticated;
         }
 
          public static bool WhiteLabelPaid

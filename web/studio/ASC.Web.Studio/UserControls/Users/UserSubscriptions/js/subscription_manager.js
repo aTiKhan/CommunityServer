@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -54,36 +54,45 @@ var CommonSubscriptionManager = new function() {
     };
 
     this.SubscribeToWhatsNew = function() {
-
         AjaxPro.SubscriptionManager.SubscribeToWhatsNew(function(result) {
             var res = result.value;
             if (res.rs1 == '1') {
                 jq('#studio_newSubscriptionButton').html(res.rs2);
             } else {
-                jq('#studio_newSubscriptionButton').html('<div class="errorBox">' + res.rs2 + '</div>');
+                toastr.error(res.rs2);
             }
         });
     };
 
-    this.SubscribeToTipsAndTrics = function () {
-
-        AjaxPro.SubscriptionManager.SubscribeToTipsAndTrics(function (result) {
+    this.SubscribeToTipsAndTricks = function () {
+        AjaxPro.SubscriptionManager.SubscribeToTipsAndTricks(function (result) {
             var res = result.value;
             if (res.rs1 == '1') {
                 jq('#studio_tipsSubscriptionButton').html(res.rs2);
             } else {
-                jq('#studio_tipsSubscriptionButton').html('<div class="errorBox">' + res.rs2 + '</div>');
+                toastr.error(res.rs2);
+            }
+        });
+    };
+
+    this.SubscribeToSpam = function () {
+        AjaxPro.SubscriptionManager.SubscribeToSpam(function (result) {
+            var res = result.value;
+            if (res.rs1 == '1') {
+                jq('#studio_spamSubscriptionButton').html(res.rs2);
+            } else {
+                toastr.error(res.rs2);
             }
         });
     };
 
     this.SubscribeToAdminNotify = function() {
-        AjaxPro.SubscriptionManager.SubscribeToAdminNotify(function(result) {
+        AjaxPro.SubscriptionManager.SubscribeToAdminNotify(function (result) {
             var res = result.value;
             if (res.rs1 == '1') {
                 jq('#studio_adminSubscriptionButton').html(res.rs2);
             } else {
-                jq('#studio_adminSubscriptionButton').html('<div class="errorBox">' + res.rs2 + '</div>');
+                toastr.error(res.rs2);
             }
         });
     };

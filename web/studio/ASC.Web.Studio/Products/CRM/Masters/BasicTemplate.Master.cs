@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -83,7 +83,7 @@ namespace ASC.Web.CRM
                     .AddSource(PathProvider.GetFileStaticRelativePath,
                         "common.js",
                         "navsidepanel.js",
-                        "fileUploader.js",
+                        "fileuploader.js",
                         "tasks.js",
                         "contacts.js",
                         "cases.js",
@@ -94,7 +94,8 @@ namespace ASC.Web.CRM
                         "reports.js")
                     .AddSource(ResolveUrl,
                         "~/js/uploader/ajaxupload.js",
-                        "~/js/third-party/autosize.js");
+                        "~/js/third-party/autosize.js",
+                        "~/js/asc/plugins/progressdialog.js");
         }
 
         public StyleBundleData GetStaticStyleSheet()

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -64,7 +64,7 @@ ASC.Projects.TimeSpendActionPage = (function() {
             self = this;
 
             function canCreateTimeSpend(prj) {
-                return prj.canCreateTimeSpend && prj.status === 0 && prj.taskCountTotal > 0;
+                return prj.canCreateTimeSpend && prj.taskCountTotal > 0;
             }
 
             var actions = [
@@ -126,7 +126,7 @@ ASC.Projects.TimeSpendActionPage = (function() {
                         canCreate: function () {
                             return currentProjectId ?
                                 canCreateTimeSpend(currentProject) :
-                                ASC.Projects.Master.Projects.some(canCreateTimeSpend);
+                                baseObject.Master.Projects.some(canCreateTimeSpend);
                         }
                     }
                 },
@@ -248,15 +248,13 @@ ASC.Projects.TimeSpendActionPage = (function() {
     function taEditHandler(id) {
         var time = getFilteredTimeById(id),
             task = time.task,
-            taskId = task.id,
-            taskTitle = task.title,
             recordNote = time.note,
             date = time.date,
             separateTime = jq.timeFormat(time.hours).split(':'),
             responsible = (time.person || time.createdBy).id,
             prjId = time.task.projectOwner.id;
 
-        baseObject.TimeTrakingEdit.showPopup(prjId, taskId, taskTitle, id, { hours: parseInt(separateTime[0], 10), minutes: parseInt(separateTime[1], 10) }, date, recordNote, responsible);
+        baseObject.TimeTrakingEdit.showPopup(prjId, task, id, { hours: parseInt(separateTime[0], 10), minutes: parseInt(separateTime[1], 10), seconds: parseInt(separateTime[2], 10) }, date, recordNote, responsible);
     }
     function taRemoveHandler(id) {
         teamlab.removePrjTime({ timeid: id }, { timeids: [id] }, { success: onRemoveTime, error: onUpdatePrjTimeError });
@@ -440,14 +438,10 @@ ASC.Projects.TimeSpendActionPage = (function() {
 
         showTotalCountForTask(times);
 
-        var tasksResource = ASC.Projects.Resources.TasksResource;
         var task = times[0].task;
         var taskData = {
-            uplink: "tasks.aspx?prjID=" + task.projectId + "&id=" + task.id,
             icon: "tasks",
-            title: task.title,
-            subscribed: task.isSubscribed,
-            subscribedTitle: task.isSubscribed ? tasksResource.UnfollowTask : tasksResource.FollowTask
+            title: task.title
         };
 
         ASC.Projects.InfoContainer.init(taskData);

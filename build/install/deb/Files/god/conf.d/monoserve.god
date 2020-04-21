@@ -5,7 +5,7 @@ module God
         socket = nil
         self.info = []
         begin
-          timeout(5) do
+          Timeout.timeout(5) do
             socket = UNIXSocket.new(self.path)
           end
         rescue Timeout::Error
@@ -28,7 +28,7 @@ God.watch do |w|
   w.name = "monoserve"
   w.group = "onlyoffice"
   w.grace = 15.seconds
-  w.start = "/bin/bash -c '/etc/init.d/monoserve start; sleep 5s; wget -qO- --retry-connrefused --no-check-certificate --waitretry=15 -t 0 --continue http://localhost/warmup/auth.aspx &> /dev/null'"
+  w.start = "/etc/init.d/monoserve start"
   w.stop = "/etc/init.d/monoserve stop"
   w.restart = "/etc/init.d/monoserve restart"
   w.pid_file = "/tmp/monoserve"
@@ -48,7 +48,14 @@ God.watch do |w|
       c.times = 5
       c.interval = 5.seconds
     end
-	restart.condition(:cpu_usage) do |c|
+    restart.condition(:http_response_code) do |c|
+      c.host = 'localhost'
+      c.path = '/api/2.0/capabilities.json'
+      c.code_is_not = 200
+      c.times = 5
+      c.interval = 5.seconds
+    end
+    restart.condition(:cpu_usage) do |c|
       c.above = 90.percent
       c.times = 5
       c.interval = 3.minutes

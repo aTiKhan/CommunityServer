@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,7 +24,6 @@
 */
 
 
-using ASC.Projects.Engine;
 using ASC.Web.Core.Files;
 using ASC.Web.Files.Classes;
 using ASC.Web.Files.Controls;
@@ -44,6 +43,7 @@ namespace ASC.Web.Projects
         protected override void PageLoad()
         {
             var mainContent = (MainContent) LoadControl(MainContent.Location);
+            mainContent.NoMediaViewers = true;
             mainContent.FolderIDCurrentRoot = Project == null ? Global.FolderProjects : EngineFactory.FileEngine.GetRoot(Project.ID);
             mainContent.TitlePage = ProjectsCommonResource.ModuleName;
             CommonContainerHolder.Controls.Add(mainContent);
@@ -53,16 +53,16 @@ namespace ASC.Web.Projects
             Page
                 .RegisterStyle(PathProvider.GetFileStaticRelativePath("common.css"))
                 .RegisterStyle(r => FilesLinkUtility.FilesBaseAbsolutePath + r,
-                               "controls/maincontent/maincontent.css",
-                               "controls/contentlist/contentlist.css",
-                               "controls/accessrights/accessrights.css",
-                               "controls/fileviewer/fileviewer.css",
-                               "controls/thirdparty/thirdparty.css",
-                               "controls/convertfile/convertfile.css",
-                               "controls/emptyfolder/emptyfolder.css",
-                               "controls/chunkuploaddialog/chunkuploaddialog.css",
-                               "controls/tree/treebuilder.css",
-                               "controls/tree/tree.css"
+                               "Controls/MainContent/maincontent.css",
+                               "Controls/ContentList/contentlist.css",
+                               "Controls/AccessRights/accessrights.css",
+                               "Controls/ThirdParty/thirdparty.css",
+                               "Controls/ConvertFile/convertfile.css",
+                               "Controls/ConvertFile/confirmconvert.css",
+                               "Controls/EmptyFolder/emptyfolder.css",
+                               "Controls/ChunkUploadDialog/chunkuploaddialog.css",
+                               "Controls/Tree/treebuilder.css",
+                               "Controls/Tree/tree.css"
                 )
                 .RegisterBodyScripts(ResolveUrl,
                                      "~/js/third-party/jquery/jquery.mousewheel.js",
@@ -86,13 +86,13 @@ namespace ASC.Web.Projects
                                      "socketmanager.js"
                 )
                 .RegisterBodyScripts(r => FilesLinkUtility.FilesBaseAbsolutePath + r,
-                                     "controls/createmenu/createmenu.js",
-                                     "controls/fileviewer/fileviewer.js",
-                                     "controls/convertfile/convertfile.js",
-                                     "controls/emptyfolder/emptyfolder.js",
-                                     "controls/chunkuploaddialog/chunkuploadmanager.js",
-                                     "controls/tree/treebuilder.js",
-                                     "controls/tree/tree.js"
+                                     "Controls/CreateMenu/createmenu.js",
+                                     "Controls/ConvertFile/convertfile.js",
+                                     "Controls/ConvertFile/confirmconvert.js",
+                                     "Controls/EmptyFolder/emptyfolder.js",
+                                     "Controls/ChunkUploadDialog/chunkuploadmanager.js",
+                                     "Controls/Tree/treebuilder.js",
+                                     "Controls/Tree/tree.js"
                 )
                 .RegisterClientScript(new Files.Masters.ClientScripts.FilesLocalizationResources())
                 .RegisterClientScript(new Files.Masters.ClientScripts.FilesConstantsResources());

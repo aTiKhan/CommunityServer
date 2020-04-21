@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -29,6 +29,7 @@
 using System;
 using System.Collections.Generic;
 using System.Web;
+using ASC.Core;
 using ASC.Core.Users;
 using ASC.Data.Storage;
 using ASC.Notify.Model;
@@ -98,7 +99,7 @@ namespace ASC.Web.CRM
                            {
                                ID = _exportCompleted,
                                Name = CRMCommonResource.SubscriptionType_ExportCompleted,
-                               NotifyAction = NotifyConstants.Event_ExportCompleted,
+                               NotifyAction = CoreContext.Configuration.CustomMode ? NotifyConstants.Event_ExportCompletedCustomMode : NotifyConstants.Event_ExportCompleted,
                                Single = true,
                                CanSubscribe = true
                            },
@@ -106,7 +107,7 @@ namespace ASC.Web.CRM
                            {
                                ID = _importCompleted,
                                Name = CRMCommonResource.SubscriptionType_ImportCompleted,
-                               NotifyAction = NotifyConstants.Event_ImportCompleted,
+                               NotifyAction = CoreContext.Configuration.CustomMode ? NotifyConstants.Event_ImportCompletedCustomMode : NotifyConstants.Event_ImportCompleted,
                                Single = true,
                                CanSubscribe = true
                            },

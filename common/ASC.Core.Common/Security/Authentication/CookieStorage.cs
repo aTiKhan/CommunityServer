@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -27,13 +27,13 @@
 using System;
 using System.Globalization;
 using System.Web;
+using ASC.Common.Logging;
 using ASC.Security.Cryptography;
 using ASC.Core.Tenants;
-using log4net;
 
 namespace ASC.Core.Security.Authentication
 {
-    class CookieStorage
+    public class CookieStorage
     {
         private const string DateTimeFormat = "yyyy-MM-dd HH:mm:ss,fff";
 
@@ -79,7 +79,7 @@ namespace ASC.Core.Security.Authentication
         public static string EncryptCookie(int tenant, Guid userid, string login = null, string password = null)
         {
             var settingsTenant = TenantCookieSettings.GetForTenant(tenant);
-            var expires = settingsTenant.IsDefault() ? DateTime.UtcNow.AddYears(1) : DateTime.UtcNow.AddMinutes(settingsTenant.LifeTime);
+            var expires = TenantCookieSettings.GetExpiresTime(tenant);
             var settingsUser = TenantCookieSettings.GetForUser(tenant, userid);
             return EncryptCookie(tenant, userid, login, password, settingsTenant.Index, expires, settingsUser.Index);
         }

@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -32,7 +32,6 @@ using System.IO;
 using System.Linq;
 
 using ASC.Files.Core;
-using ASC.Files.Core.Security;
 using ASC.Web.Files.Api;
 using ASC.Web.Files.Classes;
 using ASC.Web.Files.Services.WCFService;
@@ -67,6 +66,14 @@ namespace ASC.Projects.Engine
             }
         }
 
+        public IEnumerable<File> GetFiles(object[] id)
+        {
+            using (var dao = FilesIntegration.GetFileDao())
+            {
+                return dao.GetFiles(id);
+            }
+        }
+
         public File SaveFile(File file, Stream stream)
         {
             using (var dao = FilesIntegration.GetFileDao())
@@ -90,21 +97,29 @@ namespace ASC.Projects.Engine
             }
         }
 
+        public void MoveToTrash(object id)
+        {
+            using (var dao = FilesIntegration.GetFileDao())
+            {
+                dao.MoveFile(id, Global.FolderTrash);
+            }
+        }
+
         public static void RegisterFileSecurityProvider()
         {
             FilesIntegration.RegisterFileSecurityProvider(Module, Bunch, new SecurityAdapterProvider());
         }
 
-        internal static Hashtable GetFileListInfoHashtable(IEnumerable<File> uploadedFiles)
+        internal static List<Tuple<string, string>> GetFileListInfoHashtable(IEnumerable<File> uploadedFiles)
         {
-            if (uploadedFiles == null) return new Hashtable();
+            if (uploadedFiles == null) return new List<Tuple<string, string>>();
 
-            var fileListInfoHashtable = new Hashtable();
+            var fileListInfoHashtable = new List<Tuple<string, string>>();
 
             foreach (var file in uploadedFiles)
             {
-                var fileInfo = String.Format("{0} ({1})", file.Title, Path.GetExtension(file.Title).ToUpper());
-                fileListInfoHashtable.Add(fileInfo, file.DownloadUrl);
+                var fileInfo = string.Format("{0} ({1})", file.Title, Path.GetExtension(file.Title).ToUpper());
+                fileListInfoHashtable.Add(new Tuple<string, string>(fileInfo, file.DownloadUrl));
             }
 
             return fileListInfoHashtable;

@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -29,11 +29,13 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Web.Configuration;
+using ASC.Common.Caching;
+using ASC.Common.Logging;
 using ASC.Core;
 using ASC.Core.Users;
 using ASC.Data.Storage;
-using ASC.Data.Storage.S3;
 using ASC.Files.Core;
 using ASC.Files.Core.Data;
 using ASC.Files.Core.Security;
@@ -47,7 +49,6 @@ using ASC.Web.Studio.Core.Users;
 using ASC.Web.Studio.Utility;
 
 using Autofac;
-using log4net;
 
 using Constants = ASC.Core.Configuration.Constants;
 using File = ASC.Files.Core.File;
@@ -58,6 +59,7 @@ namespace ASC.Web.Files.Classes
     {
         private static readonly object Locker = new object();
         private static bool isInit;
+        public static readonly ICacheNotify Notify = AscCache.Notify;
 
         static Global()
         {
@@ -95,6 +97,10 @@ namespace ASC.Web.Files.Classes
                     DaoFactory = factory;
                     FileStorageService = storageService;
                     SocketManager = new SocketManager();
+                    if (CoreContext.Configuration.Standalone)
+                    {
+                        ClearCache();
+                    }
 
                     isInit = true;
                 }
@@ -104,6 +110,32 @@ namespace ASC.Web.Files.Classes
                 Logger.Fatal("Could not resolve IDaoFactory instance. Using default DaoFactory instead.", error);
                 DaoFactory = new DaoFactory();
                 FileStorageService = new FileStorageServiceController();
+            }
+        }
+
+        private static void ClearCache()
+        {
+            try
+            {
+                Notify.Subscribe<AscCacheItem>((item, action) =>
+                {
+                    try
+                    {
+                        ProjectsRootFolderCache.Clear();
+                        UserRootFolderCache.Clear();
+                        CommonFolderCache.Clear();
+                        ShareFolderCache.Clear();
+                        TrashFolderCache.Clear();
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.Fatal("ClearCache action", e);
+                    }
+                });
+            }
+            catch (Exception e)
+            {
+                Logger.Fatal("ClearCache subscribe", e);
             }
         }
 
@@ -292,6 +324,11 @@ namespace ASC.Web.Files.Classes
 
         public static IDaoFactory DaoFactory { get; private set; }
 
+        public static EncryptedDataDao DaoEncryptedData
+        {
+            get { return new EncryptedDataDao(TenantProvider.CurrentTenantID, FileConstant.DatabaseId); }
+        }
+
         public static IFileStorageService FileStorageService { get; private set; }
 
         public static SocketManager SocketManager { get; private set; }
@@ -330,13 +367,13 @@ namespace ASC.Web.Files.Classes
             return InvalidTitleChars.Replace(title, "_");
         }
 
-        public static string GetUserName(Guid userId)
+        public static string GetUserName(Guid userId, bool alive = false)
         {
             if (userId.Equals(SecurityContext.CurrentAccount.ID)) return FilesCommonResource.Author_Me;
             if (userId.Equals(Constants.Guest.ID)) return FilesCommonResource.Guest;
 
             var userInfo = CoreContext.UserManager.GetUsers(userId);
-            if (userInfo.Equals(ASC.Core.Users.Constants.LostUser)) return CustomNamingPeople.Substitute<FilesCommonResource>("ProfileRemoved");
+            if (userInfo.Equals(ASC.Core.Users.Constants.LostUser)) return alive ? FilesCommonResource.Guest : CustomNamingPeople.Substitute<FilesCommonResource>("ProfileRemoved");
 
             return userInfo.DisplayUserName(false);
         }
@@ -408,7 +445,7 @@ namespace ASC.Web.Files.Classes
                 var file = new File
                     {
                         Title = fileName,
-                        ContentLength = stream.Length,
+                        ContentLength = stream.CanSeek ? stream.Length : storeTemp.GetFileSize("", filePath),
                         FolderID = folder,
                         Comment = FilesCommonResource.CommentCreate,
                     };

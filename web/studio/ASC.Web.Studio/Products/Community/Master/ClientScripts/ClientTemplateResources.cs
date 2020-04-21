@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -23,6 +23,7 @@
  *
 */
 
+
 using ASC.Web.Core.Client.HttpHandlers;
 
 namespace ASC.Web.Community.ClientScripts
@@ -31,7 +32,7 @@ namespace ASC.Web.Community.ClientScripts
     {
         protected override string[] Links
         {
-            get { return new[] {"~/products/community/templates/CommonTemplates.html"}; }
+            get { return new[] {"~/Products/Community/Templates/CommonTemplates.html"}; }
         }
     }
 }

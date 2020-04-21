@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,10 +25,14 @@
 
 
 using System;
+using System.Collections.Generic;
+using System.Threading;
+using ASC.Common.Logging;
 using ASC.Core;
 using ASC.Core.Common.Contracts;
 using ASC.Core.Tenants;
 using ASC.Notify.Cron;
+using ASC.Web.Studio.Core.Backup;
 
 namespace ASC.Data.Backup.Storage
 {
@@ -41,6 +45,7 @@ namespace ASC.Data.Backup.Storage
         public BackupStorageType StorageType { get; set; }
         public string StorageBasePath { get; set; }
         public DateTime LastBackupTime { get; internal set; }
+        public Dictionary<string, string> StorageParams { get; internal set; }
 
         public Schedule(int tenantId)
         {
@@ -49,17 +54,31 @@ namespace ASC.Data.Backup.Storage
 
         public bool IsToBeProcessed()
         {
-            var cron = new CronExpression(Cron);
-            var tenantTimeZone = CoreContext.TenantManager.GetTenant(TenantId).TimeZone;
-            var lastBackupTime = LastBackupTime.Equals(default(DateTime))
-                ? DateTime.UtcNow.Date.AddSeconds(-1)
-                : TenantUtil.DateTimeFromUtc(tenantTimeZone, LastBackupTime);
+            try
+            {
+                if (BackupHelper.ExceedsMaxAvailableSize(TenantId)) throw new Exception("Backup file exceed " + TenantId);
 
-            var nextBackupTime = cron.GetTimeAfter(lastBackupTime);
+                var cron = new CronExpression(Cron);
+                var tenant = CoreContext.TenantManager.GetTenant(TenantId);
+                var tenantTimeZone = tenant.TimeZone;
+                var culture = tenant.GetCulture();
+                Thread.CurrentThread.CurrentCulture = culture;
 
-            if (!nextBackupTime.HasValue) return false;
-            var now = TenantUtil.DateTimeFromUtc(tenantTimeZone, DateTime.UtcNow);
-            return nextBackupTime <= now;
+                var lastBackupTime = LastBackupTime.Equals(default(DateTime))
+                    ? DateTime.UtcNow.Date.AddSeconds(-1)
+                    : TenantUtil.DateTimeFromUtc(tenantTimeZone, LastBackupTime);
+
+                var nextBackupTime = cron.GetTimeAfter(lastBackupTime);
+
+                if (!nextBackupTime.HasValue) return false;
+                var now = TenantUtil.DateTimeFromUtc(tenantTimeZone, DateTime.UtcNow);
+                return nextBackupTime <= now;
+            }
+            catch (Exception e)
+            {
+                LogManager.GetLogger("ASC").Error("Schedule " + TenantId, e);
+                return false;
+            }
         }
     }
 }

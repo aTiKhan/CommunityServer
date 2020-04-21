@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -146,7 +146,7 @@ ASC.Files.Common = (function () {
         return (str || "").trim().replace(ASC.Files.Common.characterRegExp, "_");
     };
 
-    var keyCode = { enter: 13, esc: 27, spaceBar: 32, pageUP: 33, pageDown: 34, end: 35, home: 36, left: 37, up: 38, right: 39, down: 40, insertKey: 45, deleteKey: 46, A: 65, C: 67, F: 70, N: 78, a: 97, c: 99, f: 102, n: 110 };
+    var keyCode = { enter: 13, ctrl: 17, esc: 27, spaceBar: 32, pageUP: 33, pageDown: 34, end: 35, home: 36, left: 37, up: 38, right: 39, down: 40, insertKey: 45, deleteKey: 46, A: 65, C: 67, F: 70, N: 78, F2: 113 };
 
     return {
         getSitePath: getSitePath,

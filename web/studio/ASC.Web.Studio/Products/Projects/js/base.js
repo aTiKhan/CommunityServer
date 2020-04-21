@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -77,6 +77,7 @@ ASC.Projects.PageNavigator = (function () {
                     });
         }
 
+        $rowCounter.advancedSelector("reset");
         if (settings.small) {
             $rowCounter.advancedSelector("undisable", smallList);
             $rowCounter.advancedSelector("disable", bigList);
@@ -152,7 +153,7 @@ ASC.Projects.PageNavigator = (function () {
 
         if (!data || !data.hasOwnProperty(paginationKey)) {
             pagination = {
-                entryCountOnPage: paginationKey === "discussionsKeyForPagination" ? 10 : ASC.Projects.Master.EntryCountOnPage,
+                entryCountOnPage: paginationKey.startsWith("discussionsKeyForPagination") ? 10 : ASC.Projects.Master.EntryCountOnPage,
                 currentPage: 0
             };
         } else {
@@ -235,7 +236,9 @@ ASC.Projects.Base = (function () {
         timeTrackingResource,
         messageResource,
         templatesResource,
-        popup;
+        popup,
+        selfGetFunc;
+
     var descriptionPanel = ASC.Projects.DescriptionPanel;
     var eventBinder = ASC.Projects.EventBinder;
 
@@ -274,6 +277,7 @@ ASC.Projects.Base = (function () {
         templatesResource = resources.ProjectTemplatesResource,
         popup = {
             projectRemoveWarning: createPopupData([projectResource.DeleteProjectPopup, commonResource.PopupNoteUndone], projectResource.DeleteProject, projectResource.DeleteProject),
+            projectsRemoveWarning: createPopupData([projectResource.DeleteProjectsPopup, commonResource.PopupNoteUndone], projectResource.DeleteProjects, projectResource.DeleteProjects),
             taskRemoveWarning: createPopupData([tasksResource.RemoveTaskPopup, commonResource.PopupNoteUndone], tasksResource.RemoveTask, tasksResource.RemoveTask),
             tasksRemoveWarning: createPopupData([tasksResource.RemoveTasksPopup, commonResource.PopupNoteUndone], tasksResource.RemoveTasks, tasksResource.RemoveTasks),
             milestoneRemoveWarning: createPopupData([milestoneResource.DeleteMilestonePopup, commonResource.PopupNoteUndone], milestoneResource.DeleteMilestone, milestoneResource.DeleteMilestone),
@@ -427,26 +431,34 @@ ASC.Projects.Base = (function () {
                 $groupeMenu.hide();
             }
 
-            var emptyScreen;
-            if (filter.baseFilter) {
-                filter.hide();
-                emptyScreen = settings.baseEmptyScreen;
-            } else {
-                emptyScreen = jq.extend(
-                {
-                    img: "filter",
-                    button: {
-                        title: ASC.Projects.Resources.ProjectsFilterResource.ClearFilter,
-                        clear: true,
-                        canCreate: function() { return true; }
+            selfGetFunc({}, {
+                filter: { Count: 0, StartIndex: 0 },
+                success: function (params) {
+                    var emptyScreen;
+                    if (filter.baseFilter || !params.__total) {
+                        filter.hide();
+                        emptyScreen = settings.baseEmptyScreen;
+                    } else {
+                        filter.show();
+                        emptyScreen = jq.extend(
+                            {
+                                img: "filter",
+                                button: {
+                                    title: ASC.Projects.Resources.ProjectsFilterResource.ClearFilter,
+                                    clear: true,
+                                    canCreate: function () { return true; }
+                                }
+                            }, settings.filterEmptyScreen);
                     }
-                }, settings.filterEmptyScreen);
-            }
 
-            jq("#emptyScrCtrlPrj").html(jq.tmpl("projects_emptyScreen", emptyScreen)).show();
-            jq("#emptyScrCtrlPrj .addFirstElement").off(clickEvent).on(clickEvent, emptyScreen.button.onclick);
+                    jq("#emptyScrCtrlPrj").html(jq.tmpl("projects_emptyScreen", emptyScreen)).show();
+                    jq("#emptyScrCtrlPrj .addFirstElement").off(clickEvent).on(clickEvent, emptyScreen.button.onclick);
 
-            hideLoader();
+                    hideLoader();
+                }
+            });
+
+
             return;
         }
 
@@ -459,11 +471,12 @@ ASC.Projects.Base = (function () {
         hideLoader();
     };
 
+    
     function getData(getFunc, success) {
         showLoader();
         this.currentFilter.Count = pageNavigator.entryCountOnPage;
         this.currentFilter.StartIndex = pageNavigator.entryCountOnPage * pageNavigator.currentPage;
-
+        selfGetFunc = getFunc;
         getFunc({}, {
             filter: this.currentFilter,
             success: function () {
@@ -485,7 +498,7 @@ ASC.Projects.Base = (function () {
             $container = $commonListContainer;
         }
 
-        $container.on(clickEvent, entityMenuClass, function () {
+        $container.off(clickEvent, entityMenuClass).on(clickEvent, entityMenuClass, function () {
             if ($actionPanel) {
                 jq(entityMenuClass).removeClass(activeClass);
                 $actionPanel.remove();
@@ -518,7 +531,7 @@ ASC.Projects.Base = (function () {
             return showActionsPanel.call(this);
         });
 
-        $container.on('contextmenu', withEntityMenuClass, function (event) {
+        $container.off('contextmenu', withEntityMenuClass).on('contextmenu', withEntityMenuClass, function (event) {
             getSelectedActionCombobox(event.target).find(entityMenuClass).click();
             if (!$actionPanel) return true;
 
@@ -564,8 +577,8 @@ ASC.Projects.Base = (function () {
     function showActionsPanel() {
         var self = jq(this),
             offset = self.offset(),
-            x = offset.left - $actionPanel.outerWidth() + self.outerWidth(true),
-            y = calculateTopPosition(offset.top + self.outerHeight(), self);
+            x = calculateLeftPosition(offset, self),
+            y = calculateTopPosition(offset, self);
 
         $actionPanel.find('.dropdown-item').show();
         self.addClass(activeClass);
@@ -573,8 +586,9 @@ ASC.Projects.Base = (function () {
         $actionPanel.css({ left: x, top: y }).show();
     };
 
-    function calculateTopPosition(y, self) {
-        var panelHeight = $actionPanel.innerHeight(),
+    function calculateTopPosition(offset, self) {
+        var y = offset.top + self.outerHeight(),
+            panelHeight = $actionPanel.innerHeight(),
             w = jq(window),
             scrScrollTop = w.scrollTop(),
             scrHeight = w.height();
@@ -589,6 +603,17 @@ ASC.Projects.Base = (function () {
         }
 
         return y;
+    }
+
+    function calculateLeftPosition(offset, self) {
+        var $w = jq(window),
+            windowWidth = $w.width(),
+            leftPadding = $w.scrollLeft();
+        var x = offset.left;
+        if (offset.left + self.width() + $actionPanel.outerWidth() > leftPadding + windowWidth) {
+            x = x - $actionPanel.outerWidth() + self.outerWidth(true);
+        }
+        return x;
     }
 
     function unbindEvents() {

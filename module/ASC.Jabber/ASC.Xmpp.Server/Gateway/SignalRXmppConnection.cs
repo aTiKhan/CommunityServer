@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -23,10 +23,12 @@
  *
 */
 
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ASC.Common.Logging;
 using ASC.Core.Notify.Signalr;
 using ASC.Xmpp.Core.protocol;
 using ASC.Xmpp.Core.protocol.Base;
@@ -35,13 +37,11 @@ using ASC.Xmpp.Core.protocol.x.muc;
 using ASC.Xmpp.Core.utils.Xml.Dom;
 using ASC.Xmpp.Server.Utils;
 
-using log4net;
-
 namespace ASC.Xmpp.Server.Gateway
 {
     public class SignalRXmppConnection : IXmppConnection
     {
-        private static readonly ILog _log = LogManager.GetLogger(typeof(BoshXmppConnection));
+        private static readonly ILog _log = LogManager.GetLogger("ASC");
         private static readonly SignalrServiceClient SignalrServiceClient = new SignalrServiceClient("chat");
         private static readonly TimeSpan _inactivityPeriod = TimeSpan.FromSeconds(310);
         private XmppServer _xmppServer;

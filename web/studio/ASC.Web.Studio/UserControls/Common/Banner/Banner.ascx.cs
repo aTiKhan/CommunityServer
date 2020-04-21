@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -41,7 +41,7 @@ namespace ASC.Web.Studio.UserControls.Common.Banner
 {
     public partial class Banner : UserControl
     {
-        public static string Location { get { return "~/usercontrols/common/banner/banner.ascx"; } }
+        public static string Location { get { return "~/UserControls/Common/Banner/Banner.ascx"; } }
        
         protected static string LanguageName
         {
@@ -71,7 +71,7 @@ namespace ASC.Web.Studio.UserControls.Common.Banner
         }
         protected void Page_Load(object sender, EventArgs e)
         {
-            Page.RegisterBodyScripts("~/usercontrols/common/banner/js/banner.js");
+            Page.RegisterBodyScripts("~/UserControls/Common/Banner/js/banner.js");
 
             banners = new List<BannerType>();
 

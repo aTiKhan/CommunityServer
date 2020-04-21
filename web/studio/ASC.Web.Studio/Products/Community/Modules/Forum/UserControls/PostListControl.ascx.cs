@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -161,7 +161,7 @@ namespace ASC.Web.UserControls.Forum
                                         PageUrl = string.Format(
                                             CultureInfo.CurrentCulture,
                                             "{0}?&t={1}&size={2}",
-                                            VirtualPathUtility.ToAbsolute("~/products/community/modules/forum/posts.aspx"),
+                                            VirtualPathUtility.ToAbsolute("~/Products/Community/Modules/Forum/Posts.aspx"),
                                             Topic.ID,
                                             pageSize
                                             ),

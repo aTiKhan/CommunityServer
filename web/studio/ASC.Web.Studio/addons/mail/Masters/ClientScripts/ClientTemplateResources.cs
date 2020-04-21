@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -36,6 +36,7 @@ namespace ASC.Web.Mail.Masters.ClientScripts
             {
                 return new[]
                 {
+                    "~/Templates/ProgressDialogTemplate.html",
                     "~/addons/mail/templates/foldersTmpl.html",
                     "~/addons/mail/templates/messagesTmpl.html",
                     "~/addons/mail/templates/messageTmpl.html",
@@ -51,6 +52,7 @@ namespace ASC.Web.Mail.Masters.ClientScripts
                     "~/addons/mail/templates/crmIntegrationPopupTmpl.html",
                     "~/addons/mail/templates/docAttachmentsTmpl.html",
                     "~/addons/mail/templates/addFirstAccountTmpl.html",
+                    "~/addons/mail/templates/contentLossWarning.html",
                     "~/addons/mail/templates/composeMessageBodyTmpl.html",
                     "~/addons/mail/templates/signatureTmpl.html",
                     "~/addons/mail/templates/mailAutoreplyTmpl.html",
@@ -66,8 +68,13 @@ namespace ASC.Web.Mail.Masters.ClientScripts
                     "~/addons/mail/templates/administration/createMailboxPopupTmpl.html",
                     "~/addons/mail/templates/administration/administrationDataTmpl.html",
                     "~/addons/mail/templates/administration/createMailgroupPopupTmpl.html",
+                    "~/addons/mail/templates/administration/changeMailboxPasswordPopupTmpl.html",
+                    "~/addons/mail/templates/administration/mailboxSettingsPopupTmpl.html",
                     "~/addons/mail/templates/calendarTmpl.html",
-                    "~/addons/mail/templates/commonTmpl.html"
+                    "~/addons/mail/templates/commonTmpl.html",
+                    "~/addons/mail/templates/filters/editFilterTmpl.html",
+                    "~/addons/mail/templates/filters/filtersTmpl.html",
+                    "~/addons/mail/templates/mailTemplateAdvansedSelectorTmpl.html"
                 };
             }
         }

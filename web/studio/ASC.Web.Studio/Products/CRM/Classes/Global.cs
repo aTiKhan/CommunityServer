@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -138,30 +138,11 @@ namespace ASC.Web.CRM.Classes
         {
             get
             {
-                return TenantExtra.EnableDocbuilder && !string.IsNullOrEmpty(FilesLinkUtility.DocServiceDocbuilderUrl) && CRMSecurity.IsAdmin;
+                return !string.IsNullOrEmpty(FilesLinkUtility.DocServiceDocbuilderUrl) && CRMSecurity.IsAdmin;
             }
         }
 
         #region CRM Settings
-
-        public static void SaveSMTPSettings(string host, int port, bool authentication, string hostLogin, string hostPassword, string senderDisplayName, string senderEmailAddress, bool enableSSL)
-        {
-            var crmSettings = Global.TenantSettings;
-
-            crmSettings.SMTPServerSetting = new SMTPServerSetting
-            {
-                Host = host,
-                Port = port,
-                RequiredHostAuthentication = authentication,
-                HostLogin = hostLogin,
-                HostPassword = hostPassword,
-                SenderDisplayName = senderDisplayName,
-                SenderEmailAddress = senderEmailAddress,
-                EnableSSL = enableSSL
-            };
-
-            crmSettings.Save();
-        }
 
         public static void SaveDefaultCurrencySettings(CurrencyInfo currency)
         {

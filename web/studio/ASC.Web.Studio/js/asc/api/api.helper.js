@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -385,7 +385,7 @@
                     for (var i = 0, n = req.__jointrequests.length; i < n; i++) {
                         var jointrequest = req.__jointrequests[i];
                         if (typeof jointrequest.__errorcallback === "function") {
-                            jointrequest.__errorcallback(jointrequest.__params);
+                            jointrequest.__errorcallback(jointrequest.__params, req.__errors);
                         }
                     }
                 }

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -30,37 +30,61 @@ using System.Threading;
 using System.Web;
 using ASC.FederatedLogin.Helpers;
 using ASC.FederatedLogin.Profile;
-using ASC.Thrdparty;
-using ASC.Thrdparty.Configuration;
 using Newtonsoft.Json.Linq;
 
 namespace ASC.FederatedLogin.LoginProviders
 {
-    public class YandexLoginProvider : ILoginProvider
+    public class YandexLoginProvider : BaseLoginProvider<YandexLoginProvider>
     {
+        public override string CodeUrl
+        {
+            get { return "https://oauth.yandex.ru/authorize"; }
+        }
+
+        public override string AccessTokenUrl
+        {
+            get { return "https://oauth.yandex.ru/token"; }
+        }
+
+        public override string ClientID
+        {
+            get { return this["yandexClientId"]; }
+        }
+
+        public override string ClientSecret
+        {
+            get { return this["yandexClientSecret"]; }
+        }
+
+        public override string RedirectUri
+        {
+            get { return this["yandexRedirectUrl"]; }
+        }
+
         private const string YandexProfileUrl = "https://login.yandex.ru/info";
 
-        private const string YandexOauthUrl = "https://oauth.yandex.ru/";
-        public const string YandexOauthCodeUrl = YandexOauthUrl + "authorize";
-        public const string YandexOauthTokenUrl = YandexOauthUrl + "token";
 
-
-        public static string YandexOAuth20ClientId
+        public YandexLoginProvider()
         {
-            get { return KeyStorage.Get("yandexClientId"); }
         }
 
-        public static string YandexOAuth20ClientSecret
+        public YandexLoginProvider(string name, int order, Dictionary<string, string> props, Dictionary<string, string> additional = null)
+            : base(name, order, props, additional)
         {
-            get { return KeyStorage.Get("yandexClientSecret"); }
         }
 
-        public LoginProfile ProcessAuthoriztion(HttpContext context, IDictionary<string, string> @params)
+        public override LoginProfile ProcessAuthoriztion(HttpContext context, IDictionary<string, string> @params)
         {
             try
             {
-                var token = Auth(context);
-                return RequestProfile(token);
+                var token = Auth(context, Scopes, (context.Request["access_type"] ?? "") == "offline"
+                                                      ? new Dictionary<string, string>
+                                                          {
+                                                              { "force_confirm", "true" }
+                                                          }
+                                                      : null);
+
+                return GetLoginProfile(token == null ? null : token.AccessToken);
             }
             catch (ThreadAbortException)
             {
@@ -72,40 +96,17 @@ namespace ASC.FederatedLogin.LoginProviders
             }
         }
 
-        public static OAuth20Token Auth(HttpContext context)
+        public override LoginProfile GetLoginProfile(string accessToken)
         {
-            var error = context.Request["error"];
-            if (!string.IsNullOrEmpty(error))
-            {
-                if (error == "access_denied")
-                {
-                    error = "Canceled at provider";
-                }
-                throw new Exception(error);
-            }
+            if (string.IsNullOrEmpty(accessToken))
+                throw new Exception("Login failed");
 
-            var code = context.Request["code"];
-            if (string.IsNullOrEmpty(code))
-            {
-                OAuth20TokenHelper.RequestCode(HttpContext.Current,
-                                               YandexOauthCodeUrl,
-                                               YandexOAuth20ClientId,
-                                               "",
-                                               "");
-                return null;
-            }
-
-            var token = OAuth20TokenHelper.GetAccessToken(YandexOauthTokenUrl,
-                                                          YandexOAuth20ClientId,
-                                                          YandexOAuth20ClientSecret,
-                                                          "",
-                                                          code);
-            return token;
+            return RequestProfile(accessToken);
         }
 
-        private static LoginProfile RequestProfile(OAuth20Token token)
+        private static LoginProfile RequestProfile(string accessToken)
         {
-            var yandexProfile = RequestHelper.PerformRequest(YandexProfileUrl + "?format=json&oauth_token=" + token.AccessToken);
+            var yandexProfile = RequestHelper.PerformRequest(YandexProfileUrl + "?format=json&oauth_token=" + accessToken);
             var loginProfile = ProfileFromYandex(yandexProfile);
 
             return loginProfile;

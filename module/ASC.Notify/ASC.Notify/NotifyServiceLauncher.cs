@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,15 +24,15 @@
 */
 
 
+using System.ServiceModel;
+
 using ASC.Common.Data;
+using ASC.Common.Logging;
 using ASC.Common.Module;
 using ASC.Notify.Config;
 using ASC.Web.Core;
 using ASC.Web.Studio.Core.Notify;
 using ASC.Web.Studio.Utility;
-using log4net;
-using log4net.Config;
-using System.ServiceModel;
 using TMResourceData;
 
 namespace ASC.Notify
@@ -46,8 +46,6 @@ namespace ASC.Notify
 
         public void Start()
         {
-            XmlConfigurator.Configure();
-
             serviceHost = new ServiceHost(typeof(NotifyService));
             serviceHost.Open();
             

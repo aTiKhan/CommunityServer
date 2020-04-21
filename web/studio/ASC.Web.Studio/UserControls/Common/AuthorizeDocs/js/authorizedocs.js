@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,6 +25,9 @@
 
 
 jq(function () {
+    var recaptchaEmail = null;
+    var recaptchaLogin = null;
+
     jq('#login').blur();
     
     if (jq.cookies.get('onluoffice_personal_cookie') == null || jq.cookies.get('onluoffice_personal_cookie') == false) {
@@ -33,14 +36,22 @@ jq(function () {
 
     if (jq("#agree_to_terms").prop("checked")) {
         bindConfirmEmailBtm();
-        jq('.account-links a')
+        jq('.auth-form-with_btns_social .account-links a')
                     .removeClass('disabled')
                     .unbind('click');
+    } else {
+        jq('.auth-form-with_btns_social .account-links a')
+            .addClass('disabled');
     }
+
+    jq('.auth-form-with_form_btn')
+        .click(function () {
+            return false;
+        });
 
     function bindConfirmEmailBtm() {
 
-        jq('.account-links a').removeClass('disabled');
+        jq('.auth-form-with_btns_social .account-links a').removeClass('disabled');
 
         jq("#confirmEmailBtn")
             .removeClass('disabled')
@@ -48,6 +59,7 @@ jq(function () {
                 var $email = jq("#confirmEmail"),
                     email = $email.val().trim(),
                     spam = jq("#spam").prop("checked"),
+                    analytics = jq("#analytics").prop("checked"),
                     $error = jq("#confirmEmailError"),
                     errorText = "",
                     isError = false;
@@ -72,12 +84,18 @@ jq(function () {
                     "email": email,
                     "lang": jq(".personal-languages_select").attr("data-lang"),
                     "campaign": jq("#confirmEmailBtn").attr("data-campaign") ? !!(jq("#confirmEmailBtn").attr("data-campaign").length) : false,
-                    "spam": spam
+                    "spam": spam,
+                    "analytics": analytics,
+                    "recaptchaResponse": recaptchaEmail != null ? window.grecaptcha.getResponse(recaptchaEmail) : ""
                 };
 
                 var onError = function (error) {
                     $error.html(error);
                     $email.addClass("error");
+
+                    if (recaptchaEmail != null) {
+                        window.grecaptcha.reset(recaptchaEmail);
+                    }
                 };
 
                 Teamlab.registerUserOnPersonal(data, {
@@ -88,6 +106,7 @@ jq(function () {
                         }
                         $error.empty();
                         jq("#activationEmail").html(email);
+                        jq(".auth-form-with_form_w").hide();
                         jq("#sendEmailSuccessPopup").show();
                     },
                     error: function (params, errors) {
@@ -103,22 +122,34 @@ jq(function () {
                 enableScroll();
                 jq('#login').blur();
                 jq("#loginPopup").hide();
-                jq("#confirmEmail").focus();
                 hideAccountLinks();
+                jq(".auth-form-with_form_w").show();
+                jq("#confirmEmail").focus();
             });
         });
-
-        var ua = window.navigator.userAgent;
-        if (ua.indexOf("CrOS") != -1) {
-            jq("#chromebookText").show();
-        }
+        
+        jq('.create-link').on("click", function () {
+            jq('html, body').animate({ scrollTop: 0 }, 300);
+            jq(".auth-form-with_form_w").show();
+            jq("#confirmEmail").focus();
+        });
         // close popup window
         jq(".default-personal-popup_closer").on("click", function () {
             hideAccountLinks();
             jq(this).parents(".default-personal-popup").fadeOut(200, function() {
                 enableScroll();
             });
-            
+            if ((jq('body').hasClass('desktop'))) {
+                jq("#personalLogin a").click();
+            }
+            jq('.auth-form-with_form_btn')
+                .click(function () {
+                    return false;
+                });
+        });
+        // close register form
+        jq(".register_form_closer").on("click", function () {
+            jq(this).parents(".auth-form-with_form_w").fadeOut(200, function () {});
         });
         // close cookie mess
         jq(".cookieMess_closer").on("click", function () {
@@ -153,7 +184,7 @@ jq(function () {
         }
         function hideAccountLinks() {
             if (!jq("#agree_to_terms")[0].checked) {
-                jq('.account-links a')
+                jq('.auth-form-with_btns_social .account-links a')
                     .click(function () { return false; })
                     .addClass('disabled');
                 jq("#confirmEmailBtn")
@@ -168,6 +199,16 @@ jq(function () {
                 hideAccountLinks();
             }
         });
+        jq("#desktop_agree_to_terms").change(function () {
+            var btn = jq("#loginBtn");
+            if (this.checked) {
+                btn.removeClass('disabled').unbind('click');
+            } else {
+                btn.addClass('disabled').click(function() {
+                    return false;
+                });
+            }
+        });
         
         jq(document).keyup(function (event) {
             var code;
@@ -180,7 +221,8 @@ jq(function () {
                 code = e.which;
             }
 
-            if (code == 27) {
+
+            if (code == 27 && !jq('body').hasClass('desktop')) {
                 jq(".default-personal-popup").fadeOut(200, function () {
                     enableScroll();
                     hideAccountLinks();
@@ -204,18 +246,52 @@ jq(function () {
             }
             $body.css('overflow-y', 'auto');
         }
+
         // Login
         jq("#personalLogin a").on("click", function () {
+            jq(".auth-form-with_form_w").fadeOut(200, function () { });
             showAccountLinks();
+            jq('.auth-form-with_form_btn').removeClass('disabled').unbind('click');
             jq("#loginPopup").show();
             jq('#login').focus();
             disableScroll();
+
+            if (jq("#recaptchaLogin").length) {
+                if (recaptchaLogin != null) {
+                    window.grecaptcha.reset(recaptchaLogin);
+                } else {
+                    var recaptchaLoginRender = function () {
+                        recaptchaLogin = window.grecaptcha.render("recaptchaLogin", {"sitekey": jq("#recaptchaData").val()});
+                    };
+                    
+                    if (window.grecaptcha && window.grecaptcha.render) {
+                        recaptchaLoginRender();
+                    } else {
+                        jq(document).ready(recaptchaLoginRender);
+                    }
+                }
+            }
+        });
+
+        // open form
+        jq(".open-form").on("click", function () {
+            jq(".auth-form-with_form_w").show();
+            jq("#confirmEmail").focus();
+            //disableScroll();
+
+            if (jq("#recaptchaEmail").length) {
+                if (recaptchaEmail != null) {
+                    window.grecaptcha.reset(recaptchaEmail);
+                } else {
+                    recaptchaEmail = window.grecaptcha.render("recaptchaEmail", {"sitekey": jq("#recaptchaData").val()});
+                }
+            }
         });
 
         var loginMessage = jq(".login-message[value!='']").val();
         if (loginMessage && loginMessage.length) {
-            jq("#loginPopup").show();
-            disableScroll();
+            jq("#personalLogin a").click();
+
             var type = jq(".login-message[value!='']").attr("data-type");
             if (type | 0) {
                 toastr.success(loginMessage);
@@ -230,6 +306,9 @@ jq(function () {
                 PasswordTool.ShowPwdReminderDialog();
             }
         } catch (e) {
+        }
+        if (jq('body').hasClass('desktop')) {
+            showAccountLinks();
         }
     }
 
@@ -290,7 +369,7 @@ jq(function () {
             fixed = false,
             anchor = node.find('.auth-form-with_form_w_anchor'),
             content = node.find('.auth-form-with_form_w');
-        var onScroll = function (e) {
+       /* var onScroll = function (e) {
             var docTop = doc.scrollTop(),
                 anchorTop = anchor.offset().top;
 
@@ -309,7 +388,7 @@ jq(function () {
             }
         };
 
-        jq(window).on('scroll', onScroll);
+        jq(window).on('scroll', onScroll);*/
     };
 
     
@@ -361,7 +440,7 @@ jq(function () {
         centerMode: true,
         asNavFor: '.create-carousel'
     });
-    
+
     bindEvents();
     getReviewList();
     

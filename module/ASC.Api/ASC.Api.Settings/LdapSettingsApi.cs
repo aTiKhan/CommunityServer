@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -38,6 +38,8 @@ using ASC.Web.Studio.Core;
 using ASC.Web.Studio.Utility;
 using Newtonsoft.Json;
 using Resources;
+using ASC.Notify.Cron;
+using ASC.ActiveDirectory.Base;
 
 namespace ASC.Api.Settings
 {
@@ -74,6 +76,70 @@ namespace ASC.Api.Settings
                 settings.IsDefault = true;
 
             return settings;
+        }
+
+        /// <summary>
+        /// Returns current portal LDAP AutoSync cron expression if any
+        /// </summary>
+        /// <short>
+        /// Get LDAP AutoSync Cron expression
+        /// </short>
+        /// <returns>string or null</returns>
+        [Read("ldap/cron")]
+        public string GetLdapCronSettings()
+        {
+            CheckLdapPermissions();
+
+            var settings = LdapCronSettings.Load();
+
+            if (settings == null)
+                settings = new LdapCronSettings().GetDefault() as LdapCronSettings;
+
+            if (string.IsNullOrEmpty(settings.Cron))
+                return null;
+
+            return settings.Cron;
+        }
+
+        /// <summary>
+        /// Sets current portal LDAP AutoSync cron expression
+        /// </summary>
+        /// <short>
+        /// Sets LDAP AutoSync Cron expression
+        /// </short>
+        [Create("ldap/cron")]
+        public void SetLdapCronSettings(string cron)
+        {
+            CheckLdapPermissions();
+
+            if (!string.IsNullOrEmpty(cron))
+            {
+                new CronExpression(cron); // validate
+
+                if (!LdapSettings.Load().EnableLdapAuthentication)
+                {
+                    throw new Exception(Resource.LdapSettingsErrorCantSaveLdapSettings);
+                }
+            }
+
+            var settings = LdapCronSettings.Load();
+
+            if (settings == null)
+                settings = new LdapCronSettings();
+
+            settings.Cron = cron;
+            settings.Save();
+
+            var t = CoreContext.TenantManager.GetCurrentTenant();
+            if (!string.IsNullOrEmpty(cron))
+            {
+                LdapNotifyHelper.UnregisterAutoSync(t);
+                LdapNotifyHelper.RegisterAutoSync(t, cron);
+            }
+            else
+            {
+                LdapNotifyHelper.UnregisterAutoSync(t);
+            }
         }
 
         /// <summary>
@@ -115,7 +181,7 @@ namespace ASC.Api.Settings
 
             var tenant = CoreContext.TenantManager.GetCurrentTenant();
 
-            var op = new LdapSaveSyncOperation(ldapSettings, tenant, LdapOperationType.Sync, ldapLocalization);
+            var op = new LdapSaveSyncOperation(ldapSettings, tenant, LdapOperationType.Sync, ldapLocalization, CurrentUser.ToString());
 
             return QueueTask(op);
         }
@@ -189,11 +255,24 @@ namespace ASC.Api.Settings
 
             ldapSettings.AcceptCertificate = acceptCertificate;
 
-            var ldapLocalization = new LdapLocalization(Resource.ResourceManager);
+            if (!ldapSettings.EnableLdapAuthentication)
+            {
+                SetLdapCronSettings(null);
+            }
+
+            //ToDo
+            ldapSettings.AccessRights.Clear();
+
+            if (!ldapSettings.LdapMapping.ContainsKey(LdapSettings.MappingFields.MailAttribute) || string.IsNullOrEmpty(ldapSettings.LdapMapping[LdapSettings.MappingFields.MailAttribute]))
+            {
+                ldapSettings.SendWelcomeEmail = false;
+            }
+
+            var ldapLocalization = new LdapLocalization(Resource.ResourceManager, ASC.Web.Studio.Core.Notify.WebstudioNotifyPatternResource.ResourceManager);
 
             var tenant = CoreContext.TenantManager.GetCurrentTenant();
 
-            var op = new LdapSaveSyncOperation(ldapSettings, tenant, LdapOperationType.Save, ldapLocalization);
+            var op = new LdapSaveSyncOperation(ldapSettings, tenant, LdapOperationType.Save, ldapLocalization, CurrentUser.ToString());
 
             return QueueTask(op);
         }
@@ -239,7 +318,7 @@ namespace ASC.Api.Settings
 
             var tenant = CoreContext.TenantManager.GetCurrentTenant();
 
-            var op = new LdapSaveSyncOperation(ldapSettings, tenant, LdapOperationType.SaveTest, ldapLocalization);
+            var op = new LdapSaveSyncOperation(ldapSettings, tenant, LdapOperationType.SaveTest, ldapLocalization, CurrentUser.ToString());
 
             return QueueTask(op);
         }
@@ -315,8 +394,13 @@ namespace ASC.Api.Settings
                 CertificateConfirmRequest = certificateConfirmRequest,
                 Source = operation.GetProperty<string>(LdapOperation.SOURCE),
                 OperationType = Enum.GetName(typeof(LdapOperationType),
-                    (LdapOperationType) Convert.ToInt32(operation.GetProperty<string>(LdapOperation.OPERATION_TYPE)))
+                    (LdapOperationType)Convert.ToInt32(operation.GetProperty<string>(LdapOperation.OPERATION_TYPE))),
+                Warning = operation.GetProperty<string>(LdapOperation.WARNING)
             };
+
+            if (!(string.IsNullOrEmpty(result.Warning))) {
+                operation.SetProperty(LdapOperation.WARNING, ""); // "mark" as read
+            }
 
             return result;
         }

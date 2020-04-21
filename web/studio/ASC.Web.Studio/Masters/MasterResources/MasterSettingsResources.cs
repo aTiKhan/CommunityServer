@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -33,6 +33,7 @@ using ASC.Core;
 using ASC.Core.Users;
 using ASC.Data.Storage;
 using ASC.Web.Core.Client.HttpHandlers;
+using ASC.Web.Core.Users;
 using ASC.Web.Core.Utility.Skins;
 using ASC.Web.Core.WhiteLabel;
 using ASC.Web.Studio.Core;
@@ -67,34 +68,43 @@ namespace ASC.Web.Studio.Masters.MasterResources
                         //CurrentTenantId = tenant.TenantId,
                         CurrentTenantCreatedDate = tenant.CreatedDateTime,
                         CurrentTenantVersion = tenant.Version,
-                        CurrentTenantUtcOffset = tenant.TimeZone,
-                        CurrentTenantUtcHoursOffset = tenant.TimeZone.BaseUtcOffset.Hours,
-                        CurrentTenantUtcMinutesOffset = tenant.TimeZone.BaseUtcOffset.Minutes,
-                        TimezoneDisplayName = tenant.TimeZone.DisplayName,
-                        TimezoneOffsetMinutes = tenant.TimeZone.GetUtcOffset(DateTime.UtcNow).TotalMinutes,
+                        CurrentTenantTimeZone = new
+                            {
+                                Id = tenant.TimeZone.Id,
+                                DisplayName = Common.Utils.TimeZoneConverter.GetTimeZoneName(tenant.TimeZone),
+                                BaseUtcOffset = tenant.TimeZone.GetOffset(true).TotalMinutes,
+                                UtcOffset = tenant.TimeZone.GetOffset().TotalMinutes
+                            },
                         TenantIsPremium = curQuota.Trial ? "No" : "Yes",
                         TenantTariff = curQuota.Id,
                         EmailRegExpr = @"^(([^<>()[\]\\.,;:\s@\""]+(\.[^<>()[\]\\.,;:\s@\""]+)*)|(\"".+\""))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$",
+                        UserNameRegExpr = UserFormatter.UserNameRegex,
                         GroupSelector_MobileVersionGroup = new { Id = -1, Name = UserControlsCommonResource.LblSelect.HtmlEncode().ReplaceSingleQuote() },
                         GroupSelector_WithGroupEveryone = new { Id = Constants.GroupEveryone.ID, Name = UserControlsCommonResource.Everyone.HtmlEncode().ReplaceSingleQuote() },
                         GroupSelector_WithGroupAdmin = new { Id = Constants.GroupAdmin.ID, Name = UserControlsCommonResource.Admin.HtmlEncode().ReplaceSingleQuote() },
                         SetupInfoNotifyAddress = SetupInfo.NotifyAddress,
                         SetupInfoTipsAddress = SetupInfo.TipsAddress,
-                        CKEDITOR_BASEPATH = WebPath.GetPath("/usercontrols/common/ckeditor/"),
+                        CKEDITOR_BASEPATH = WebPath.GetPath("/UserControls/Common/ckeditor/"),
                         MaxImageFCKWidth = ConfigurationManager.AppSettings["MaxImageFCKWidth"] ?? "620",
                         UserPhotoHandlerUrl = VirtualPathUtility.ToAbsolute("~/UserPhoto.ashx"),
+                        UserDefaultBigPhotoURL = UserPhotoManager.GetDefaultBigPhotoURL(),
                         ImageWebPath = WebImageSupplier.GetImageFolderAbsoluteWebPath(),
-                        UrlShareGooglePlus = SetupInfo.ShareGooglePlusUrl,
                         UrlShareTwitter = SetupInfo.ShareTwitterUrl,
                         UrlShareFacebook = SetupInfo.ShareFacebookUrl,
                         LogoDarkUrl = CommonLinkUtility.GetFullAbsolutePath(TenantLogoManager.GetLogoDark(true)),
-                        HelpLink = helpLink ?? ""
-                })
+                        HelpLink = helpLink ?? "",
+                        MailMaximumMessageBodySize = ConfigurationManager.AppSettings["mail.maximum-message-body-size"] ?? "524288"
+        })
             };
 
             if (CoreContext.Configuration.Personal)
             {
                 result.Add(RegisterObject(new { CoreContext.Configuration.Personal }));
+            }
+
+            if (CoreContext.Configuration.CustomMode)
+            {
+                result.Add(RegisterObject(new { CoreContext.Configuration.CustomMode }));
             }
 
             if (CoreContext.Configuration.Standalone)

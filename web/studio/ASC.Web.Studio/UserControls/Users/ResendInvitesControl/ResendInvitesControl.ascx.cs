@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -41,12 +41,12 @@ namespace ASC.Web.Studio.UserControls.Users
     {
         public static string Location
         {
-            get { return "~/usercontrols/users/resendinvitescontrol/resendinvitescontrol.ascx"; }
+            get { return "~/UserControls/Users/ResendInvitesControl/ResendInvitesControl.ascx"; }
         }
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            Page.RegisterBodyScripts("~/usercontrols/users/resendinvitescontrol/js/resendinvitescontrol.js");
+            Page.RegisterBodyScripts("~/UserControls/Users/ResendInvitesControl/js/resendinvitescontrol.js");
 
             AjaxPro.Utility.RegisterTypeForAjax(GetType());
             _invitesResenderContainer.Options.IsPopup = true;

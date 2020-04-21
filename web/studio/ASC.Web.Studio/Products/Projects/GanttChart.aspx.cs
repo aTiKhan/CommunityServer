@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,10 +24,12 @@
 */
 
 
+using System.Collections.Generic;
+using System.Linq;
 using System.Web;
 using ASC.Web.Core.Mobile;
-using ASC.Web.Studio.Utility;
 using ASC.Web.Projects.Resources;
+using ASC.Web.Studio.Utility;
 
 namespace ASC.Web.Projects
 {
@@ -35,10 +37,17 @@ namespace ASC.Web.Projects
     {
         protected override bool CanRead { get { return !MobileDetector.IsMobile; } }
         protected override bool CheckSecurity { get { return CanRead; } }
+        protected string HelpLink { get; set; }
+        protected List<CustomTaskStatus> Statuses { get; set; }
 
         protected override void PageLoad()
         {
             Master.DisabledSidePanel = true;
+
+            Statuses = EngineFactory.StatusEngine.GetWithDefaults()
+                .OrderBy(t => t.StatusType)
+                .ThenBy(t => t.Order)
+                .ToList();
 
             _hintPopupTaskRemove.Options.IsPopup = true;
             _hintPopupMilestoneRemove.Options.IsPopup = true;
@@ -47,7 +56,14 @@ namespace ASC.Web.Projects
             _moveTaskOutMilestone.Options.IsPopup = true;
             _addNewLinkPopup.Options.IsPopup = true;
 
-            Page.RegisterStyle("~/products/projects/app_themes/default/css/ganttchart.css");
+            Page.RegisterStyle("~/Products/Projects/App_Themes/default/css/ganttchart.css");
+
+            HelpLink = CommonLinkUtility.GetHelpLink();
+
+            if (!string.IsNullOrEmpty(HelpLink))
+            {
+                HelpLink = HelpLink.TrimEnd('/') + "/projects.aspx";
+            }
 
             Title = HeaderStringHelper.GetPageTitle(ProjectResource.GanttGart);
         }

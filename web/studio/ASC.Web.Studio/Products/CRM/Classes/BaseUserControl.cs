@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,7 +24,6 @@
 */
 
 
-using System.Web;
 using System.Web.UI;
 using ASC.CRM.Core.Dao;
 
@@ -40,15 +39,6 @@ namespace ASC.Web.CRM
         public DaoFactory DaoFactory
         {
             get { return Page.DaoFactory; }
-        }
-
-        protected string GetCookieKeyForFilterForExport()
-        {
-            return Request.GetUrlRewriter().AbsoluteUri
-                          .Replace("&view=editor", "")
-                          .Replace("action=export", "")
-                          .TrimEnd('?')
-                          .TrimEnd('&');
         }
     }
 }

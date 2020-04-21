@@ -1,4 +1,30 @@
-﻿window.ASC = window.ASC || {};
+/*
+ *
+ * (c) Copyright Ascensio System Limited 2010-2020
+ *
+ * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
+ * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
+ * In accordance with Section 7(a) of the GNU GPL its Section 15 shall be amended to the effect that 
+ * Ascensio System SIA expressly excludes the warranty of non-infringement of any third-party rights.
+ *
+ * THIS PROGRAM IS DISTRIBUTED WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR
+ * FITNESS FOR A PARTICULAR PURPOSE. For more details, see GNU GPL at https://www.gnu.org/copyleft/gpl.html
+ *
+ * You can contact Ascensio System SIA by email at sales@onlyoffice.com
+ *
+ * The interactive user interfaces in modified source and object code versions of ONLYOFFICE must display 
+ * Appropriate Legal Notices, as required under Section 5 of the GNU GPL version 3.
+ *
+ * Pursuant to Section 7 § 3(b) of the GNU GPL you must retain the original ONLYOFFICE logo which contains 
+ * relevant author attributions when distributing the software. If the display of the logo in its graphic 
+ * form is not reasonably feasible for technical reasons, you must include the words "Powered by ONLYOFFICE" 
+ * in every copy of the program you distribute. 
+ * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
+ *
+*/
+
+
+window.ASC = window.ASC || {};
 
 window.ASC.TMTalk = window.ASC.TMTalk || {};
 
@@ -116,7 +142,7 @@ window.ASC.TMTalk.roomsManager = (function () {
     };
     var blurHistorySearch = function () {
     };
-    var clearSearch = function(room) {
+    var clearSearch = function (room) {
         var messages = null;
         if (ASC.TMTalk.dom.hasClass(room, 'room')) {
             var searchInput = ASC.TMTalk.dom.getElementsByClassName(room, 'search-value', 'input');
@@ -134,6 +160,11 @@ window.ASC.TMTalk.roomsManager = (function () {
             jQuery('div#talkRoomsContainer ul.rooms li.room.chat div.filtering-panel div.filtering-panel-tools').removeClass('show');
             jQuery('div#talkRoomsContainer ul.rooms li.room.chat div.filtering-panel div.filtering-container').removeClass('show_tools');
 
+            if (ASC.TMTalk.Config.fullText) {
+                var jid = ASC.TMTalk.roomsManager.getRoomData().id;
+                ASC.TMTalk.messagesManager.clearCurrentHistory(jid);
+                ASC.TMTalk.messagesManager.getHistory(jid);
+            }
         }
     };
     var find = null;
@@ -174,6 +205,10 @@ window.ASC.TMTalk.roomsManager = (function () {
                 if (ASC.TMTalk.dom.hasClass(room, 'room')) {
                     var searchstr = input.value;
                     if (searchstr) {
+                        if (ASC.TMTalk.Config.fullText) {
+                            ASC.TMTalk.connectionManager.searchMessage(jid, input.value);
+                            return;
+                        }
                         var nodes = null,
                             messagescontainer = null;
                         nodes = ASC.TMTalk.dom.getElementsByClassName(room, 'messages', 'div');
@@ -200,7 +235,11 @@ window.ASC.TMTalk.roomsManager = (function () {
                     }
                 }
             } else {
-                ASC.TMTalk.roomsManager.clearSearch(room);
+                if (ASC.TMTalk.Config.fullText) {
+                    ASC.TMTalk.messagesManager.updateHistory(jid, 0, 20, "");
+                } else {
+                    ASC.TMTalk.roomsManager.clearSearch(room);
+                }
             }
             filteringPanel.removeClass('input-text');
             

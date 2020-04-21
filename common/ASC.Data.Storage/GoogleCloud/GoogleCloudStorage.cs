@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -23,27 +23,23 @@
  *
 */
 
+
 #region Import
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Google.Cloud.Storage.V1;
-using ASC.Data.Storage.Configuration;
-using System.IO;
-using Google.Apis.Auth.OAuth2;
-using ASC.Common.Web;
-using System.Web;
-using MimeMapping = ASC.Common.Web.MimeMapping;
 using System.Globalization;
-using Google.Apis.Upload;
-using System.Security.Cryptography;
-using System.Net.Http.Headers;
-using System.Net.Http;
+using System.IO;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
+using System.Text;
 using System.Threading;
+using System.Web;
+using ASC.Data.Storage.Configuration;
+using Google.Apis.Auth.OAuth2;
+using Google.Cloud.Storage.V1;
+using MimeMapping = ASC.Common.Web.MimeMapping;
 
 
 #endregion
@@ -57,12 +53,25 @@ namespace ASC.Data.Storage.GoogleCloud
         private readonly PredefinedObjectAcl _moduleAcl;
 
         private string _bucket = "";
-        private string _jsonPath = "";
+        private string _json = "";
 
         private Uri _bucketRoot;
         private Uri _bucketSSlRoot;
-   
+
         private bool _lowerCasing = true;
+
+        public GoogleCloudStorage(string tenant)
+        {
+            _tenant = tenant;
+
+            _modulename = string.Empty;
+            _dataList = null;
+
+            _domainsExpires = new Dictionary<string, TimeSpan> { { string.Empty, TimeSpan.Zero } };
+            _domainsAcl = new Dictionary<string, PredefinedObjectAcl>();
+            _moduleAcl = PredefinedObjectAcl.PublicRead;
+
+        }
 
         public GoogleCloudStorage(string tenant, HandlerConfigurationElement handlerConfig, ModuleConfigurationElement moduleConfig)
         {
@@ -87,7 +96,7 @@ namespace ASC.Data.Storage.GoogleCloud
         public override IDataStore Configure(IDictionary<string, string> props)
         {
 
-            _bucket = props["bucket"];          
+            _bucket = props["bucket"];
 
             _bucketRoot = props.ContainsKey("cname") && Uri.IsWellFormedUriString(props["cname"], UriKind.Absolute)
                               ? new Uri(props["cname"], UriKind.Absolute)
@@ -97,13 +106,13 @@ namespace ASC.Data.Storage.GoogleCloud
                              Uri.IsWellFormedUriString(props["cnamessl"], UriKind.Absolute)
                                  ? new Uri(props["cnamessl"], UriKind.Absolute)
                                  : new Uri(string.Format("https://storage.googleapis.com/{0}/", _bucket), UriKind.Absolute);
-                     
+
             if (props.ContainsKey("lower"))
             {
                 bool.TryParse(props["lower"], out _lowerCasing);
             }
 
-            _jsonPath = props["jsonPath"];         
+            _json = props["json"];
 
             if (props.ContainsKey("subdir"))
             {
@@ -115,13 +124,7 @@ namespace ASC.Data.Storage.GoogleCloud
 
         private StorageClient GetStorage()
         {
-            GoogleCredential credential = null;
-
-            using (var jsonStream = new FileStream(_jsonPath, FileMode.Open,
-                FileAccess.Read, FileShare.Read))
-            {
-                credential = GoogleCredential.FromStream(jsonStream);
-            }
+            var credential = GoogleCredential.FromJson(_json);
 
             return StorageClient.Create(credential);
         }
@@ -175,10 +178,13 @@ namespace ASC.Data.Storage.GoogleCloud
 
             var storage = GetStorage();
 
-            var preSignedURL = UrlSigner.FromServiceAccountPath(_jsonPath)
-                                        .Sign(_bucket, MakePath(domain, path), expire, HttpMethod.Get);
+            using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(_json ?? "")))
+            {
+                var preSignedURL = UrlSigner.FromServiceAccountData(stream)
+                                            .Sign(_bucket, MakePath(domain, path), expire, HttpMethod.Get);
 
-            return MakeUri(preSignedURL);
+                return MakeUri(preSignedURL);
+            }
         }
 
         public Uri GetUriShared(string domain, string path)
@@ -664,11 +670,14 @@ namespace ASC.Data.Storage.GoogleCloud
 
             storage.UpdateObject(uploaded);
 
-            var preSignedURL = UrlSigner.FromServiceAccountPath(_jsonPath)
-                            .Sign(_bucket, MakePath(domain, path), expires, null);
+            using (var mStream = new MemoryStream(Encoding.UTF8.GetBytes(_json ?? "")))
+            {
+                var preSignedURL = UrlSigner.FromServiceAccountData(mStream)
+                                .Sign(_bucket, MakePath(domain, path), expires, null);
 
-            //TODO: CNAME!
-            return preSignedURL;
+                //TODO: CNAME!
+                return preSignedURL;
+            }
         }
 
         public override void DeleteExpired(string domain, string path, TimeSpan oldThreshold)

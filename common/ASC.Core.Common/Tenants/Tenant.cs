@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -36,6 +36,7 @@ namespace ASC.Core.Tenants
     {
         public const int DEFAULT_TENANT = -1;
 
+        public static readonly string HostName = Dns.GetHostName().ToLowerInvariant();
 
         public Tenant()
         {
@@ -104,6 +105,8 @@ namespace ASC.Core.Tenants
 
         public string AffiliateId { get; set; }
 
+        public string Campaign { get; set; }
+
         public string PaymentId { get; set; }
 
         public TenantIndustry Industry { get; set; }
@@ -170,7 +173,7 @@ namespace ASC.Core.Tenants
             {
                 //single tenant on local host
                 TenantAlias = "localhost";
-                result = Dns.GetHostName().ToLowerInvariant();
+                result = HostName;
             }
             else
             {

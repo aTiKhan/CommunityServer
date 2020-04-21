@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -34,13 +34,14 @@ using System.Text;
 using System.Threading;
 using System.Web;
 using ASC.Core;
+using ASC.Core.Common.Configuration;
 using ASC.Core.Tenants;
 using ASC.Core.Users;
 using ASC.FederatedLogin;
 using ASC.FederatedLogin.Helpers;
+using ASC.FederatedLogin.LoginProviders;
 using ASC.MessagingSystem;
 using ASC.Security.Cryptography;
-using ASC.Thrdparty.Configuration;
 using ASC.Web.Core;
 using ASC.Web.Core.Files;
 using ASC.Web.Core.Users;
@@ -58,26 +59,32 @@ using SecurityContext = ASC.Core.SecurityContext;
 
 namespace ASC.Web.Files.ThirdPartyApp
 {
-    public class BoxApp : IThirdPartyApp
+    public class BoxApp : Consumer, IThirdPartyApp, IOAuthProvider
     {
         public const string AppAttr = "box";
 
-        private const string BoxUrlToken = "https://www.box.com/api/oauth2/token";
         private const string BoxUrlUserInfo = "https://api.box.com/2.0/users/me";
         private const string BoxUrlFile = "https://api.box.com/2.0/files/{fileId}";
         private const string BoxUrlUpload = "https://upload.box.com/api/2.0/files/{fileId}/content";
 
+        public string Scopes { get { return ""; } }
+        public string CodeUrl { get { return ""; } }
+        public string AccessTokenUrl { get { return "https://www.box.com/api/oauth2/token"; } }
+        public string RedirectUri { get { return ""; } }
+        public string ClientID { get { return this["boxAppClientId"]; } }
+        public string ClientSecret { get { return this["boxAppSecretKey"]; } }
 
-        private static string ClientId
+        public bool IsEnabled
         {
-            get { return KeyStorage.Get("boxAppClientId"); }
+            get { return !string.IsNullOrEmpty(ClientID) && !string.IsNullOrEmpty(ClientSecret); }
         }
 
-        private static string SecretKey
-        {
-            get { return KeyStorage.Get("boxAppSecretKey"); }
-        }
+        public BoxApp() { }
 
+        public BoxApp(string name, int order, Dictionary<string, string> additional)
+            : base(name, order, additional)
+        {
+        }
 
         public bool Request(HttpContext context)
         {
@@ -98,7 +105,7 @@ namespace ASC.Web.Files.ThirdPartyApp
 
         public string GetRefreshUrl()
         {
-            return BoxUrlToken;
+            return AccessTokenUrl;
         }
 
         public File GetFile(string fileId, out bool editable)
@@ -210,7 +217,7 @@ namespace ASC.Web.Files.ThirdPartyApp
                     Global.Logger.Debug("BoxApp: GetConvertedUri from " + fileType + " to " + currentType + " - " + downloadUrl);
 
                     var key = DocumentServiceConnector.GenerateRevisionId(downloadUrl);
-                    DocumentServiceConnector.GetConvertedUri(downloadUrl, fileType, currentType, key, false, out downloadUrl);
+                    DocumentServiceConnector.GetConvertedUri(downloadUrl, fileType, currentType, key, null, false, out downloadUrl);
                     stream = null;
                 }
                 catch (Exception e)
@@ -294,7 +301,7 @@ namespace ASC.Web.Files.ThirdPartyApp
         }
 
 
-        private static void RequestCode(HttpContext context)
+        private void RequestCode(HttpContext context)
         {
             var token = GetToken(context.Request["code"]);
             if (token == null)
@@ -328,7 +335,7 @@ namespace ASC.Web.Files.ThirdPartyApp
 
                 var cookiesKey = SecurityContext.AuthenticateMe(userInfo.ID);
                 CookiesManager.SetCookies(CookiesType.AuthKey, cookiesKey);
-                MessageService.Send(HttpContext.Current.Request, MessageAction.LoginSuccessViaSocialAccount);
+                MessageService.Send(HttpContext.Current.Request, MessageAction.LoginSuccessViaSocialApp);
 
                 if (isNew)
                 {
@@ -381,8 +388,7 @@ namespace ASC.Web.Files.ThirdPartyApp
                 request.Method = "GET";
                 request.Headers.Add("Authorization", "Bearer " + token);
 
-                using (var response = request.GetResponse())
-                using (var stream = new ResponseStream(response))
+                using (var stream = new ResponseStream(request.GetResponse()))
                 {
                     stream.StreamCopyTo(context.Response.OutputStream);
                 }
@@ -393,13 +399,16 @@ namespace ASC.Web.Files.ThirdPartyApp
                 context.Response.Write(ex.Message);
                 Global.Logger.Error("BoxApp: Error request " + context.Request.Url, ex);
             }
+
             try
             {
                 context.Response.Flush();
-                context.Response.End();
+                context.Response.SuppressContent = true;
+                context.ApplicationInstance.CompleteRequest();
             }
-            catch (HttpException)
+            catch (HttpException ex)
             {
+                Global.Logger.Error("BoxApp StreamFile", ex);
             }
         }
 
@@ -520,16 +529,12 @@ namespace ASC.Web.Files.ThirdPartyApp
             return null;
         }
 
-        private static Token GetToken(string code)
+        private Token GetToken(string code)
         {
             try
             {
                 Global.Logger.Debug("BoxApp: GetAccessToken by code " + code);
-                var token = OAuth20TokenHelper.GetAccessToken(BoxUrlToken,
-                                                              ClientId,
-                                                              SecretKey,
-                                                              string.Empty,
-                                                              code);
+                var token = OAuth20TokenHelper.GetAccessToken<BoxApp>(code);
                 return new Token(token, AppAttr);
             }
             catch (Exception ex)

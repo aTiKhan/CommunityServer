@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -67,6 +67,8 @@ namespace ASC.Web.Community.Wiki
             {
                 FindDiff();
             }
+
+            cmdCancel.Text = WikiResource.cmdCancel;
         }
 
         private void FindDiff()
@@ -144,6 +146,11 @@ namespace ASC.Web.Community.Wiki
                 sb.Append(" class=\"" + typ + "\"");
             }
             sb.AppendFormat(@">{0}</span>", Server.HtmlEncode(aText).Replace("\r", "").Replace(" ", "&nbsp;"));
+        }
+
+        protected void cmdCancel_Click(object sender, EventArgs e)
+        {
+            Response.RedirectLC(ActionHelper.GetViewPagePath(this.ResolveUrlLC("PageHistoryList.aspx"), PageNameUtil.Decode(WikiPage)), this);
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,13 +25,13 @@
 
 
 using System;
-using ASC.Core;
 using ASC.Web.Core;
 using ASC.Web.Core.WebZones;
 using ASC.Web.Calendar.Notification;
 using System.Text;
 using System.Web.UI;
 using System.Web;
+using ASC.Data.Storage;
 
 namespace ASC.Web.Calendar
 {
@@ -79,7 +79,7 @@ namespace ASC.Web.Calendar
                                DefaultSortOrder = 80,
                                DisabledIconFileName = "disabledlogo.png",
                                IconFileName = "logo.png",
-                               LargeIconFileName = "product_logolarge.png",
+                               LargeIconFileName = "product_logolarge.svg",
                                SubscriptionManager = new CalendarSubscriptionManager(),
                            };
         }
@@ -129,9 +129,13 @@ namespace ASC.Web.Calendar
 
             sb.AppendFormat(@"<li class=""top-item-box calendar"">
                                   <a class=""inner-text"" href=""{0}"" title=""{1}"">
+                                      <svg><use base=""{2}""  href=""/skins/default/images/svg/top-studio-menu.svg#svgTopStudioMenuCalendar""></use></svg>
                                       <span class=""inner-label""></span>
                                   </a>
-                              </li>", VirtualPathUtility.ToAbsolute(StartURL), Name);
+                              </li>", 
+                              VirtualPathUtility.ToAbsolute(StartURL), 
+                              Name,
+                              WebPath.GetPath("/"));
 
             return sb.ToString();
         }

@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -36,13 +36,13 @@ namespace ASC.Web.Studio.UserControls.Common.ChooseTimePeriod
     {
         public static string Location
         {
-            get { return "~/usercontrols/common/choosetimeperiod/choosetimeperiod.ascx"; }
+            get { return "~/UserControls/Common/ChooseTimePeriod/ChooseTimePeriod.ascx"; }
         }
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            Page.RegisterStyle("~/usercontrols/common/choosetimeperiod/css/choosetimeperiod.less")
-                .RegisterBodyScripts("~/usercontrols/common/choosetimeperiod/js/choosetimeperiod.js");
+            Page.RegisterStyle("~/UserControls/Common/ChooseTimePeriod/css/choosetimeperiod.less")
+                .RegisterBodyScripts("~/UserControls/Common/ChooseTimePeriod/js/choosetimeperiod.js");
         }
     }
 

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -26,6 +26,7 @@
 
 using System;
 using System.Runtime.Serialization;
+using System.Threading.Tasks;
 
 namespace ASC.Common.Threading.Progress
 {
@@ -72,6 +73,24 @@ namespace ASC.Common.Threading.Progress
             }
         }
 
+        public async Task RunJobAsync()
+        {
+            try
+            {
+                Percentage = 0;
+                await DoJobAsync();
+            }
+            catch (Exception e)
+            {
+                Error = e;
+            }
+            finally
+            {
+                Percentage = 100;
+                IsCompleted = true;
+            }
+        }
+
         protected ProgressBase()
         {
             Id = Guid.NewGuid(); // random id
@@ -92,6 +111,11 @@ namespace ASC.Common.Threading.Progress
 
 
         protected abstract void DoJob();
+
+        protected virtual Task DoJobAsync()
+        {
+            return Task.Run(()=>{});
+        }
 
 
         object ICloneable.Clone()

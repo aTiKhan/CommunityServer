@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -23,10 +23,14 @@
  *
 */
 
+
 using System;
 using System.Web;
 using System.Web.Services;
-using ASC.Mail.Aggregator.Common;
+using ASC.Common.Logging;
+using ASC.Core;
+using ASC.Mail.Data.Storage;
+using ASC.Web.Mail.Resources;
 
 namespace ASC.Web.Mail.HttpHandlers
 {
@@ -40,8 +44,15 @@ namespace ASC.Web.Mail.HttpHandlers
     {
         public void ProcessRequest(HttpContext context)
         {
+            var log = LogManager.GetLogger("ASC.Mail.ContactPhotoHandler");
+
             try
             {
+                if (!SecurityContext.IsAuthenticated)
+                {
+                    throw new HttpException(403, "Access denied.");
+                }
+
                 var contactId = Convert.ToInt32(context.Request.QueryString["cid"]);
                 var photoSize = Convert.ToInt32(context.Request.QueryString["ps"]);
 
@@ -65,13 +76,32 @@ namespace ASC.Web.Mail.HttpHandlers
                 context.Response.Clear();
                 context.Response.Write(photoUrl);
             }
-            catch (Exception)
+            catch (HttpException he)
             {
+                log.Error("ContactPhoto handler failed", he);
+
+                context.Response.StatusCode = he.GetHttpCode();
+                context.Response.Write(he.Message != null ? HttpUtility.HtmlEncode(he.Message) : MailApiErrorsResource.ErrorInternalServer);
+            }
+            catch (Exception ex)
+            {
+                log.Error("ContactPhoto handler failed", ex);
+
+                context.Response.StatusCode = 404;
                 context.Response.Redirect("404.html");
             }
             finally
             {
-                context.Response.End();
+                try
+                {
+                    context.Response.Flush();
+                    context.Response.SuppressContent = true;
+                    context.ApplicationInstance.CompleteRequest();
+                }
+                catch (HttpException ex)
+                {
+                    LogManager.GetLogger("ASC").Error("ResponceContactPhotoUrl", ex);
+                }
             }
         }
 

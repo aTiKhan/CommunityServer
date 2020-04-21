@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using ASC.Common.Logging;
 using ASC.Core;
 using ASC.Data.Storage.Configuration;
 
@@ -123,6 +124,7 @@ namespace ASC.Data.Storage.DiscStorage
 
         public override Uri Save(string domain, string path, Stream stream)
         {
+            LogManager.GetLogger("ASC").Debug("Save " + path);
             var buffered = stream.GetBuffered();
             if (QuotaController != null)
             {
@@ -145,7 +147,7 @@ namespace ASC.Data.Storage.DiscStorage
             //optimaze disk file copy
             var fileStream = buffered as FileStream;
             long fslen;
-            if (fileStream != null && WorkContext.IsMono)
+            if (fileStream != null && WorkContext.IsMono && false) // false, because Mono 6.0 throw System.IO.IOException: Sharing violation on path /tmp/...
             {
                 File.Copy(fileStream.Name, target, true);
                 fslen = fileStream.Length;

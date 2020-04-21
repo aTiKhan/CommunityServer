@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -26,6 +26,7 @@
 
 using System;
 using System.Collections.Generic;
+using ASC.Core;
 using ASC.Notify.Model;
 using ASC.Web.Core.Subscriptions;
 using ASC.Web.Files.Resources;
@@ -40,6 +41,7 @@ namespace ASC.Web.Files.Classes
         private readonly Guid _subscrTypeShareDoc = new Guid("{552846EC-AC94-4408-AAC6-17C8989B8B38}");
         private readonly Guid _subscrTypeShareFolder = new Guid("{0292A4F4-0687-42a6-9CE4-E21215045ABE}");
         private readonly Guid _subscrTypeMailMerge = new Guid("{FB5858EC-046C-41E2-84C9-B44BF7884514}");
+        private readonly Guid _subscrTypeEditorMentions = new Guid("{9D3CAB90-5718-4E82-959F-27EC83BFBC5F}");
 
         public GroupByType GroupByType
         {
@@ -53,24 +55,8 @@ namespace ASC.Web.Files.Classes
 
         public List<SubscriptionType> GetSubscriptionTypes()
         {
-            return new List<SubscriptionType>
+            var subscriptionTypes = new List<SubscriptionType>
                                     {
-                                        new SubscriptionType
-                                            {
-                                                ID = _subscrTypeDocuSignComplete,
-                                                Name = FilesCommonResource.SubscriptDocuSignComplete,
-                                                NotifyAction = NotifyConstants.Event_DocuSignComplete,
-                                                Single = true,
-                                                CanSubscribe = true
-                                            },
-                                        new SubscriptionType
-                                            {
-                                                ID = _subscrTypeDocuSignStatus,
-                                                Name = FilesCommonResource.SubscriptDocuSignStatus,
-                                                NotifyAction = NotifyConstants.Event_DocuSignStatus,
-                                                Single = true,
-                                                CanSubscribe = true
-                                            },
                                         new SubscriptionType
                                             {
                                                 ID = _subscrTypeShareDoc,
@@ -94,8 +80,40 @@ namespace ASC.Web.Files.Classes
                                                 NotifyAction = NotifyConstants.Event_MailMergeEnd,
                                                 Single = true,
                                                 CanSubscribe = true
-                                            }
+                                            },
+                                        new SubscriptionType
+                                            {
+                                                ID = _subscrTypeEditorMentions,
+                                                Name = FilesCommonResource.EditorMentions,
+                                                NotifyAction = NotifyConstants.Event_EditorMentions,
+                                                Single = true,
+                                                CanSubscribe = true
+                                            },
                                     };
+
+            if (CoreContext.Configuration.CustomMode) return subscriptionTypes;
+
+            subscriptionTypes.AddRange(new List<SubscriptionType>
+                                    {
+                                        new SubscriptionType
+                                            {
+                                                ID = _subscrTypeDocuSignComplete,
+                                                Name = FilesCommonResource.SubscriptDocuSignComplete,
+                                                NotifyAction = NotifyConstants.Event_DocuSignComplete,
+                                                Single = true,
+                                                CanSubscribe = true
+                                            },
+                                        new SubscriptionType
+                                            {
+                                                ID = _subscrTypeDocuSignStatus,
+                                                Name = FilesCommonResource.SubscriptDocuSignStatus,
+                                                NotifyAction = NotifyConstants.Event_DocuSignStatus,
+                                                Single = true,
+                                                CanSubscribe = true
+                                            }
+                                    });
+
+            return subscriptionTypes;
         }
 
         public ISubscriptionProvider SubscriptionProvider

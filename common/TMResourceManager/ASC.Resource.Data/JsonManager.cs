@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -29,6 +29,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml;
+using ASC.Common.Logging;
 using Ionic.Zip;
 using Newtonsoft.Json;
 using TMResourceData.Model;
@@ -64,7 +65,7 @@ namespace TMResourceData
                     }
                     catch (Exception e)
                     {
-                        log4net.LogManager.GetLogger("ASC").ErrorFormat("parse xml " + fileName, e);
+                        LogManager.GetLogger("ASC").ErrorFormat("parse xml " + fileName, e);
                     }
                 }
             }

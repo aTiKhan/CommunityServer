@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -63,7 +63,7 @@ namespace ASC.Common.Security.Authorizing
             return acl.IsAllow;
         }
 
-        internal AzManagerAcl GetAzManagerAcl(ISubject subject, IAction action, ISecurityObjectId objectId, ISecurityObjectProvider securityObjProvider)
+        public AzManagerAcl GetAzManagerAcl(ISubject subject, IAction action, ISecurityObjectId objectId, ISecurityObjectProvider securityObjProvider)
         {
             if (action.AdministratorAlwaysAllow && (Constants.Admin.ID == subject.ID || roleProvider.IsSubjectInRole(subject, Constants.Admin)))
             {
@@ -101,7 +101,7 @@ namespace ASC.Common.Security.Authorizing
             return acl;
         }
 
-        internal IEnumerable<ISubject> GetSubjects(ISubject subject, ISecurityObjectId objectId, ISecurityObjectProvider securityObjProvider)
+        public IEnumerable<ISubject> GetSubjects(ISubject subject, ISecurityObjectId objectId, ISecurityObjectProvider securityObjProvider)
         {
             var subjects = new List<ISubject>();
             subjects.Add(subject);
@@ -126,7 +126,7 @@ namespace ASC.Common.Security.Authorizing
 
         #region Nested type: AzManagerAcl
 
-        internal class AzManagerAcl
+        public class AzManagerAcl
         {
             public IAction DenyAction;
             public ISubject DenySubject;

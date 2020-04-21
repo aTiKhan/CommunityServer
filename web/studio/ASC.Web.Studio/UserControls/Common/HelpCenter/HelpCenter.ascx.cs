@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -56,7 +56,7 @@ namespace ASC.Web.Studio.UserControls.Common.HelpCenter
                 return;
             }
 
-            Page.RegisterStyle("~/usercontrols/common/helpcenter/css/help-center.less");
+            Page.RegisterStyle("~/UserControls/Common/HelpCenter/css/help-center.less");
 
             string module;
             string mainLink;
@@ -80,6 +80,11 @@ namespace ASC.Web.Studio.UserControls.Common.HelpCenter
             HelpLinkBlock = mainLink + index + "=";
 
             HelpCenterItems = HelpCenterHelper.GetHelpCenter(module, HelpLinkBlock);
+
+            if (MediaViewersPlaceHolder != null)
+            {
+                MediaViewersPlaceHolder.Controls.Add(LoadControl(MediaPlayer.Location));
+            }
         }
 
         private IWebItem GetProduct()

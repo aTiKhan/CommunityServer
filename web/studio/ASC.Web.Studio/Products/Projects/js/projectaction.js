@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -37,13 +37,13 @@ ASC.Projects.ProjectAction = (function() {
         $projectTeamSelector,
         $projectStatusContainer,
         $projectStatus,
+        $projectTag,
         $projectParticipants,
         $notifyManagerCheckbox,
         $followingProjectCheckbox,
+        $notifyProjectCheckbox,
         $projectTitle,
         $projectDescription,
-        $projectTags,
-        $tagsAutocompleteContainer,
         $projectParticipantsContainer,
         $projectPrivacyCheckbox;
 
@@ -52,10 +52,9 @@ ASC.Projects.ProjectAction = (function() {
         readonlyAttr = "readonly",
         requiredFieldErrorClass = "requiredFieldError",
         requiredInputErrorClass = "requiredInputError",
-        itemsDisplayListClass = ".items-display-list",
-        tagAutocompleteSelectedItemClass = "tagAutocompleteSelectedItem";
+        itemsDisplayListClass = ".items-display-list";
 
-    var teamlab, loadingBanner, project, team = [];
+    var teamlab, loadingBanner, project, team = [], tagsId = [], master;
 
     var init = function () {
         teamlab = Teamlab;
@@ -66,6 +65,7 @@ ASC.Projects.ProjectAction = (function() {
         param = jq.getURLParam("contactID");
         contactId = param ? param : undefined;
         projectId = jq.getURLParam("prjID");
+        master = ASC.Projects.Master;
 
         if (!projectId) {
             teamlab.getPrjTemplates({}, { success: onGetTemplates });
@@ -84,13 +84,13 @@ ASC.Projects.ProjectAction = (function() {
         $projectTeamSelector = jq("#projectTeamSelector");
         $projectStatusContainer = jq("#projectStatusContainer");
         $projectStatus = jq("#projectStatus");
+        $projectTag = jq("#tags");
         $projectParticipants = jq("#projectParticipants");
         $notifyManagerCheckbox = jq("#notifyManagerCheckbox");
         $followingProjectCheckbox = jq("#followingProjectCheckbox");
+        $notifyProjectCheckbox = jq("#notifyProjectCheckbox");
         $projectTitle = jq("[id$=projectTitle]");
         $projectDescription = jq("[id$=projectDescription]");
-        $projectTags = jq("[id$=projectTags]");
-        $tagsAutocompleteContainer = jq("#tagsAutocompleteContainer");
         $projectParticipantsContainer = jq("#projectParticipantsContainer");
         $projectPrivacyCheckbox = jq("#projectPrivacyCkeckbox");
 
@@ -119,6 +119,38 @@ ASC.Projects.ProjectAction = (function() {
             showGroups: true
         }).on("showList", onChooseProjectTeam);
 
+        var itemsSelectedIds = [];
+
+        if (projectId) {
+            var findTag = function (tagToFind) {
+                return function (item) {
+                    return tagToFind === Encoder.htmlDecode(item.title);
+                };
+            };
+
+            for (var i = 0; i < project.tags.length; i++) {
+                var tag = master.Tags.filter(findTag(project.tags[i])).map(function (item) { return item.value; });
+                itemsSelectedIds = itemsSelectedIds.concat(tag);
+            }
+        }
+
+        $projectTag.tagsadvancedSelector({
+            canadd: true,
+            itemsChoose: master.Tags.map(function (item) { return { id: item.value, title: item.title } }),
+            itemsSelectedIds:itemsSelectedIds
+        }).on("showList", function (event, items) {
+            tagsId = items.map(function(item) {
+                return item.id;
+            });
+            var titles = items.map(function (item) {
+                return Encoder.htmlEncode(item.title);
+            });
+            var selectedTags = titles.length ? titles.reduce(function (previousValue, currentValue) {
+                return previousValue + ", " + currentValue;
+            }) : "";
+            jq("#tagsContainer").html(selectedTags);
+        });
+
         if (project) {
             projectResponsible = project.responsible.id;
             var statuses = ASC.Projects.Resources.ProjectStatus;
@@ -137,7 +169,7 @@ ASC.Projects.ProjectAction = (function() {
                 showCloseQuestion(item.id);
             });
 
-            team = ASC.Projects.Master.Team.filter(function (item) {
+            team = master.Team.filter(function (item) {
                 return item.id !== projectResponsible;
             });
             if ($projectManagerSelector.attr("data-id") == currentUserId) {
@@ -163,62 +195,6 @@ ASC.Projects.ProjectAction = (function() {
             }
         });
 
-        jq("body").click(function (event) {
-            var target = (event.target) ? event.target : event.srcElement;
-            var element = jq(target);
-            if (!element.is("[id$=projectTags]")) {
-                $tagsAutocompleteContainer.empty();
-            }
-        });
-
-        $projectTags.keydown(function (eventObject) {
-            var value = $projectTags.val();
-            var titles = value.split(",");
-
-            var code = eventObject.which;
-            //enter
-            if (code == 13) {
-                var str = "";
-                for (var i = 0; i < titles.length - 1; i++) {
-                    str += jq.trim(titles[i]);
-                    str += ", ";
-                }
-
-                if (jq(".tagAutocompleteSelectedItem").length != 0) {
-                    $projectTags.val(str + jq(".tagAutocompleteSelectedItem").text() + ", ");
-                }
-
-                $tagsAutocompleteContainer.html("");
-                return false;
-            }
-            return true;
-        });
-
-        $projectTags.keyup(function (eventObject) {
-            $tagsAutocompleteContainer.click(function () { return false; });
-
-            var value = $projectTags.val();
-            var titles = value.split(",");
-
-            var width = document.getElementById(jq(this).attr("id")).offsetWidth;
-            $tagsAutocompleteContainer.css("width", width + "px");
-
-            var code = eventObject.which;
-            //left
-            if (code == 37) { return; }
-                //up
-            else if (code == 38) { moveSelected(true); return; }
-                //right
-            else if (code == 39) { return; }
-                //down
-            else if (code == 40) { moveSelected(false); return; }
-
-            var tagName = titles[titles.length - 1];
-            if (jq.trim(tagName) != "") {
-                teamlab.getPrjTagsByName({ titles: titles }, tagName, { tagName: tagName }, { success: onGetTags });
-            }
-        });
-
         // title
         $projectTitle.keyup(function () {
             if (jq.trim($projectTitle.val()) != "") {
@@ -228,6 +204,7 @@ ASC.Projects.ProjectAction = (function() {
 
         // popup and other button
 
+        var oldTeam = team.map(user => user.id);
         jq("#projectActionButton").click(function () {
             if (!validateProjectData() || jq(this).hasClass("disable")) return;
 
@@ -237,6 +214,12 @@ ASC.Projects.ProjectAction = (function() {
             lockProjectActionPageElements();
 
             if (projectId) {
+                var needDelete = oldTeam.filter(function (userId) {
+                    return team.map(user => user.id).indexOf(userId) < 0;
+                });
+                needDelete.forEach(function (user) {
+                    teamlab.removeCaldavProjectCalendar(projectId, user);
+                });
                 updateProject(projectId, project);
             } else {
                 addProject(project);
@@ -247,14 +230,14 @@ ASC.Projects.ProjectAction = (function() {
             ASC.Projects.Base.showCommonPopup("projectRemoveWarning",
                 function () {
                     lockProjectActionPageElements();
-                    teamlab.removePrjProject({}, projectId, { success: onDeleteProject, error: unlockProjectActionPageElements });
+                    teamlab.removePrjProject(projectId, { success: onDeleteProject, error: onError });
                 });
         });
 
         jq("#cancelEditProject").click(function () {
             if (jq(this).hasClass("disable")) return;
             window.onbeforeunload = null;
-            document.location.href = document.referrer;
+            document.location.replace(location.pathname.substring(0, location.pathname.lastIndexOf("/") + 1));
         });
 
         $projectParticipantsContainer.on("click", ".reset-action", function () {
@@ -263,7 +246,6 @@ ASC.Projects.ProjectAction = (function() {
             deleteItemInArray(teamIds, id);
             team = team.filter(function (item) { return item.id !== id; });
 
-            $projectParticipants.attr("value", teamIds.join());
             if (teamIds.length == 0) {
                 $projectParticipantsContainer.hide();
             }
@@ -296,6 +278,12 @@ ASC.Projects.ProjectAction = (function() {
 
         if (!projectId && ASC.Projects.MilestoneContainer) {
             ASC.Projects.MilestoneContainer.init();
+            jq(document).bind("chooseResp", function (event, data) {
+                showNotifyProjectCheckbox();
+            });
+            jq(document).bind("unchooseResp", function (event, data) {
+                hideNotifyProjectCheckbox();
+            });
         }
         jq.confirmBeforeUnload(confirmBeforeUnloadCheck);
 
@@ -353,7 +341,7 @@ ASC.Projects.ProjectAction = (function() {
             project.responsibleid ||
             project.notify ||
             project.description.length ||
-            project.tags.length ||
+            tagsId.length ||
             (project.milestones && project.milestones.length) ||
             (project.tasks && project.tasks.length) ||
             (project.participants && project.participants.length);
@@ -363,7 +351,6 @@ ASC.Projects.ProjectAction = (function() {
         teamIds = team.map(function (item) { return item.id; });
 
         var projectManagerId = $projectManagerSelector.attr("data-id");
-        $projectParticipants.attr("value", teamIds.join());
 
         if (team.length > 0) {
             var teamForTemplate = team.map(function(item) {
@@ -387,31 +374,48 @@ ASC.Projects.ProjectAction = (function() {
             }
             $projectParticipantsContainer.show();
             $projectTeamSelector.useradvancedSelector("select", teamIds);
+            if (!project) {
+                showNotifyProjectCheckbox();
+            }
         } else {
             $projectParticipantsContainer.empty().hide();
         }
     };
 
+    function showNotifyProjectCheckbox() {
+        $notifyProjectCheckbox.show();
+        $notifyProjectCheckbox.removeAttr(disabledAttr);
+    }
+
+    function hideNotifyProjectCheckbox() {
+        $notifyProjectCheckbox.attr(disabledAttr, disabledAttr);
+    }
+
     function mapTeamMember(item) {
         var resources = ASC.Projects.Resources;
         item.isManager = projectResponsible === item.id;
+        item.isAdmin = item.isAdmin || (item.groups && item.groups.indexOf(master.ProjectsProductID) > -1);
         return jq.extend({
                 security: [
                     security(item, "canReadMessages", resources.MessageResource.Messages),
                     security(item, "canReadFiles", resources.ProjectsFileResource.Documents),
                     security(item, "canReadTasks", resources.TasksResource.AllTasks),
                     security(item, "canReadMilestones", resources.MilestoneResource.Milestones),
-                    security(item, "canReadContacts", resources.CommonResource.ModuleContacts)
+                    security(item, "canReadContacts", resources.CommonResource.ModuleContacts, item.isVisitor)
                 ]
             }, item);
     }
 
-    function security(item, flag, title) {
-        return { check: getPropertyOrDefault(item, flag), flag: flag, title: title };
+    function security(item, flag, title, defaultDisabled) {
+        var result = { check: getPropertyOrDefault(item, flag, defaultDisabled), flag: flag, title: title };
+        if (typeof defaultDisabled === "boolean") {
+            result.defaultDisabled = defaultDisabled;
+        }
+        return result;
     }
 
     function clearFields() {
-        $projectTitle.add($projectDescription).add($projectTags).val("");
+        $projectTitle.add($projectDescription).val("");
         $notifyManagerCheckbox.add($followingProjectCheckbox).prop(checkedProp, false);
     };
 
@@ -455,14 +459,14 @@ ASC.Projects.ProjectAction = (function() {
             responsibleid: projectResponsible,
             notify: $notifyManagerCheckbox.is(":" + checkedProp),
             description: $projectDescription.val(),
-            tags: $projectTags.val(),
             'private': $projectPrivacyCheckbox.is(":" + checkedProp),
             templateProjectId: jq("#SelectedTemplateID").val()
         };
-        
-        if (ASC.Projects.CreateProjectStructure) {
-            project.milestones = ASC.Projects.CreateProjectStructure.getProjMilestones();
-            project.tasks = ASC.Projects.CreateProjectStructure.getProjTasks();
+
+        var projStructure = ASC.Projects.CreateProjectStructure;
+        if (projStructure) {
+            project.milestones = projStructure.getProjMilestones();
+            project.tasks = projStructure.getProjTasks();
         }
 
         if (projectId) {
@@ -477,15 +481,15 @@ ASC.Projects.ProjectAction = (function() {
                     CanReadTasks: getPropertyOrDefault(item, "canReadTasks"),
                     CanReadMilestones: getPropertyOrDefault(item, "canReadMilestones"),
                     CanReadContacts: getPropertyOrDefault(item, "canReadContacts")
-                }
+                };
             });
-
+            project.notifyResponsibles = $notifyProjectCheckbox.is(":" + checkedProp);
         }
         return project;
     };
 
-    function getPropertyOrDefault(item, property) {
-        return item.hasOwnProperty(property) ? item[property] : true;
+    function getPropertyOrDefault(item, property, defaultDisabled) {
+        return item.hasOwnProperty(property) ? item[property] : !defaultDisabled;
     }
 
     function removeContactFromProject(contactid) {
@@ -557,7 +561,7 @@ ASC.Projects.ProjectAction = (function() {
             teamlab.followingPrjProject({}, project.id, { projectId: project.id }, { success: onFollowingProject });
         } else {
             window.onbeforeunload = null;
-            document.location.replace("tasks.aspx?prjID=" + project.id);
+            document.location.replace("tasks.aspx?prjID=" + project.id + "#sortBy=sort_order&sortOrder=ascending");
         }
     };
 
@@ -570,34 +574,6 @@ ASC.Projects.ProjectAction = (function() {
             }
         }
         return index;
-    };
-
-    function moveSelected(up) {
-        if ($tagsAutocompleteContainer.html() == "") return;
-
-        var items = $tagsAutocompleteContainer.find(".tagAutocompleteItem");
-
-        var selected = false;
-        items.each(function(idx) {
-            if (jq(this).is(".tagAutocompleteSelectedItem")) {
-                selected = true;
-                if (up && idx > 0) {
-                    jq(this).removeClass(tagAutocompleteSelectedItemClass);
-                    items.eq(idx - 1).addClass(tagAutocompleteSelectedItemClass);
-                    $tagsAutocompleteContainer.scrollTo(items.eq(idx - 1).position().top, 100);
-                    return false;
-                } else if (!up && idx < items.length - 1) {
-                    jq(this).removeClass(tagAutocompleteSelectedItemClass);
-                    items.eq(idx + 1).addClass(tagAutocompleteSelectedItemClass);
-                    $tagsAutocompleteContainer.scrollTo(items.eq(idx + 1).position().top, 100);
-                    return false;
-                }
-            }
-            return true;
-        });
-        if (!selected) {
-            items.eq(0).addClass(tagAutocompleteSelectedItemClass);
-        }
     };
 
     function showCloseQuestion(status) {
@@ -632,7 +608,6 @@ ASC.Projects.ProjectAction = (function() {
         $projectManagerSelector.find("td:last").css({ 'display': "none" });
         $projectParticipantsContainer.find(itemsDisplayListClass).removeClass("canedit");
         $projectStatus.attr(disabledAttr, disabledAttr).addClass(disabledAttr);
-        $projectTags.attr(readonlyAttr, readonlyAttr).addClass(disabledAttr);
         $notifyManagerCheckbox.attr(disabledAttr, disabledAttr);
         $projectPrivacyCheckbox.attr(disabledAttr, disabledAttr);
         $followingProjectCheckbox.attr(disabledAttr, disabledAttr);
@@ -647,7 +622,6 @@ ASC.Projects.ProjectAction = (function() {
         $projectManagerSelector.find("td:last").css({ 'display': "table-cell" });
         $projectParticipantsContainer.find(itemsDisplayListClass).addClass("canedit");
         $projectStatus.removeAttr(disabledAttr).removeClass(disabledAttr);
-        $projectTags.removeAttr(readonlyAttr).removeClass(disabledAttr);
         $notifyManagerCheckbox.removeAttr(disabledAttr);
         $projectPrivacyCheckbox.removeAttr(disabledAttr);
         $followingProjectCheckbox.removeAttr(disabledAttr);
@@ -655,33 +629,46 @@ ASC.Projects.ProjectAction = (function() {
         loadingBanner.hideLoading();
     };
 
+    function onError(params, error) {
+        ASC.Projects.Common.displayInfoPanel(error, true);
+        unlockProjectActionPageElements();
+    }
     // actions
     function addProject(project) {
         var params = {};
         if (isProjectsCreatedFromCRM()) {
             params.isProjectsCreatedFromCRM = true;
         }
-        teamlab.addPrjProject(params, project, { success: onAddProject, error: unlockProjectActionPageElements });
+        teamlab.addPrjProject(params, project, { success: onAddProject, error: onError });
     };
 
     function updateProject(projectId, project) {
-        teamlab.updatePrjProject({}, projectId, project, { success: onUpdateProject, error: unlockProjectActionPageElements });
+        teamlab.updatePrjProject({}, projectId, project, { success: onUpdateProject, error: onError });
     };
 
     //handlers
     function onAddProject(params) {
         project = this.__responses[0];
 
-        if (params.isProjectsCreatedFromCRM) {
-            appendContacts(project);
-        } else {
-            checkFollowProj(project);
-        }
+        teamlab.updatePrjProjectTags(project.id, { tags: tagsId }, {
+            success: function() {
+                if (params.isProjectsCreatedFromCRM) {
+                    appendContacts(project);
+                } else {
+                    checkFollowProj(project);
+                }
+            }
+        });
     };
 
     function onUpdateProject(params, project) {
-        window.onbeforeunload = null;
-        document.location.replace("tasks.aspx?prjID=" + project.id);
+        teamlab.updatePrjProjectTags(project.id, { tags: tagsId },
+            {
+                success: function() {
+                    window.onbeforeunload = null;
+                    document.location.replace("tasks.aspx?prjID=" + project.id);
+                }
+            });
     };
 
     function onDeleteProject() {
@@ -691,48 +678,18 @@ ASC.Projects.ProjectAction = (function() {
 
     function onFollowingProject(params, project) {
         window.onbeforeunload = null;
-        document.location.replace("projects.aspx?prjID=" + project.id);
-    };
-
-    function onGetTags(params, tags) {
-        var titles = params.titles;
-        $tagsAutocompleteContainer.empty();
-
-        if (tags.length > 0) {
-            for (var i = 0; i < tags.length; i++) {
-                var container = document.createElement("div");
-
-                jq(container).addClass("tagAutocompleteItem");
-                jq(container).text(tags[i]);
-
-                jq(container).on("mouseover", function() {
-                    jq("div.tagAutocompleteItem").each(function() {
-                        jq(this).removeClass(tagAutocompleteSelectedItemClass);
-                    });
-                    jq(this).addClass(tagAutocompleteSelectedItemClass);
-                });
-
-                jq(container).click(function () {
-                    var str = "";
-                    for (var j = 0; j < titles.length - 1; j++) {
-                        str += jq.trim(titles[j]);
-                        str += ", ";
-                    }
-                    $projectTags.val(str + jq(this).text() + ", ");
-                    $tagsAutocompleteContainer.empty();
-                });
-
-                $tagsAutocompleteContainer.append(container);
-                $projectTags.focus();
-            }
-        }
+        document.location.replace("tasks.aspx?prjID=" + project.id + "#sortBy=sort_order&sortOrder=ascending");
     };
 
     function onGetCRMOpportunity(params, opportunity) {
         $projectTitle.val(opportunity.title);
         $projectDescription.val(opportunity.description);
-        $projectManagerSelector.useradvancedSelector("select", [opportunity.responsible.id]);
-        $projectManagerSelector.html(Encoder.htmlDecode(opportunity.responsible.displayName)).attr("data-id", opportunity.responsible.id).removeClass("plus");
+
+        if (opportunity.responsible.id !== "4a515a15-d4d6-4b8e-828e-e0586f18f3a3") {
+            $projectManagerSelector.useradvancedSelector("select", [opportunity.responsible.id]);
+            $projectManagerSelector.html(Encoder.htmlDecode(opportunity.responsible.displayName)).attr("data-id", opportunity.responsible.id).removeClass("plus");
+        }
+
         if (opportunity.responsible.id == currentUserId) {
             $notifyManagerCheckbox.prop(checkedProp, false).attr(disabledAttr, disabledAttr);
             $followingProjectCheckbox.prop(checkedProp, false).attr(disabledAttr, disabledAttr);
@@ -765,7 +722,7 @@ ASC.Projects.ProjectAction = (function() {
         jq("#projectActionPage").html(jq.tmpl("projects_action_create",
         {
             IsProjectCreatedFromCrm: isProjectsCreatedFromCRM(),
-            hideChooseTeam: ASC.Resources.Master.ApiResponses_ActiveProfiles.response.length === 1,
+            hideChooseTeam: Object.keys(window.UserManager.getAllUsers(true)).length === 1,
             showTemplates: data.length > 0,
             pageTitle: ASC.Projects.Resources.ProjectResource.CreateNewProject,
             IsPrivateDisabled: false,
@@ -809,10 +766,14 @@ ASC.Projects.ProjectAction = (function() {
 
     function onGetProject(params, data) {
         project = data;
+        tagsId = master.Tags
+            .filter(function (item) { return data.tags.indexOf(item.title) > -1; })
+            .map(function (item) { return item.value });
+
         jq("#projectActionPage").html(jq.tmpl("projects_action_create",
             {
                 IsProjectCreatedFromCrm: isProjectsCreatedFromCRM(),
-                hideChooseTeam: ASC.Resources.Master.ApiResponses_ActiveProfiles.response.length === 1,
+                hideChooseTeam: Object.keys(window.UserManager.getAllUsers(true)).length === 1,
                 showTemplates: false,
                 pageTitle: ASC.Projects.Resources.ProjectResource.EditProject,
                 IsPrivateDisabled: false,
@@ -828,7 +789,7 @@ ASC.Projects.ProjectAction = (function() {
                     }),
                     "private": data.isPrivate,
                     canDelete: data.canDelete,
-                    url: "tasks.aspx?prjID=" + data.ID,
+                    url: "tasks.aspx?prjID=" + data.id,
                     tags: data.tags.length ? data.tags.reduce(function (previousValue, currentValue) {
                         return previousValue + ", " + currentValue;
                     }) : ""

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,7 +25,7 @@
 
 
 using ASC.Api.Attributes;
-using ASC.Mail.Aggregator.Common;
+using ASC.Mail.Data.Contracts;
 
 namespace ASC.Api.Mail
 {
@@ -103,8 +103,12 @@ namespace ASC.Api.Mail
         [Read(@"settings/cacheMessagesEnabled")]
         public bool GetCacheUnreadMessagesFlag()
         {
-            var value = MailCommonSettings.CacheUnreadMessages;
-            return value;
+            //TODO: Change cache algoritnm and restore it back
+
+            /*var value = MailCommonSettings.CacheUnreadMessages;
+            return value;*/
+
+            return false;
         }
 
         /// <summary>
@@ -142,6 +146,31 @@ namespace ASC.Api.Mail
         public void SetEnableGoNextAfterMoveFlag(bool enabled)
         {
             MailCommonSettings.GoNextAfterMove = enabled;
+        }
+
+        /// <summary>
+        ///    Returns ReplaceMessageBody flag
+        /// </summary>
+        /// <returns>boolean</returns>
+        /// <short>Get ReplaceMessageBody flag</short> 
+        /// <category>Settings</category>
+        [Read(@"settings/replaceMessageBody")]
+        public bool GetEnableReplaceMessageBodyFlag()
+        {
+            var value = MailCommonSettings.ReplaceMessageBody;
+            return value;
+        }
+
+        /// <summary>
+        ///    Set ReplaceMessageBody flag
+        /// </summary>
+        /// <param name="enabled">True or False value</param>
+        /// <short>Set ReplaceMessageBody flag</short> 
+        /// <category>Settings</category>
+        [Update(@"settings/replaceMessageBody")]
+        public void SetEnableReplaceMessageBodyFlag(bool enabled)
+        {
+            MailCommonSettings.ReplaceMessageBody = enabled;
         }
     }
 }

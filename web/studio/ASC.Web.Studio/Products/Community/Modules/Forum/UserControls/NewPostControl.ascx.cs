@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -41,10 +41,12 @@ using ASC.Web.UserControls.Forum.Resources;
 using AjaxPro;
 using ASC.Core;
 using ASC.Core.Users;
+using ASC.ElasticSearch;
 using ASC.Forum;
 using ASC.Notify;
 using ASC.Notify.Model;
 using ASC.Notify.Recipients;
+using ASC.Web.Community.Search;
 using ASC.Web.Studio.Utility;
 using ASC.Web.UserControls.Forum.Common;
 
@@ -196,7 +198,7 @@ namespace ASC.Web.UserControls.Forum
 
         private void InitScripts()
         {
-            Page.RegisterBodyScripts("~/usercontrols/common/ckeditor/ckeditor-connector.js");
+            Page.RegisterBodyScripts("~/UserControls/Common/ckeditor/ckeditor-connector.js");
 
             //Page.RegisterInlineScript("ckeditorConnector.load(function () {ForumManager.forumEditor = jq('#ckEditor').ckeditor({ toolbar : 'ComForum', filebrowserUploadUrl: '" + RenderRedirectUpload() + @"'}).editor;});");
             Page.RegisterInlineScript("ckeditorConnector.load(function () {" +
@@ -250,7 +252,7 @@ namespace ASC.Web.UserControls.Forum
             Utility.RegisterTypeForAjax(this.GetType());
             Utility.RegisterTypeForAjax(typeof(PostControl));
 
-            Page.RegisterBodyScripts("~/js/uploader/jquery.fileupload.js", "~/js/uploader/jquery.fileuploadManager.js");
+            Page.RegisterBodyScripts("~/js/uploader/jquery.fileupload.js", "~/js/uploader/jquery.fileuploadmanager.js");
 
             PostType = NewPostType.Topic;
             PostAction = PostAction.Normal;
@@ -614,6 +616,8 @@ namespace ASC.Web.UserControls.Forum
                         try
                         {
                             ForumDataProvider.UpdatePost(TenantProvider.CurrentTenantID, EditedPost.ID, EditedPost.Subject, EditedPost.Text, EditedPost.Formatter);
+                            FactoryIndexer<PostWrapper>.UpdateAsync(EditedPost);
+
                             if (IsAllowCreateAttachment)
                                 CreateAttachments(EditedPost);
                             int postsOnPageCount = -1;
@@ -654,7 +658,7 @@ namespace ASC.Web.UserControls.Forum
                         {
                             post.ID = ForumDataProvider.CreatePost(TenantProvider.CurrentTenantID, post.TopicID, post.ParentPostID,
                                                                    post.Subject, post.Text, post.IsApproved, post.Formatter);
-
+                            FactoryIndexer<PostWrapper>.IndexAsync(post);
                             Topic.PostCount++;
 
                             CommonControlsConfigurer.FCKEditingComplete(_settings.FileStoreModuleID, post.ID.ToString(), post.Text, false);
@@ -714,7 +718,14 @@ namespace ASC.Web.UserControls.Forum
                         topic.Type = (PostType == NewPostType.Poll ? TopicType.Poll : TopicType.Informational);
 
                         topic.ID = ForumDataProvider.CreateTopic(TenantProvider.CurrentTenantID, topic.ThreadID, topic.Title, topic.Type);
+
+                        foreach (var ace in ASC.Forum.Module.Constants.Aces)
+                        {
+                            CoreContext.AuthorizationManager.AddAce(new AzRecord(SecurityContext.CurrentAccount.ID, ace, ASC.Common.Security.Authorizing.AceType.Allow, topic));
+                        }
+
                         Topic = topic;
+                        FactoryIndexer<TopicWrapper>.IndexAsync(topic);
 
                         foreach (var tag in topic.Tags)
                         {
@@ -733,6 +744,7 @@ namespace ASC.Web.UserControls.Forum
                         post.ID = ForumDataProvider.CreatePost(TenantProvider.CurrentTenantID, post.TopicID, post.ParentPostID,
                                                                post.Subject, post.Text, post.IsApproved, post.Formatter);
 
+                        FactoryIndexer<PostWrapper>.IndexAsync(post);
                         CommonControlsConfigurer.FCKEditingComplete(_settings.FileStoreModuleID, post.ID.ToString(), post.Text, false);
 
                         if (IsAllowCreateAttachment)
@@ -747,6 +759,10 @@ namespace ASC.Web.UserControls.Forum
                             topic.QuestionID = ForumDataProvider.CreatePoll(TenantProvider.CurrentTenantID, topic.ID,
                                                                             _pollMaster.Singleton ? QuestionType.OneAnswer : QuestionType.SeveralAnswer,
                                                                             topic.Title, answerVariants);
+
+                            var topicWrapper = (TopicWrapper) topic;
+
+                            FactoryIndexer<TopicWrapper>.IndexAsync(topicWrapper);
                         }
 
                         NotifyAboutNewPost(post);

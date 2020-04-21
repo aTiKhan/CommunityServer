@@ -187,6 +187,15 @@ namespace ASC.Web.Projects.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to d.
+        /// </summary>
+        public static string Days {
+            get {
+                return ResourceManager.GetString("Days", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to due date.
         /// </summary>
         public static string DeadLine {
@@ -363,6 +372,15 @@ namespace ASC.Web.Projects.Resources {
         public static string MilestonesMarkMajorTimestamps {
             get {
                 return ResourceManager.GetString("MilestonesMarkMajorTimestamps", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Milestones mark the major timestamps in project planning process. Once a milestone is created you can fill it with tasks for all project participants. Plan a milestone and set a due date to make sure that the tasks are completed on time..
+        /// </summary>
+        public static string MilestonesMarkMajorTimestampsVisitor {
+            get {
+                return ResourceManager.GetString("MilestonesMarkMajorTimestampsVisitor", resourceCulture);
             }
         }
         

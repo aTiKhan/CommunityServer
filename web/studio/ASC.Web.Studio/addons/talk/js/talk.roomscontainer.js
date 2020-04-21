@@ -1,4 +1,30 @@
-﻿window.ASC = window.ASC || {};
+/*
+ *
+ * (c) Copyright Ascensio System Limited 2010-2020
+ *
+ * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
+ * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
+ * In accordance with Section 7(a) of the GNU GPL its Section 15 shall be amended to the effect that 
+ * Ascensio System SIA expressly excludes the warranty of non-infringement of any third-party rights.
+ *
+ * THIS PROGRAM IS DISTRIBUTED WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR
+ * FITNESS FOR A PARTICULAR PURPOSE. For more details, see GNU GPL at https://www.gnu.org/copyleft/gpl.html
+ *
+ * You can contact Ascensio System SIA by email at sales@onlyoffice.com
+ *
+ * The interactive user interfaces in modified source and object code versions of ONLYOFFICE must display 
+ * Appropriate Legal Notices, as required under Section 5 of the GNU GPL version 3.
+ *
+ * Pursuant to Section 7 § 3(b) of the GNU GPL you must retain the original ONLYOFFICE logo which contains 
+ * relevant author attributions when distributing the software. If the display of the logo in its graphic 
+ * form is not reasonably feasible for technical reasons, you must include the words "Powered by ONLYOFFICE" 
+ * in every copy of the program you distribute. 
+ * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
+ *
+*/
+
+
+window.ASC = window.ASC || {};
 
 window.ASC.TMTalk = window.ASC.TMTalk || {};
 
@@ -228,12 +254,14 @@ window.ASC.TMTalk.roomsContainer = (function ($) {
       smile = null,
       smilesInd = 0,
       aliasesInd = 0,
-      reUrl = /(http:\/\/|https:\/\/|ftp:\/\/|www\.){1}[\w\.\/\|\\:?#'~\[\]\{\}%&=+$,@\-_!~*;()]+/ig,
+      //reUrl = /(http:\/\/|https:\/\/|ftp:\/\/|www\.){1}[\w\.\/\|\\:?#'~\[\]\{\}%&=+$,@\-_!~*;()]+/ig,
       foundLinks = [],
       foundSmiles = [];
 
     body = translateSymbols(body, false);
     body = body.replace(/\n/g, '<br>');
+      
+    var reUrl = new XRegExp("(http:\/\/|https:\/\/|ftp:\/\/|www\.){1}[0-9\\p{L}\\p{M}\w\.\/\|\\:?#'~\[\\]\{\}%&=+$,@\\-_!~*;()]+", 'gi');
 
     while (link = reUrl.exec(body)) {
       lnkstr = link[0];
@@ -331,7 +359,7 @@ window.ASC.TMTalk.roomsContainer = (function ($) {
             currentMessagesCount = jQuery('div#talkRoomsContainer ul.rooms li.room.current ul.messages:first').find('li').not('.default').length;
             var startindex = currentMessagesCount++;
             var count = 5;
-            ASC.TMTalk.messagesManager.updateHistory(cid, startindex, count);
+            ASC.TMTalk.messagesManager.updateHistory(cid, startindex, count, jq(".room.current .search-value").val());
         }
     });
     if (messagescontainer !== null) {
@@ -975,7 +1003,7 @@ window.ASC.TMTalk.roomsContainer = (function ($) {
     }
   };
 
-  var onGetContactHistory = function (jid, messages, newmessagescount) {
+  var onGetContactHistory = function (jid, messages, newmessagescount, removeOld, searchText) {
     var
       node = null,
       nodes = null,
@@ -993,11 +1021,22 @@ window.ASC.TMTalk.roomsContainer = (function ($) {
 	    //  }
 	    //  node.parentNode.removeChild(node);
       //}
-
+        var messagescontainer;
       nodes = ASC.TMTalk.dom.getElementsByClassName(room, 'messages', 'div');
       if (nodes.length > 0) {
-        ASC.TMTalk.dom.removeClass(nodes[0], 'loading');
+          ASC.TMTalk.dom.removeClass(nodes[0], 'loading');
+          nodes = ASC.TMTalk.dom.getElementsByClassName(nodes[0], 'messages', 'ul');
+          if (nodes.length > 0) {
+              messagescontainer = nodes[0];
+          }
       }
+
+        if (removeOld) {
+            var oldMessages = ASC.TMTalk.dom.getElementsByClassName(room, 'message paragraph', 'li');
+            for (var i = 0; i < oldMessages.length; i++) {
+                oldMessages[i].remove();
+            }
+        }
 
       messagesInd = messages.length;
       var currentMessageCount = jQuery('div#talkRoomsContainer ul.rooms li.room.current ul.messages:first').find('li').not('.default').length;
@@ -1010,11 +1049,19 @@ window.ASC.TMTalk.roomsContainer = (function ($) {
           var container = jQuery('div#talkRoomsContainer ul.rooms li.room[data-roomcid="' + jid + '"] ul.messages');
           var element = jQuery('div#talkRoomsContainer li.room[data-roomcid="' + jid + '"] div.messages ul.messages li:eq(5)');
           var correction = jQuery('div#talkRoomsContainer li.room.current').hasClass('conference') ? 25 : 50;
-          var top = element.position().top + container.offset().top + container.scrollTop() - correction;
+
+          var top = 0;
+          if (container.length > 0 && element.length > 0 && element.position() != undefined) {
+              top = element.position().top + container.offset().top + container.scrollTop() - correction;
+          }
           jQuery('div#talkRoomsContainer ul.rooms li.room[data-roomcid="' + jid + '"] ul.messages').scrollTo(top);
       } else if (currentMessageCount != 0) {
           jQuery('div#talkRoomsContainer ul.rooms li.room[data-roomcid="' + jid + '"] ul.messages').scrollTo(0);
       }
+
+        if (searchText) {
+            historySearch(searchText, room, ASC.TMTalk.dom.getElementsByClassName(messagescontainer, 'message', 'li'));
+        }
     }
   };
 
@@ -1435,10 +1482,12 @@ window.ASC.TMTalk.roomsContainer = (function ($) {
     if (text.length > 0) {
       cltext = text.toLowerCase();
       strIndex = 0;
-      while ((strIndex = cltext.indexOf(lcstr)) !== -1) {
-        newhtml += text.substring(0, strIndex) + '<span class="hl-text">' + text.substring(strIndex, strIndex + lcstr.length) + '</span>';
-        text = text.substring(strIndex + strlen);
-        cltext = cltext.substring(strIndex + strlen);
+      
+      while ((strIndex = cltext.indexOf(Encoder.htmlEncode(lcstr))) !== -1) {
+          var endIndex = Encoder.htmlEncode(lcstr).length;
+          newhtml += text.substring(0, strIndex) + '<span class="hl-text">' + text.substring(strIndex, strIndex + endIndex) + '</span>';
+          text = text.substring(strIndex + Encoder.htmlEncode(str).length);
+          cltext = cltext.substring(strIndex + Encoder.htmlEncode(str).length);
       }
       newhtml += text;
       //newhtml += text.replace(restr, '<span class="hl-text">$&</span>');
@@ -1513,7 +1562,7 @@ window.ASC.TMTalk.roomsContainer = (function ($) {
     }
     if (lastfoundmessage !== null) {
       var messagescontainer = lastfoundmessage.parentNode;
-      messagescontainer.scrollTop = lastfoundmessage.offsetTop - (messagescontainer.offsetHeight - lastfoundmessage.offsetHeight);
+      messagescontainer.scrollTop = lastfoundmessage.offsetTop - (messagescontainer.offsetHeight - lastfoundmessage.offsetHeight) + lastfoundmessage.scrollHeight;
     }
   };
     
@@ -1613,7 +1662,9 @@ window.ASC.TMTalk.roomsContainer = (function ($) {
     minimizingUserList  :minimizingUserList,
     
     showLastMessage : showLastMessage,
-    onRottenInvite  : onRottenInvite
+    onRottenInvite: onRottenInvite,
+
+    getRoomByCid: getRoomByCid
   };
 })(jQuery);
 

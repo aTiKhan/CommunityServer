@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2015
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -31,6 +31,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Web;
 using ASC.CRM.Core;
+using ASC.Core;
 using ASC.Web.CRM.Classes;
 using ASC.Web.CRM.Resources;
 
@@ -78,6 +79,11 @@ namespace ASC.Web.CRM.Controls.Reports
 
                 if (Enum.IsDefined(typeof (ReportType), reportType))
                     CurrentReportType = (ReportType) reportType;
+
+                if (CurrentReportType == ReportType.WorkloadByVoip && CoreContext.Configuration.CustomMode)
+                {
+                    Response.Redirect(PathProvider.StartURL());
+                }
 
                 InitReportInfo();
             }

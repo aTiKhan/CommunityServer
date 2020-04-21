@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -29,12 +29,12 @@ using System.Web;
 using System.Web.UI;
 using ASC.Core;
 using ASC.Core.Tenants;
-using ASC.Data.Storage;
-using ASC.FullTextIndex;
 using ASC.MessagingSystem;
 using ASC.Web.Studio.Core;
 using ASC.Web.Studio.Utility;
 using AjaxPro;
+using ASC.ElasticSearch;
+using ASC.ElasticSearch.Service;
 
 namespace ASC.Web.Studio.UserControls.Management
 {
@@ -42,11 +42,11 @@ namespace ASC.Web.Studio.UserControls.Management
     [AjaxNamespace("FullTextSearch")]
     public partial class FullTextSearch : UserControl
     {
-        protected FullTextSearchSettings CurrentSettings
+        protected Settings CurrentSettings
         {
             get
             {
-                return CoreContext.Configuration.GetSection<FullTextSearchSettings>(Tenant.DEFAULT_TENANT) ?? new FullTextSearchSettings();
+                return CoreContext.Configuration.GetSection<Settings>(Tenant.DEFAULT_TENANT) ?? Settings.Default;
             }
         }
 
@@ -58,14 +58,14 @@ namespace ASC.Web.Studio.UserControls.Management
                 Response.Redirect("~/management.aspx");
 
             AjaxPro.Utility.RegisterTypeForAjax(GetType(), Page);
-            Page.RegisterBodyScripts("~/usercontrols/management/fulltextsearch/js/fulltextsearch.js")
-                .RegisterStyle("~/usercontrols/management/fulltextsearch/css/fulltextsearch.css");
+            Page.RegisterBodyScripts("~/UserControls/Management/FullTextSearch/js/fulltextsearch.js")
+                .RegisterStyle("~/UserControls/Management/FullTextSearch/css/fulltextsearch.css");
 
             HelpLink = CommonLinkUtility.GetHelpLink();
         }
 
         [AjaxMethod]
-        public void Save(FullTextSearchSettings settings)
+        public void Save(Settings settings)
         {
             SecurityContext.DemandPermissions(SecutiryConstants.EditPortalSettings);
             CoreContext.Configuration.SaveSection(Tenant.DEFAULT_TENANT, settings);
@@ -76,7 +76,7 @@ namespace ASC.Web.Studio.UserControls.Management
         [AjaxMethod]
         public object Test()
         {
-            return FullTextIndex.FullTextSearch.CheckState() ?
+            return FactoryIndexer.CheckState() ?
                 new { success = true, message = Resources.Resource.FullTextSearchServiceIsRunning } :
                 new { success = false, message = Resources.Resource.FullTextSearchServiceIsNotRunning };
         }

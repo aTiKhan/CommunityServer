@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -235,6 +235,7 @@ namespace ASC.Web.Studio.Helpers
                 {
                     graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
                     graphic.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                    graphic.SmoothingMode = SmoothingMode.HighQuality;
                     graphic.DrawImage(image, rect);
                 }
             }
@@ -327,6 +328,7 @@ namespace ASC.Web.Studio.Helpers
             {
                 graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
                 graphic.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                graphic.SmoothingMode = SmoothingMode.HighQuality;
                 graphic.DrawImage(image, 0, 0, widthPreview, heightPreview);
             }
 

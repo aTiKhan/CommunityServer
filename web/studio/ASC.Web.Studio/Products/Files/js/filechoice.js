@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -27,14 +27,28 @@
 window.ASC.Files.FileChoice = (function () {
     var isInit = false;
 
-    var init = function (folderId, onlyFolder, thirdParty, mailMerge) {
+    var init = function (folderId, onlyFolder, thirdParty, fromEditor) {
+        if (fromEditor) {
+            thirdParty = undefined;
+        }
         if (isInit === false) {
             isInit = true;
+
+            if (typeof thirdParty == "string") {
+                if (thirdParty == "") {
+                    thirdParty = undefined;
+                } else {
+                    thirdParty = (thirdParty == "true");
+                }
+            }
 
             jq("#fileSelectorTree").css("visibility", "visible");
 
             var callback = function () {
                 ASC.Files.FileSelector.openDialog(folderId, onlyFolder, thirdParty);
+                if (onlyFolder) {
+                    ASC.Files.FileChoice.eventAfter();
+                }
             };
 
             if (thirdParty) {
@@ -64,37 +78,46 @@ window.ASC.Files.FileChoice = (function () {
                     window.parent.postMessage(message, "*");
                 };
             } else {
-                ASC.Files.FileSelector.onSubmit = function (files) {
-                    var file = files[0];
-                    var fileExt = ASC.Files.Utility.GetFileExtension(file.title);
-                    fileExt = fileExt.substring(fileExt.indexOf('.') + 1);
+                ASC.Files.Folders.eventAfter = function () {
+                    ASC.Files.FileChoice.eventAfter();
+                };
 
-                    if (!mailMerge) {
-                        var message = JSON.stringify({
-                            fileId: file.id,
-                            fileTitle: file.title,
-                        });
+                ASC.Files.FileSelector.onSubmit = function (files) {
+
+                    if (!fromEditor) {
+                        if (jq(".file-selector-files").hasClass("file-selector-single")) {
+                            var file = files[0];
+                            var message = JSON.stringify({
+                                fileId: file.id,
+                                fileTitle: file.title,
+                            });
+                        } else {
+                            message = JSON.stringify({
+                                files: files,
+                                folderShareable: ASC.Files.Folders.currentFolder.shareable
+                            });
+                        }
 
                         window.parent.postMessage(message, "*");
                     } else {
-                        Teamlab.getPresignedUri(file.id, {
-                            success: function (params, url) {
-                                var data = {
-                                    file: {
-                                        fileType: fileExt,
-                                        url: url
-                                    },
-                                    Referer: "onlyoffice"
-                                };
+                        file = files[0];
 
-                                message = JSON.stringify(data);
-
-                                window.parent.postMessage(message, "*");
-                            },
-                            error: function (params, errors) {
-                                toastr.error(errors);
+                        ASC.Files.ServiceManager.bind(ASC.Files.ServiceManager.events.GetPresignedUri, function (jsonData, params, errorMessage) {
+                            if (typeof errorMessage != "undefined") {
+                                toastr.error(errorMessage);
+                                return;
                             }
+                            var data = {
+                                file: jsonData,
+                                Referer: "onlyoffice"
+                            };
+
+                            message = JSON.stringify(data);
+
+                            window.parent.postMessage(message, "*");
                         });
+
+                        ASC.Files.ServiceManager.getPresignedUri(ASC.Files.ServiceManager.events.GetPresignedUri, {fileId: file.id});
                     }
                 };
             }
@@ -114,8 +137,12 @@ window.ASC.Files.FileChoice = (function () {
         }
     };
 
+    var eventAfter = function () {
+    };
+
     return {
         init: init,
+        eventAfter:eventAfter
     };
 })();
 

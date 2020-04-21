@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -22,6 +22,7 @@
  * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
  *
 */
+
 
 @import "../../../../skins/base.less";
 
@@ -185,7 +186,7 @@
     }
 
     .baseLinkAction {
-        background: url(./images/btn-edit.png) no-repeat 0 0 transparent;
+        background: url('../../../../skins/default/images/svg/people/pencilgray.svg') no-repeat 0 0 transparent;
         border: 0;
         display: inline-block;
         width: 16px;
@@ -196,7 +197,7 @@
         color: #FFF !important;
 
         &:hover {
-            background-position: bottom;
+            background: url('../../../../skins/default/images/svg/people/pencilblue.svg') no-repeat 0 0 transparent;
         }
     }
 }
@@ -296,7 +297,8 @@ body.media-width-0-1200 {
                     background-position: -144px center;
                 }
 
-                &.skype .label {
+                &.skype .label,
+                &.extskype .label {
                     background-position: -120px center;
                 }
 
@@ -328,7 +330,8 @@ body.media-width-0-1200 {
                     background-position: -96px center;
                 }
 
-                &.phone .label {
+                &.phone .label,
+                &.extphone .label {
                     background-position: -48px center;
                 }
 
@@ -343,108 +346,72 @@ body.media-width-0-1200 {
 
 
 /* <AccountLinkControl> */
-.social-logins .account-links ul {
-    display: block;
+.social-logins ul.account-links {
     height: 80px;
 
     li {
-        background: none;
-        width: auto;
-        min-width: 100px;
-        line-height: normal;
-        margin: 0 0 0 52px;
-        padding: 0;
+        margin: 0 48px 0 0;
         float: left;
         white-space: nowrap;
 
-        &:first-child {
-            margin-left: 0;
-        }
-
         span {
+            color: #787878;
             display: block;
             margin: 8px 0 0;
-            color: #787878;
+        }
+        &.connected span {
+            color: #116d9d;
         }
 
         a {
-            display: inline-block;
             border-bottom: 1px dotted #000000;
-            margin: 4px 0 0;
             color: #000000;
+            display: inline-block;
+            margin: 4px 0 0;
             text-decoration: none;
         }
 
-        .label {
-            display: block;
-            background-image: url(./images/social-icons.png);
+        .icon {
+            background-color: transparent;
             background-position: 0 0;
             background-repeat: no-repeat;
-            background-color: #83888d;
-            width: 32px;
-            height: 32px;
-            .borderRadius(3px);
+            height: 34px;
             margin: 0;
+            width: 105px;
+            .borderRadius(3px);
+        }
+        &.google .icon {
+            background-image: url("../../../../skins/default/images/svg/people/google.png");
         }
 
-        &.connected {
-            .label {
-                background-color: #4ca5d6;
-            }
+        &.twitter .icon {
+            background-image: url("../../../../skins/default/images/svg/people/twitter.png");
         }
 
-        &.google {
-            .label {
-                background-position: -96px 0;
-            }
+        &.facebook .icon {
+            background-image: url("../../../../skins/default/images/svg/people/facebook.png");
         }
 
-        &.twitter {
-            .label {
-                background-position: -64px 0;
-            }
-        }
-
-        &.facebook {
-            .label {
-                background-position: -32px 0;
-            }
-        }
-
-        &.linkedin {
-            .label {
-                background-position: -128px 0;
-            }
+        &.linkedin .icon {
+            background-image: url("../../../../skins/default/images/svg/people/linkedin.png");
         }
     }
 }
 
 body.media-width-0-1400 {
-    .social-logins .account-links ul li {
-        margin: 0 0 0 30px;
-        &:first-child {
-            margin-left: 0;
-        }
+    .social-logins ul.account-links li {
+        margin-right: 32px;
+
         span {
-            max-width: 100px;
-            -ms-word-wrap: break-word;
-            word-wrap: break-word;
             white-space: normal;
+            word-wrap: break-word;
+            -ms-word-wrap: break-word;
         }
     }
 }
 body.media-width-0-1200 {
-    .social-logins .account-links ul li {
-        margin: 0 0 0 10px;
-        &:first-child {
-            margin-left: 0;
-        }
-        span {
-            max-width: 100px;
-            -ms-word-wrap: break-word;
-            word-wrap: break-word;
-            white-space: normal;
-        }
+    .social-logins ul.account-links li {
+        margin-right: 16px;
     }
 }
 
@@ -475,12 +442,13 @@ a {
 
     .profile-action-usericon {
         width: 200px;
+        height: 200px;
 
         img {
             border: none;
             display: block;
             margin: 0 auto;
-            max-height: 320px;
+            max-height: 200px;
             max-width: 200px;
         }
     }

@@ -1,4 +1,30 @@
-﻿String.prototype.format = function () {
+/*
+ *
+ * (c) Copyright Ascensio System Limited 2010-2020
+ *
+ * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
+ * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
+ * In accordance with Section 7(a) of the GNU GPL its Section 15 shall be amended to the effect that 
+ * Ascensio System SIA expressly excludes the warranty of non-infringement of any third-party rights.
+ *
+ * THIS PROGRAM IS DISTRIBUTED WITHOUT ANY WARRANTY; WITHOUT EVEN THE IMPLIED WARRANTY OF MERCHANTABILITY OR
+ * FITNESS FOR A PARTICULAR PURPOSE. For more details, see GNU GPL at https://www.gnu.org/copyleft/gpl.html
+ *
+ * You can contact Ascensio System SIA by email at sales@onlyoffice.com
+ *
+ * The interactive user interfaces in modified source and object code versions of ONLYOFFICE must display 
+ * Appropriate Legal Notices, as required under Section 5 of the GNU GPL version 3.
+ *
+ * Pursuant to Section 7 § 3(b) of the GNU GPL you must retain the original ONLYOFFICE logo which contains 
+ * relevant author attributions when distributing the software. If the display of the logo in its graphic 
+ * form is not reasonably feasible for technical reasons, you must include the words "Powered by ONLYOFFICE" 
+ * in every copy of the program you distribute. 
+ * Pursuant to Section 7 § 3(e) we decline to grant you any rights under trademark law for use of our trademarks.
+ *
+*/
+
+
+String.prototype.format = function () {
   if (arguments.length === 0) {
     return '';
   }
@@ -80,7 +106,25 @@ window.ASC.TMTalk.sounds = (function () {
     isEnabled = null,
     soundsContainer = null;
 
-  var init = function (o) {
+    var initHtml = function() {
+        var o = document.createElement('div'),
+            soundsContainerId = 'talkHtmlSoundsContainer';
+        o.setAttribute('id', soundsContainerId);
+        
+        for (var i = 0; i < ASC.TMTalk.Config.soundsHtml.length; i++) {
+            var audioFindName = ASC.TMTalk.Config.soundsHtml[i].match(/\/\w+\./g);
+            if (audioFindName.length > 0) {
+                var audio = document.createElement('audio');
+                var audioName = audioFindName[audioFindName.length - 1].substring(1, audioFindName[audioFindName.length - 1].length - 1);
+                
+                audio.setAttribute('id', audioName);
+                audio.setAttribute('src', ASC.TMTalk.Config.soundsHtml[i]);
+                o.appendChild(audio);
+            }
+        }
+        document.getElementById('talkWrapper').appendChild(o);
+    };
+    var init = function (o) {
     if (typeof o === 'string') {
       o = document.getElementById(o);
     }
@@ -88,21 +132,27 @@ window.ASC.TMTalk.sounds = (function () {
       return null;
     }
     soundsContainer = o;
-    if (isEnabled === null && ASC.TMTalk.flashPlayer.isCorrect) {
+    if (isEnabled === null) {
       isEnabled = true;
     }
   };
 
-  var play = function (soundname) {
+    var play = function (soundname) {
     if (isEnabled === true && typeof soundname === 'string') {
-      try { soundsContainer.playSound(soundname) } catch (err) { }
+        var sound = document.getElementById(soundname + 'sound');
+        if (sound != null) {
+            try {
+                sound.play().catch(function (e) {
+                    console.log(e.message);
+                });
+            } catch(e) {}
+        }
+        //try { soundsContainer.playSound(soundname) } catch (err) { }
     }
   };
 
   var enable = function () {
-    if (ASC.TMTalk.flashPlayer.isCorrect) {
       isEnabled = true;
-    }
   };
 
   var disable = function () {
@@ -110,7 +160,8 @@ window.ASC.TMTalk.sounds = (function () {
   };
 
   var supported = function () {
-    return ASC.TMTalk.flashPlayer.isCorrect;
+      return true;
+      //return ASC.TMTalk.flashPlayer.isCorrect;
   };
 
   return {
@@ -119,6 +170,8 @@ window.ASC.TMTalk.sounds = (function () {
     init  : init,
     play  : play,
 
+    initHtml: initHtml,
+    
     enable  : enable,
     disable : disable
   };
@@ -494,7 +547,11 @@ window.ASC.TMTalk.dragMaster = (function () {
   var execEvent = function (eventType, thisArg, argsArray) {
     thisArg = thisArg || window;
     argsArray = argsArray || [];
-
+    if (window.getSelection) {
+        window.getSelection().removeAllRanges();
+    } else {
+        document.selection.empty();
+    }
     switch (eventType.toLowerCase()) {
       case 'ondrag' :
         if (typeof onDrop === 'function') {

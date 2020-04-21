@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -26,58 +26,51 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading;
-using System.Web;
 using ASC.FederatedLogin.Helpers;
 using ASC.FederatedLogin.Profile;
-using ASC.Thrdparty.Configuration;
 using Newtonsoft.Json.Linq;
 
 namespace ASC.FederatedLogin.LoginProviders
 {
-    public class LinkedInLoginProvider : ILoginProvider
+    public class LinkedInLoginProvider : BaseLoginProvider<LinkedInLoginProvider>
     {
-        private const string LinkedInProfileUrl = "https://api.linkedin.com/v1/people/~:(id,first-name,last-name,formatted-name,email-address)?format=json";
-        private const string LinkedInProfileScope = "r_basicprofile r_emailaddress";
+        private const string LinkedInProfileUrl = "https://api.linkedin.com/v2/me";
+        private const string LinkedInEmailUrl = "https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))";
 
-
-        public const string LinkedInOauthCodeUrl = "https://www.linkedin.com/uas/oauth2/authorization";
-        public const string LinkedInOauthTokenUrl = "https://www.linkedin.com/uas/oauth2/accessToken";
-
-        public static string LinkedInOAuth20ClientId
+        public override string AccessTokenUrl
         {
-            get { return KeyStorage.Get("linkedInKey"); }
+            get { return "https://www.linkedin.com/oauth/v2/accessToken"; }
         }
 
-        public static string LinkedInOAuth20ClientSecret
+        public override string RedirectUri
         {
-            get { return KeyStorage.Get("linkedInSecret"); }
+            get { return this["linkedInRedirectUrl"]; }
         }
 
-        public static string LinkedInOAuth20RedirectUrl
+        public override string ClientID
         {
-            get { return KeyStorage.Get("linkedInRedirectUrl"); }
+            get { return this["linkedInKey"]; }
         }
 
-        public LoginProfile ProcessAuthoriztion(HttpContext context, IDictionary<string, string> @params)
+        public override string ClientSecret
         {
-            try
-            {
-                var token = Auth(context, LinkedInProfileScope);
-
-                return GetLoginProfile(token == null ? null : token.AccessToken);
-            }
-            catch (ThreadAbortException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                return LoginProfile.FromError(ex);
-            }
+            get { return this["linkedInSecret"]; }
         }
 
-        public LoginProfile GetLoginProfile(string accessToken)
+        public override string CodeUrl
+        {
+            get { return "https://www.linkedin.com/oauth/v2/authorization"; }
+        }
+
+        public override string Scopes
+        {
+            get { return "r_liteprofile r_emailaddress"; }
+        }
+
+        public LinkedInLoginProvider() { }
+        public LinkedInLoginProvider(string name, int order, Dictionary<string, string> props, Dictionary<string, string> additional = null) : base(name, order, props, additional) { }
+
+        public override LoginProfile GetLoginProfile(string accessToken)
         {
             if (string.IsNullOrEmpty(accessToken))
                 throw new Exception("Login failed");
@@ -85,41 +78,16 @@ namespace ASC.FederatedLogin.LoginProviders
             return RequestProfile(accessToken);
         }
 
-        public static OAuth20Token Auth(HttpContext context, string scopes)
-        {
-            var error = context.Request["error"];
-            if (!string.IsNullOrEmpty(error))
-            {
-                if (error == "access_denied")
-                {
-                    error = "Canceled at provider";
-                }
-                throw new Exception(error);
-            }
-
-            var code = context.Request["code"];
-            if (string.IsNullOrEmpty(code))
-            {
-                OAuth20TokenHelper.RequestCode(HttpContext.Current,
-                                               LinkedInOauthCodeUrl,
-                                               LinkedInOAuth20ClientId,
-                                               LinkedInOAuth20RedirectUrl,
-                                               scopes);
-                return null;
-            }
-
-            var token = OAuth20TokenHelper.GetAccessToken(LinkedInOauthTokenUrl,
-                                                          LinkedInOAuth20ClientId,
-                                                          LinkedInOAuth20ClientSecret,
-                                                          LinkedInOAuth20RedirectUrl,
-                                                          code);
-            return token;
-        }
-
         private static LoginProfile RequestProfile(string accessToken)
         {
-            var linkedInProfile = RequestHelper.PerformRequest(LinkedInProfileUrl, headers: new Dictionary<string, string> {{"Authorization", "Bearer " + accessToken}});
+            var linkedInProfile = RequestHelper.PerformRequest(LinkedInProfileUrl,
+                headers: new Dictionary<string, string> {{"Authorization", "Bearer " + accessToken}});
             var loginProfile = ProfileFromLinkedIn(linkedInProfile);
+
+            var linkedInEmail = RequestHelper.PerformRequest(LinkedInEmailUrl,
+                headers: new Dictionary<string, string> {{"Authorization", "Bearer " + accessToken}});
+            loginProfile.EMail = EmailFromLinkedIn(linkedInEmail);
+
             return loginProfile;
         }
 
@@ -129,17 +97,23 @@ namespace ASC.FederatedLogin.LoginProviders
             if (jProfile == null) throw new Exception("Failed to correctly process the response");
 
             var profile = new LoginProfile
-                {
-                    Id = jProfile.Value<string>("id"),
-                    FirstName = jProfile.Value<string>("firstName"),
-                    LastName = jProfile.Value<string>("lastName"),
-                    DisplayName = jProfile.Value<string>("formattedName"),
-                    EMail = jProfile.Value<string>("emailAddress"),
-                    
-                    Provider = ProviderConstants.LinkedIn,
-                };
+            {
+                Id = jProfile.Value<string>("id"),
+                FirstName = jProfile.Value<string>("localizedFirstName"),
+                LastName = jProfile.Value<string>("localizedLastName"),
+                EMail = jProfile.Value<string>("emailAddress"),
+                Provider = ProviderConstants.LinkedIn,
+            };
 
             return profile;
+        }
+
+        internal static string EmailFromLinkedIn(string linkedInEmail)
+        {
+            var jEmail = JObject.Parse(linkedInEmail);
+            if (jEmail == null) throw new Exception("Failed to correctly process the response");
+
+            return jEmail.SelectToken("elements[0].handle~.emailAddress").ToString();
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -28,8 +28,10 @@ using System;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Web;
+using ASC.Common.Logging;
 using ASC.Core;
 using ASC.Core.Users;
+using ASC.Web.Core.WhiteLabel;
 using HtmlAgilityPack;
 
 namespace ASC.Web.Studio.Utility.HtmlUtility
@@ -77,8 +79,8 @@ namespace ASC.Web.Studio.Utility.HtmlUtility
             }
             catch (Exception e)
             {
-                log4net.LogManager.GetLogger("ASC.Web").Error(e);
-                return e.Message + "<br/> Please contact us: <a href='mailto:support@onlyoffice.com'>support@onlyoffice.com</a>";
+                LogManager.GetLogger("ASC.Web").Error(e);
+                return string.Format("{0}<br/>Please contact us: <a href='mailto:{1}'>{1}</a>", e.Message, CompanyWhiteLabelSettings.Instance.Email);
             }
         }
 
@@ -163,6 +165,9 @@ namespace ASC.Web.Studio.Utility.HtmlUtility
                     ).ToList();
                 foreach (var htmlAttribute in toRemove)
                 {
+                    if (node.Name == "img" && htmlAttribute.Name == "src")
+                        continue;
+
                     node.Attributes.Remove(htmlAttribute);
                 }
             }

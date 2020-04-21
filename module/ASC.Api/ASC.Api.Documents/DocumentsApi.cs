@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -43,20 +43,20 @@ using ASC.Api.Utils;
 using ASC.Core;
 using ASC.Core.Users;
 using ASC.FederatedLogin.Helpers;
+using ASC.FederatedLogin.LoginProviders;
 using ASC.Files.Core;
 using ASC.MessagingSystem;
+using ASC.Web.Core;
 using ASC.Web.Core.Files;
 using ASC.Web.Files.Classes;
+using ASC.Web.Files.Configuration;
 using ASC.Web.Files.Helpers;
 using ASC.Web.Files.HttpHandlers;
-using ASC.Web.Files.Resources;
 using ASC.Web.Files.Services.DocumentService;
 using ASC.Web.Files.Services.WCFService;
 using ASC.Web.Files.Services.WCFService.FileOperations;
 using ASC.Web.Files.Utils;
 using ASC.Web.Studio.Utility;
-using ASC.FederatedLogin.LoginProviders;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using FileShare = ASC.Files.Core.Security.FileShare;
 using FilesNS = ASC.Web.Files.Services.WCFService;
@@ -202,7 +202,7 @@ namespace ASC.Api.Documents
         [Create("@my/upload")]
         public object UploadFileToMy(Stream file, ContentType contentType, ContentDisposition contentDisposition, IEnumerable<HttpPostedFileBase> files)
         {
-            return UploadFile(Global.FolderMy.ToString(), file, contentType, contentDisposition, files, false, true);
+            return UploadFile(Global.FolderMy.ToString(), file, contentType, contentDisposition, files, false, null);
         }
 
         /// <summary>
@@ -226,7 +226,7 @@ namespace ASC.Api.Documents
         [Create("@common/upload")]
         public object UploadFileToCommon(Stream file, ContentType contentType, ContentDisposition contentDisposition, IEnumerable<HttpPostedFileBase> files)
         {
-            return UploadFile(Global.FolderCommon.ToString(), file, contentType, contentDisposition, files, false, true);
+            return UploadFile(Global.FolderCommon.ToString(), file, contentType, contentDisposition, files, false, null);
         }
 
 
@@ -253,9 +253,12 @@ namespace ASC.Api.Documents
         /// <param name="keepConvertStatus" visible="false">Keep status conversation after finishing</param>
         /// <returns>Uploaded file</returns>
         [Create("{folderId}/upload")]
-        public object UploadFile(string folderId, Stream file, ContentType contentType, ContentDisposition contentDisposition, IEnumerable<HttpPostedFileBase> files, bool createNewIfExist, bool storeOriginalFileFlag, bool keepConvertStatus = false)
+        public object UploadFile(string folderId, Stream file, ContentType contentType, ContentDisposition contentDisposition, IEnumerable<HttpPostedFileBase> files, bool? createNewIfExist, bool? storeOriginalFileFlag, bool keepConvertStatus = false)
         {
-            FilesSettings.StoreOriginalFiles = storeOriginalFileFlag;
+            if (storeOriginalFileFlag.HasValue)
+            {
+                FilesSettings.StoreOriginalFiles = storeOriginalFileFlag.Value;
+            }
 
             if (files != null && files.Any())
             {
@@ -291,7 +294,7 @@ namespace ASC.Api.Documents
         /// <category>Uploads</category>
         /// <returns></returns>
         [Create("@my/insert")]
-        public FileWrapper InsertFileToMy(Stream file, string title, bool createNewIfExist, bool keepConvertStatus = false)
+        public FileWrapper InsertFileToMy(Stream file, string title, bool? createNewIfExist, bool keepConvertStatus = false)
         {
             return InsertFile(Global.FolderMy.ToString(), file, title, createNewIfExist, keepConvertStatus);
         }
@@ -306,7 +309,7 @@ namespace ASC.Api.Documents
         /// <category>Uploads</category>
         /// <returns></returns>
         [Create("@common/insert")]
-        public FileWrapper InsertFileToCommon(Stream file, string title, bool createNewIfExist, bool keepConvertStatus = false)
+        public FileWrapper InsertFileToCommon(Stream file, string title, bool? createNewIfExist, bool keepConvertStatus = false)
         {
             return InsertFile(Global.FolderCommon.ToString(), file, title, createNewIfExist, keepConvertStatus);
         }
@@ -322,11 +325,11 @@ namespace ASC.Api.Documents
         /// <category>Uploads</category>
         /// <returns></returns>
         [Create("{folderId}/insert")]
-        public FileWrapper InsertFile(string folderId, Stream file, string title, bool createNewIfExist, bool keepConvertStatus = false)
+        public FileWrapper InsertFile(string folderId, Stream file, string title, bool? createNewIfExist, bool keepConvertStatus = false)
         {
             try
             {
-                var resultFile = FileUploader.Exec(folderId, title, file.Length, file, createNewIfExist, !keepConvertStatus);
+                var resultFile = FileUploader.Exec(folderId, title, file.Length, file, createNewIfExist.HasValue ? createNewIfExist.Value : !FilesSettings.UpdateIfExist, !keepConvertStatus);
                 return new FileWrapper(resultFile);
             }
             catch (FileNotFoundException e)
@@ -339,6 +342,28 @@ namespace ASC.Api.Documents
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="file"></param>
+        /// <param name="fileId"></param>
+        /// <param name="encrypted"></param>
+        /// <returns></returns>
+        /// <visible>false</visible>
+        [Update("{fileId}/update")]
+        public FileWrapper UpdateFileStream(Stream file, string fileId, bool encrypted = false)
+        {
+            try
+            {
+                var resultFile = _fileStorageService.UpdateFileStream(fileId, file, encrypted);
+                return new FileWrapper(resultFile);
+            }
+            catch (FileNotFoundException e)
+            {
+                throw new ItemNotFoundException("File not found", e);
+            }
+        }
+
 
         /// <summary>
         /// 
@@ -348,12 +373,13 @@ namespace ASC.Api.Documents
         /// <param name="downloadUri"></param>
         /// <param name="stream"></param>
         /// <param name="doc"></param>
+        /// <param name="forcesave"></param>
         /// <category>Files</category>
         /// <returns></returns>
         [Update("file/{fileId}/saveediting")]
-        public FileWrapper SaveEditing(String fileId, string fileExtension, string downloadUri, Stream stream, String doc)
+        public FileWrapper SaveEditing(String fileId, string fileExtension, string downloadUri, Stream stream, String doc, bool forcesave)
         {
-            return new FileWrapper(_fileStorageService.SaveEditing(fileId, fileExtension, downloadUri, stream, doc));
+            return new FileWrapper(_fileStorageService.SaveEditing(fileId, fileExtension, downloadUri, stream, doc, forcesave));
         }
 
         /// <summary>
@@ -415,6 +441,7 @@ namespace ASC.Api.Documents
         /// <param name="fileName">Name of file which has to be uploaded</param>
         /// <param name="fileSize">Length in bytes of file which has to be uploaded</param>
         /// <param name="relativePath">Relative folder from folderId</param>
+        /// <param name="encrypted" visible="false"></param>
         /// <remarks>
         /// <![CDATA[
         /// Each chunk can have different length but its important what length is multiple of <b>512</b> and greater or equal than <b>5 mb</b>. Last chunk can have any size.
@@ -438,13 +465,13 @@ namespace ASC.Api.Documents
         /// ]]>
         /// </returns>
         [Create("{folderId}/upload/create_session")]
-        public object CreateUploadSession(string folderId, string fileName, long fileSize, string relativePath)
+        public object CreateUploadSession(string folderId, string fileName, long fileSize, string relativePath, bool encrypted)
         {
             var file = FileUploader.VerifyChunkedUpload(folderId, fileName, fileSize, FilesSettings.UpdateIfExist, relativePath);
 
             if (FilesLinkUtility.IsLocalFileUploader)
             {
-                var session = FileUploader.InitiateUpload(file.FolderID.ToString(), (file.ID ?? "").ToString(), file.Title, file.ContentLength);
+                var session = FileUploader.InitiateUpload(file.FolderID.ToString(), (file.ID ?? "").ToString(), file.Title, file.ContentLength, encrypted);
 
                 var response = ChunkedUploaderHandler.ToResponseObject(session, true);
                 return new
@@ -454,7 +481,7 @@ namespace ASC.Api.Documents
                     };
             }
 
-            var createSessionUrl = FilesLinkUtility.GetInitiateUploadSessionUrl(file.FolderID, file.ID, file.Title, file.ContentLength);
+            var createSessionUrl = FilesLinkUtility.GetInitiateUploadSessionUrl(file.FolderID, file.ID, file.Title, file.ContentLength, encrypted);
             var request = (HttpWebRequest)WebRequest.Create(createSessionUrl);
             request.Method = "POST";
             request.ContentLength = 0;
@@ -777,19 +804,6 @@ namespace ASC.Api.Documents
         }
 
         /// <summary>
-        /// Get presigned Uri
-        /// </summary>
-        /// <param name="fileId">File ID</param>
-        /// <returns>Url</returns>
-        /// <visible>false</visible>
-        [Read("file/{fileId}/presigned")]
-        public string GetPresignedUri(String fileId)
-        {
-            var file = _fileStorageService.GetFile(fileId, -1).NotFoundIfNull("File not found");
-            return DocumentServiceConnector.ReplaceCommunityAdress(PathProvider.GetFileStreamUrl(file));
-        }
-
-        /// <summary>
         /// Deletes the folder with the ID specified in the request
         /// </summary>
         /// <short>Delete folder</short>
@@ -822,7 +836,7 @@ namespace ASC.Api.Documents
 
             var ids = _fileStorageService.MoveOrCopyFilesCheck(itemList, destFolderId).Keys.Select(id => "file_" + id);
 
-            var entries = _fileStorageService.GetItems(new Web.Files.Services.WCFService.ItemList<string>(ids), FilterType.FilesOnly, "", "");
+            var entries = _fileStorageService.GetItems(new Web.Files.Services.WCFService.ItemList<string>(ids), FilterType.FilesOnly, false, "", "");
             return entries.Select(x => new FileWrapper((Files.Core.File)x)).ToSmartList();
         }
 
@@ -1156,7 +1170,62 @@ namespace ASC.Api.Documents
                 sharedInfo = _fileStorageService.GetSharedInfo(new Web.Files.Services.WCFService.ItemList<string> { objectId }).Find(r => r.SubjectId == FileConstant.ShareLinkId);
             }
 
-            return sharedInfo.ShortenLink ?? sharedInfo.Link;
+            return sharedInfo.Link;
+        }
+
+        /// <summary>
+        ///   Get a list of available providers
+        /// </summary>
+        /// <category>Third-Party Integration</category>
+        /// <returns>List of provider key</returns>
+        /// <remarks>List of provider key: DropboxV2, Box, WebDav, Yandex, OneDrive, SharePoint, GoogleDrive</remarks>
+        /// <returns></returns>
+        [Read("thirdparty/capabilities")]
+        public List<List<string>> Capabilities()
+        {
+            var result = new List<List<string>>();
+
+            if (CoreContext.UserManager.GetUsers(SecurityContext.CurrentAccount.ID).IsVisitor()
+                || (!CoreContext.UserManager.IsUserInGroup(SecurityContext.CurrentAccount.ID, Core.Users.Constants.GroupAdmin.ID)
+                    && !WebItemSecurity.IsProductAdministrator(ProductEntryPoint.ID, SecurityContext.CurrentAccount.ID)
+                    && !FilesSettings.EnableThirdParty
+                    && !CoreContext.Configuration.Personal))
+            {
+                return result;
+            }
+
+            if (ThirdpartyConfiguration.SupportBoxInclusion)
+            {
+                result.Add(new List<string> { "Box", BoxLoginProvider.Instance.ClientID, BoxLoginProvider.Instance.RedirectUri });
+            }
+            if (ThirdpartyConfiguration.SupportDropboxInclusion)
+            {
+                result.Add(new List<string> { "DropboxV2", DropboxLoginProvider.Instance.ClientID, DropboxLoginProvider.Instance.RedirectUri });
+            }
+            if (ThirdpartyConfiguration.SupportGoogleDriveInclusion)
+            {
+                result.Add(new List<string> { "GoogleDrive", GoogleLoginProvider.Instance.ClientID, GoogleLoginProvider.Instance.RedirectUri });
+            }
+            if (ThirdpartyConfiguration.SupportOneDriveInclusion)
+            {
+                result.Add(new List<string> { "OneDrive", OneDriveLoginProvider.Instance.ClientID, OneDriveLoginProvider.Instance.RedirectUri });
+            }
+            if (ThirdpartyConfiguration.SupportSharePointInclusion)
+            {
+                result.Add(new List<string> { "SharePoint" });
+            }
+            if (ThirdpartyConfiguration.SupportYandexInclusion)
+            {
+                result.Add(new List<string> { "Yandex" });
+            }
+            if (ThirdpartyConfiguration.SupportWebDavInclusion)
+            {
+                result.Add(new List<string> { "WebDav" });
+            }
+
+            //Obsolete BoxNet, DropBox, Google, SkyDrive,
+
+            return result;
         }
 
         /// <summary>
@@ -1173,7 +1242,7 @@ namespace ASC.Api.Documents
         /// <param name="providerId">Provider ID</param>
         /// <category>Third-Party Integration</category>
         /// <returns>Folder contents</returns>
-        /// <remarks> List of provider key: DropboxV2, Box, WebDav, Yandex, OneDrive, SharePoint, GoogleDrive</remarks>
+        /// <remarks>List of provider key: DropboxV2, Box, WebDav, Yandex, OneDrive, SharePoint, GoogleDrive</remarks>
         /// <exception cref="ArgumentException"></exception>
         [Create("thirdparty")]
         public FolderWrapper SaveThirdParty(
@@ -1272,6 +1341,18 @@ namespace ASC.Api.Documents
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="save"></param>
+        /// <visible>false</visible>
+        /// <returns></returns>
+        [Update(@"hideconfirmconvert")]
+        public bool HideConfirmConvert(bool save)
+        {
+            return _fileStorageService.HideConfirmConvert(save);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="set"></param>
         /// <returns></returns>
         [Update(@"updateifexist")]
@@ -1295,6 +1376,13 @@ namespace ASC.Api.Documents
             FilesLinkUtility.DocServicePortalUrl = docServiceUrlPortal;
 
             MessageService.Send(HttpContext.Current.Request, MessageAction.DocumentServiceLocationSetting);
+
+            var https = new Regex(@"^https://", RegexOptions.IgnoreCase);
+            var http = new Regex(@"^http://", RegexOptions.IgnoreCase);
+            if (https.IsMatch(CommonLinkUtility.GetFullAbsolutePath("")) && http.IsMatch(FilesLinkUtility.DocServiceUrl))
+            {
+                throw new Exception("Mixed Active Content is not allowed. HTTPS address for Document Server is required.");
+            }
 
             DocumentServiceConnector.CheckDocServiceUrl();
 
@@ -1325,47 +1413,6 @@ namespace ASC.Api.Documents
                 };
         }
 
-        /// <visible>false</visible>
-        [Read("provider")]
-        public IEnumerable<string> GetThirdpartyProvider()
-        {
-            var providers = new List<string>();
-
-            if (ThirdpartyConfiguration.SupportGoogleDriveInclusion)
-            {
-                providers.Add("GoogleDrive");
-            }
-            if (ThirdpartyConfiguration.SupportBoxInclusion)
-            {
-                providers.Add("Box");
-            }
-            if (ThirdpartyConfiguration.SupportDropboxInclusion)
-            {
-                providers.Add("DropboxV2");
-            }
-            if (ThirdpartyConfiguration.SupportSharePointInclusion)
-            {
-                providers.Add("SharePoint");
-            }
-            if (ThirdpartyConfiguration.SupportOneDriveInclusion)
-            {
-                providers.Add("OneDrive");
-            }
-            if (ThirdpartyConfiguration.SupportSharePointInclusion)
-            {
-                providers.Add("SkyDrive");
-            }
-            if (ThirdpartyConfiguration.SupportYandexInclusion)
-            {
-                providers.Add("Yandex");
-            }
-            if (ThirdpartyConfiguration.SupportWebDavInclusion)
-            {
-                providers.Add("WebDav");
-            }
-            return providers;
-        }
-
 
         private FolderContentWrapper ToFolderContentWrapper(object folderId, Guid userIdOrGroupId, FilterType filterType)
         {
@@ -1377,9 +1424,12 @@ namespace ASC.Api.Documents
                                                                                startIndex,
                                                                                Convert.ToInt32(_context.Count) - 1, //NOTE: in ApiContext +1
                                                                                filterType,
-                                                                               new OrderBy(sortBy, !_context.SortDescending),
+                                                                               filterType == FilterType.ByUser,
                                                                                userIdOrGroupId.ToString(),
-                                                                               _context.FilterValue),
+                                                                               _context.FilterValue,
+                                                                               false,
+                                                                               false,
+                                                                               new OrderBy(sortBy, !_context.SortDescending)),
                                             startIndex);
         }
 
@@ -1445,7 +1495,7 @@ namespace ASC.Api.Documents
             }
             try
             {
-                var token = WordpressLoginProvider.GetAccessToken(code);
+                var token = OAuth20TokenHelper.GetAccessToken<WordpressLoginProvider>(code);
                 WordpressToken.SaveToken(token);
                 var meInfo = WordpressHelper.GetWordpressMeInfo(token.AccessToken);
                 var blogId = JObject.Parse(meInfo).Value<string>("token_site_id");

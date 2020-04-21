@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -31,6 +31,7 @@ ASC.Projects.AllMilestones = (function () {
         filter = baseObject.ProjectsAdvansedFilter,
         pageNavigator = baseObject.PageNavigator,
         common = baseObject.Common,
+        milestoneAction = baseObject.MilestoneAction,
         currentProject;
 
 
@@ -66,7 +67,7 @@ ASC.Projects.AllMilestones = (function () {
             self = this;
 
             function canCreateMilestone(prj) {
-                return prj.canCreateMilestone && prj.status === 0;
+                return prj.canCreateMilestone;
             }
 
             var actions = [
@@ -86,14 +87,16 @@ ASC.Projects.AllMilestones = (function () {
                 baseEmptyScreen: {
                     img: "milestones",
                     header: resources.MilestoneResource.MilestoneNotFound_Header,
-                    description: resources.MilestoneResource.MilestonesMarkMajorTimestamps,
+                    description: teamlab.profile.isVisitor
+                                    ? resources.MilestoneResource.MilestonesMarkMajorTimestampsVisitor
+                                    : resources.MilestoneResource.MilestonesMarkMajorTimestamps,
                     button: {
                         title: resources.MilestoneResource.PlanFirstMilestone,
-                        onclick: ASC.Projects.MilestoneAction.showNewMilestonePopup,
+                        onclick: milestoneAction.showNewMilestonePopup,
                         canCreate: function () {
                             return currentProjectId ?
                                 canCreateMilestone(currentProject) :
-                                ASC.Projects.Master.Projects.some(canCreateMilestone);
+                                baseObject.Master.Projects.some(canCreateMilestone);
                         }
                     }
                 },
@@ -146,7 +149,9 @@ ASC.Projects.AllMilestones = (function () {
         // Events
 
         $milestoneList.on(clickEventName, "td.responsible span", function () {
-            var milestone = getMilestoneByTarget(jq(this));
+            var $self = jq(this);
+            if ($self.hasClass("not-action")) return;
+            var milestone = getMilestoneByTarget($self);
             filter.addUser('responsible_for_milestone', milestone.responsibleId, ['user_tasks']);
         });
 
@@ -183,7 +188,7 @@ ASC.Projects.AllMilestones = (function () {
             isNotify: milestone.isNotify
         };
 
-        ASC.Projects.MilestoneAction.onGetMilestoneBeforeUpdate(milestoneForUpdate);
+        milestoneAction.onGetMilestoneBeforeUpdate(milestoneForUpdate);
     }
 
     function addMilestoneTaskActionHandler(milestoneId) {
@@ -197,8 +202,11 @@ ASC.Projects.AllMilestones = (function () {
     }
 
     function maRemoveHandler(milestoneId) {
+        var milestone = getMilestoneById(milestoneId);
         self.showCommonPopup("milestoneRemoveWarning", function () {
             loadingBanner.displayLoading();
+
+            milestoneAction.updateCaldavMilestone(milestone.id, milestone.projectId, 2);
             teamlab.removePrjMilestone(milestoneId);
             jq.unblockUI();
         });
@@ -210,6 +218,7 @@ ASC.Projects.AllMilestones = (function () {
             teamlab.removePrjMilestones({ ids: milestoneids }, {
                 success: function (params, data) {
                     for (var i = 0; i < data.length; i++) {
+                        milestoneAction.updateCaldavMilestone(data[i].id, data[i].projectId, 2);
                         teamlab.call(teamlab.events.removePrjMilestone, this, [{ disableMessage: true }, data[i]]);
                     }
                     loadingBanner.hideLoading();
@@ -262,6 +271,7 @@ ASC.Projects.AllMilestones = (function () {
         if (milestone.responsible) {
             template.responsible = milestone.responsible.displayName;
             template.responsibleId = milestone.responsible.id;
+            template.isTerminated = milestone.responsible.isTerminated;
         } else {
             template.responsible = null;
             template.responsibleId = null;
@@ -322,7 +332,7 @@ ASC.Projects.AllMilestones = (function () {
         self.showOrHideData(currentMilestonesList, filterMilestoneCount);
         $milestoneListBody.find("tr:first").yellowFade();
 
-        ASC.Projects.MilestoneAction.unlockMilestoneActionPage();
+        milestoneAction.unlockMilestoneActionPage();
         jq.unblockUI();
     };
     function onUpdateMilestone(params, milestone) {
@@ -336,7 +346,7 @@ ASC.Projects.AllMilestones = (function () {
 
         $updatedMilestone.replaceWith(newMilestone);
         newMilestone.yellowFade();
-        ASC.Projects.MilestoneAction.unlockMilestoneActionPage();
+        milestoneAction.unlockMilestoneActionPage();
         jq.unblockUI();
         common.displayInfoPanel(projectsJsResource.MilestoneUpdated);
     };

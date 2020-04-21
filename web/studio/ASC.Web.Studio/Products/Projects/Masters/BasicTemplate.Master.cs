@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -103,11 +103,11 @@ namespace ASC.Web.Projects.Masters
         public void RegisterCRMResources()
         {
             Master
-                .AddStyles(ResolveUrl, "~/products/crm/app_themes/default/css/common.less",
-                    "~/products/crm/app_themes/default/css/contacts.less")
+                .AddStyles(ResolveUrl, "~/Products/CRM/App_Themes/default/css/common.less",
+                    "~/Products/CRM/App_Themes/default/css/contacts.less")
                 .AddBodyScripts(ResolveUrl,
-                    "~/products/crm/js/contacts.js",
-                    "~/products/crm/js/common.js");
+                    "~/Products/CRM/js/contacts.js",
+                    "~/Products/CRM/js/common.js");
         }
 
         public void WriteProjectResources()
@@ -136,9 +136,11 @@ namespace ASC.Web.Projects.Masters
                     .AddSource(ResolveUrl, new ClientTemplateResources())
                     .AddSource(ResolveUrl,
                         "~/js/asc/plugins/jquery-projectadvansedselector.js",
+                        "~/js/asc/plugins/progressdialog.js",
                         "~/js/third-party/autosize.js",
                         "~/js/uploader/ajaxupload.js")
                     .AddSource(PathProvider.GetFileStaticRelativePath,
+                        "jquery-tagsadvansedselector.js",
                         "jq_projects_extensions.js",
                         "helper.js",
                         "common.js",
@@ -159,8 +161,7 @@ namespace ASC.Web.Projects.Masters
                         "timetracking.js",
                         "apitimetraking.js",
                         "ganttchart_min.js",
-                        "ganttchartpage.js",
-                        "settings.js");
+                        "ganttchartpage.js");
         }
 
         public StyleBundleData GetStaticStyleSheet()

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -46,14 +46,14 @@ window.accountsPanel = (function($) {
             maxHeight = $content.css("max-height").replace(/[^-\d\.]/g, '');
             $panel.hover(expand, collapse);
 
-            serviceManager.bind(window.Teamlab.events.getAccounts, update);
-            serviceManager.bind(window.Teamlab.events.removeMailMailbox, update);
-            serviceManager.bind(window.Teamlab.events.updateMailMailbox, update);
-            serviceManager.bind(window.Teamlab.events.setMailMailboxState, update);
-            serviceManager.bind(window.Teamlab.events.createMailMailboxSimple, update);
-            serviceManager.bind(window.Teamlab.events.createMailMailboxOAuth, update);
-            serviceManager.bind(window.Teamlab.events.updateMailMailboxOAuth, update);
-            serviceManager.bind(window.Teamlab.events.createMailMailbox, update);
+            window.Teamlab.bind(window.Teamlab.events.getAccounts, update);
+            window.Teamlab.bind(window.Teamlab.events.removeMailMailbox, update);
+            window.Teamlab.bind(window.Teamlab.events.updateMailMailbox, update);
+            window.Teamlab.bind(window.Teamlab.events.setMailMailboxState, update);
+            window.Teamlab.bind(window.Teamlab.events.createMailMailboxSimple, update);
+            window.Teamlab.bind(window.Teamlab.events.createMailMailboxOAuth, update);
+            window.Teamlab.bind(window.Teamlab.events.updateMailMailboxOAuth, update);
+            window.Teamlab.bind(window.Teamlab.events.createMailMailbox, update);
         }
     };
 
@@ -189,14 +189,18 @@ window.accountsPanel = (function($) {
             }
 
             if (TMMail.pageIs('sysfolders')) {
-                var folder = TMMail.getSysFolderNameById(MailFilter.getFolder());
                 var filterTo = (MailFilter.getTo() || '').toLowerCase();
-                var sysfolderAnchor = '#' + folder + MailFilter.toAnchor(false, { to: filterTo == account.email.toLowerCase() ? '' : account.email }, true);
+                var folder = TMMail.getSysFolderNameById(MailFilter.getFolder());
+                var sysfolderAnchor = folder +
+                    (TMMail.pageIs("userfolder") ? "=" + TMMail.extractUserFolderIdFromAnchor() : "") +
+                     MailFilter.toAnchor(false, { to: filterTo == account.email.toLowerCase() ? '' : account.email }, true);
+
                 ASC.Controls.AnchorController.move(sysfolderAnchor);
             } else if (TMMail.pageIs('writemessage')) {
                 messagePage.selectFromAccount({}, {
                     account: account
                 });
+                TMMail.scrollTop();
             } else {
                 ASC.Controls.AnchorController.move('#inbox/to=' + encodeURIComponent(account.email) + '/');
             }

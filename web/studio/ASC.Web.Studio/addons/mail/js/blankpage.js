@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -84,6 +84,46 @@ window.blankPages = (function($) {
         );
     }
 
+    function showEmptyUserFolders() {
+        var buttons = [{
+            text: MailScriptResource.EmptyScrUserFoldersButton,
+            cssClass: "addFirstElement",
+            handler: function () {
+                userFoldersPage.createFolder();
+                return false;
+            },
+            href: null
+        }];
+
+        showPage(
+            "userFoldersEmptyScreen",
+            MailScriptResource.EmptyScrUserFoldersHeader,
+            MailScriptResource.EmptyScrUserFoldersDescription,
+            'userfolder',
+            buttons
+        );
+    }
+
+    function showEmptyFilters() {
+        var buttons = [{
+            text: MailScriptResource.EmptyScrFiltersButton,
+            cssClass: "addFirstElement",
+            handler: function () {
+                filtersPage.createFilter();
+                return false;
+            },
+            href: null
+        }];
+
+        showPage(
+            "filtersEmptyScreen",
+            MailScriptResource.EmptyScrFiltersHeader,
+            MailScriptResource.EmptyScrFiltersDescription,
+            'userFilter',
+            buttons
+        );
+    }
+
     function showNoLettersFilter() {
         var buttons = [{
             text: MailScriptResource.ResetFilterButton,
@@ -134,6 +174,11 @@ window.blankPages = (function($) {
             description = MailScriptResource.EmptyDraftsDescription;
             imgClass = 'drafts';
             buttons[0].text = MailScriptResource.EmptyDraftsButton;
+        } else if (TMMail.pageIs('templates')) {
+            header = MailScriptResource.EmptyTemplatesHeader;
+            description = MailScriptResource.EmptyTemplatesDescription;
+            imgClass = 'drafts';
+            buttons[0].text = MailScriptResource.EmptyTemplatesButton;
         } else if (TMMail.pageIs('trash')) {
             header = MailScriptResource.EmptyTrashHeader;
             description = MailScriptResource.EmptyTrashDescription;
@@ -143,6 +188,11 @@ window.blankPages = (function($) {
             header = MailScriptResource.EmptySpamHeader;
             description = MailScriptResource.EmptySpamDescription;
             imgClass = 'spam';
+            buttons = [];
+        } else if (TMMail.pageIs('userfolder')) { 
+            header = MailScriptResource.EmptyUserFolderHeader; 
+            description = MailScriptResource.EmptyUserFolderDescription;
+            imgClass = 'inbox'; // TODO: Change to userfolder
             buttons = [];
         }
 
@@ -263,7 +313,7 @@ window.blankPages = (function($) {
                 text: window.MailAdministrationResource.MigrateFromMSExchangeButton,
                 cssClass: "linkMseFaq",
                 handler: null,
-                href: "http://helpcenter.onlyoffice.com/server/docker/enterprise/migrate-from-exchange.aspx",
+                href: ASC.Resources.Master.HelpLink + "/server/docker/enterprise/migrate-from-exchange.aspx",
                 skipNewLine: true,
                 openNewTab: true
             });
@@ -307,6 +357,7 @@ window.blankPages = (function($) {
         });
 
         page.show();
+        TMMail.scrollTop();
     }
 
     function hide() {
@@ -325,6 +376,8 @@ window.blankPages = (function($) {
         showNoMailContacts: showNoMailContacts,
         showEmptyTags: showEmptyTags,
         showNoMailDomains: showNoMailDomains,
+        showEmptyUserFolders: showEmptyUserFolders,
+        showEmptyFilters: showEmptyFilters,
         hide: hide
     };
 })(jQuery);

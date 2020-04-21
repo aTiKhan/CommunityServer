@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -54,6 +54,11 @@ namespace ASC.Core.Users
             return users;
         }
 
+        public static bool HasAvatar(this UserInfo userInfo)
+        {
+            return UserPhotoManager.UserHasAvatar(userInfo.ID);
+        }
+
         public static Size GetPhotoSize(this UserInfo userInfo)
         {
             return UserPhotoManager.GetPhotoSize(userInfo.ID);
@@ -63,7 +68,17 @@ namespace ASC.Core.Users
         {
             return UserPhotoManager.GetPhotoAbsoluteWebPath(userInfo.ID);
         }
-     
+
+        public static string GetRetinaPhotoURL(this UserInfo userInfo)
+        {
+            return UserPhotoManager.GetRetinaPhotoURL(userInfo.ID);
+        }
+
+        public static string GetMaxPhotoURL(this UserInfo userInfo)
+        {
+            return UserPhotoManager.GetMaxPhotoURL(userInfo.ID);
+        }
+
         public static string GetBigPhotoURL(this UserInfo userInfo)
         {
             return UserPhotoManager.GetBigPhotoURL(userInfo.ID);
@@ -84,9 +99,9 @@ namespace ASC.Core.Users
             var sb = new StringBuilder();
 
             //check for removed users
-            if (userInfo == null || !CoreContext.UserManager.UserExists(userInfo.ID))
+            if (userInfo.ID == Constants.LostUser.ID)
             {
-                sb.Append("<span class='userLink text-medium-describe' style='white-space:nowrap;'>profile removed</span>");
+                sb.AppendFormat("<span class='userLink text-medium-describe' style='white-space:nowrap;'>{0}</span>", userInfo.DisplayUserName());
             }
             else
             {

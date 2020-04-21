@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -43,6 +43,18 @@ namespace ASC.Projects.Data.DAO
         public string GetById(int id)
         {
             return Db.ExecuteScalar<string>(Query(TagsTable).Select("title").Where("id", id));
+        }
+
+        public KeyValuePair<int, string> Create(string data)
+        {
+            var tagId = Db.ExecuteScalar<int>(
+                Insert(TagsTable)
+                    .InColumnValue("id", 0)
+                    .InColumnValue("title", data)
+                    .InColumnValue("last_modified_by", DateTime.UtcNow)
+                    .Identity(1, 0, true));
+
+            return new KeyValuePair<int, string>(tagId, data);
         }
 
         public Dictionary<int, string> GetTags()
@@ -126,6 +138,42 @@ namespace ASC.Projects.Data.DAO
             }
         }
 
+        public void SetProjectTags(int projectId, IEnumerable<int> tags)
+        {
+            using (var tx = Db.BeginTransaction(IsolationLevel.ReadUncommitted))
+            {
+                Db.ExecuteNonQuery(new SqlDelete(ProjectTagTable).Where("project_id", projectId));
+
+                var query = new SqlQuery(TagsTable + " pt")
+                    .Select("DISTINCT(pt.id)")
+                    .LeftOuterJoin(ProjectTagTable + " ppt", Exp.EqColumns("ppt.tag_id", "pt.id"))
+                    .Where("ppt.tag_id", null);
+
+                var tagsToDelete = Db.ExecuteList(query, r => (int)r[0]);
+
+                foreach (var tag in tagsToDelete.Except(tags))
+                {
+                    if (Db.ExecuteScalar<int>(new SqlQuery(ProjectTagTable).Select("project_id").Where("tag_id", tag)) == 0)
+                    {
+                        Db.ExecuteNonQuery(Delete(TagsTable).Where("id", tag));
+                    }
+                }
+
+                if (tags.Any())
+                {
+                    var insert = new SqlInsert(ProjectTagTable, true).InColumns("project_id", "tag_id");
+
+                    foreach (var t in tags)
+                    {
+                        insert.Values(projectId, t);
+                    }
+
+                    Db.ExecuteNonQuery(insert);
+                }
+
+                tx.Commit();
+            }
+        }
 
         private SqlQuery GetTagQuery()
         {

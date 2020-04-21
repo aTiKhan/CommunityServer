@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -33,6 +33,7 @@ using ASC.Security.Cryptography;
 using ASC.Web.Core.Files;
 using ASC.Web.Files.Classes;
 using ASC.Web.Files.Helpers;
+using ASC.Web.Files.Resources;
 using ASC.Web.Files.Utils;
 using ASC.Web.Studio.Core;
 using Newtonsoft.Json;
@@ -77,7 +78,7 @@ namespace ASC.Web.Files.HttpHandlers
                         return;
 
                     case ChunkedRequestType.Initiate:
-                        var createdSession = FileUploader.InitiateUpload(request.FolderId, request.FileId, request.FileName, request.FileSize);
+                        var createdSession = FileUploader.InitiateUpload(request.FolderId, request.FileId, request.FileName, request.FileSize, request.Encrypted);
                         WriteSuccess(context, ToResponseObject(createdSession, true));
                         return;
 
@@ -99,6 +100,11 @@ namespace ASC.Web.Files.HttpHandlers
                         WriteError(context, "Unknown request type.");
                         return;
                 }
+            }
+            catch (FileNotFoundException error)
+            {
+                Global.Logger.Error(error);
+                WriteError(context, FilesCommonResource.ErrorMassage_FileNotFound);
             }
             catch (Exception error)
             {
@@ -312,6 +318,11 @@ namespace ASC.Web.Files.HttpHandlers
 
                     return _cultureInfo = SetupInfo.EnabledCulturesPersonal.Find(c => String.Equals(c.Name, culture, StringComparison.InvariantCultureIgnoreCase));
                 }
+            }
+
+            public bool Encrypted
+            {
+                get { return _request["encrypted"] == "true"; }
             }
 
             private HttpPostedFileBase File

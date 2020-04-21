@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -32,49 +32,6 @@ using ASC.Data.Storage;
 public static class Extensions
 {
     private const int BufferSize = 2048;//NOTE: set to 2048 to fit in minimum tcp window
-
-    internal static Stream GetBuffered(this Stream srcStream)
-    {
-        if (srcStream == null) throw new ArgumentNullException("srcStream");
-        if (!srcStream.CanSeek || srcStream.CanTimeout)
-        {
-            //Buffer it
-            var memStream = TempStream.Create();
-            srcStream.StreamCopyTo(memStream);
-            memStream.Position = 0;
-            return memStream;
-        }
-        return srcStream;
-    }
-
-    public static byte[] GetCorrectBuffer(this Stream stream)
-    {
-        if (stream == null)
-        {
-            throw new ArgumentNullException("stream");
-        }
-
-        using (var mem = stream.GetBuffered())
-        {
-            var buffer = new byte[mem.Length];
-            mem.Position = 0;
-            mem.Read(buffer, 0, buffer.Length);
-            return buffer;
-        }
-    }
-
-    public static void StreamCopyTo(this Stream srcStream, Stream dstStream)
-    {
-        if (srcStream == null) throw new ArgumentNullException("srcStream");
-        if (dstStream == null) throw new ArgumentNullException("dstStream");
-
-        var buffer = new byte[BufferSize];
-        int readed;
-        while ((readed = srcStream.Read(buffer, 0, BufferSize)) > 0)
-        {
-            dstStream.Write(buffer, 0, readed);
-        }
-    }
 
     public static Stream IronReadStream(this IDataStore store, string domain, string path, int tryCount)
     {

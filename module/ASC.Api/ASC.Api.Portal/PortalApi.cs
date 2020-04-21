@@ -1,6 +1,6 @@
-/*
+﻿/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -27,7 +27,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Configuration;
 using System.Globalization;
 using System.Linq;
 using System.Net;
@@ -35,8 +34,10 @@ using System.Security;
 using System.Threading;
 using System.Web;
 using ASC.Api.Attributes;
+using ASC.Api.Collections;
 using ASC.Api.Impl;
 using ASC.Api.Interfaces;
+using ASC.Common.Logging;
 using ASC.Core;
 using ASC.Core.Billing;
 using ASC.Core.Common.Contracts;
@@ -45,19 +46,26 @@ using ASC.Core.Common.Notify.Push;
 using ASC.Core.Notify.Jabber;
 using ASC.Core.Tenants;
 using ASC.Core.Users;
-using ASC.FederatedLogin.LoginProviders;
+using ASC.ElasticSearch;
+using ASC.ElasticSearch.Core;
+using ASC.Geolocation;
 using ASC.Security.Cryptography;
+using ASC.Web.Core;
 using ASC.Web.Core.Helpers;
 using ASC.Web.Core.Mobile;
+using ASC.Web.Core.Utility.Settings;
 using ASC.Web.Studio.Core;
 using ASC.Web.Studio.Core.Backup;
 using ASC.Web.Studio.Core.Notify;
 using ASC.Web.Studio.Core.SMS;
+using ASC.Web.Studio.Core.TFA;
+using ASC.Web.Studio.Core.Users;
 using ASC.Web.Studio.PublicResources;
 using ASC.Web.Studio.UserControls.FirstTime;
 using ASC.Web.Studio.Utility;
 using Resources;
 using SecurityContext = ASC.Core.SecurityContext;
+using UrlShortener = ASC.Web.Core.Utility.UrlShortener;
 
 namespace ASC.Api.Portal
 {
@@ -132,6 +140,10 @@ namespace ASC.Api.Portal
         [Read("users/invite/{employeeType}")]
         public string GeInviteLink(EmployeeType employeeType)
         {
+            if (!CoreContext.UserManager.GetUsers(SecurityContext.CurrentAccount.ID).IsAdmin()
+                && !WebItemSecurity.IsProductAdministrator(WebItemManager.PeopleProductID, SecurityContext.CurrentAccount.ID))
+                throw new SecurityException("Method not available");
+
             return CommonLinkUtility.GetConfirmationUrl(string.Empty, ConfirmType.LinkInvite, (int)employeeType, SecurityContext.CurrentAccount.ID)
                    + String.Format("&emplType={0}", (int)employeeType);
         }
@@ -147,11 +159,11 @@ namespace ASC.Api.Portal
         {
             try
             {
-                return BitlyLoginProvider.GetShortenLink(link);
+                return UrlShortener.Instance.GetShortenLink(link);
             }
             catch (Exception ex)
             {
-                log4net.LogManager.GetLogger("ASC.Web").Error("getshortenlink", ex);
+                LogManager.GetLogger("ASC.Web").Error("getshortenlink", ex);
                 return link;
             }
         }
@@ -425,9 +437,9 @@ namespace ASC.Api.Portal
         /// <param name="backupMail">Include mail in the backup</param>
         /// <category>Backup</category>
         [Create("createbackupschedule")]
-        public void CreateBackupSchedule(BackupStorageType storageType, BackupAjaxHandler.StorageParams storageParams, int backupsStored, BackupAjaxHandler.CronParams cronParams, bool backupMail)
+        public void CreateBackupSchedule(BackupStorageType storageType, IEnumerable<ItemKeyValuePair<string, string>> storageParams, int backupsStored, BackupAjaxHandler.CronParams cronParams, bool backupMail)
         {
-            backupHandler.CreateSchedule(storageType, storageParams, backupsStored, cronParams, backupMail);
+            backupHandler.CreateSchedule(storageType, storageParams.ToDictionary(r=> r.Key, r=> r.Value), backupsStored, cronParams, backupMail);
         }
 
         /// <summary>
@@ -449,9 +461,9 @@ namespace ASC.Api.Portal
         /// <category>Backup</category>
         /// <returns>Backup Progress</returns>
         [Create("startbackup")]
-        public BackupProgress StartBackup(BackupStorageType storageType, BackupAjaxHandler.StorageParams storageParams, bool backupMail)
+        public BackupProgress StartBackup(BackupStorageType storageType, IEnumerable<ItemKeyValuePair<string, string>> storageParams, bool backupMail)
         {
-            return backupHandler.StartBackup(storageType, storageParams, backupMail);
+            return backupHandler.StartBackup(storageType, storageParams.ToDictionary(r=> r.Key, r=> r.Value), backupMail);
         }
 
         /// <summary>
@@ -507,9 +519,9 @@ namespace ASC.Api.Portal
         /// <category>Backup</category>
         /// <returns>Restore Progress</returns>
         [Create("startrestore")]
-        public BackupProgress StartBackupRestore(string backupId, BackupStorageType storageType, BackupAjaxHandler.StorageParams storageParams, bool notify)
+        public BackupProgress StartBackupRestore(string backupId, BackupStorageType storageType, IEnumerable<ItemKeyValuePair<string, string>> storageParams, bool notify)
         {
-            return backupHandler.StartRestore(backupId, storageType, storageParams, notify);
+            return backupHandler.StartRestore(backupId, storageType, storageParams.ToDictionary(r => r.Key, r => r.Value), notify);
         }
 
         /// <summary>
@@ -523,6 +535,12 @@ namespace ASC.Api.Portal
             return backupHandler.GetRestoreProgress();
         }
 
+        ///<visible>false</visible>
+        [Read("backuptmp")]
+        public string GetTempPath(string alias)
+        {
+            return backupHandler.GetTmpFolder();
+        }
 
 
         ///<visible>false</visible>
@@ -544,20 +562,21 @@ namespace ASC.Api.Portal
             var tenant = CoreContext.TenantManager.GetCurrentTenant();
             var user = CoreContext.UserManager.GetUsers(SecurityContext.CurrentAccount.ID);
 
+            var localhost = CoreContext.Configuration.BaseDomain == "localhost" || tenant.TenantAlias == "localhost";
+
             var newAlias = alias.ToLowerInvariant();
             var oldAlias = tenant.TenantAlias;
             var oldVirtualRootPath = CommonLinkUtility.GetFullAbsolutePath("~").TrimEnd('/');
 
             if (!String.Equals(newAlias, oldAlias, StringComparison.InvariantCultureIgnoreCase))
             {
-                var hostedSolution = new HostedSolution(ConfigurationManager.ConnectionStrings["default"]);
                 if (!String.IsNullOrEmpty(ApiSystemHelper.ApiSystemUrl))
                 {
                     ApiSystemHelper.ValidatePortalName(newAlias);
                 }
                 else
                 {
-                    hostedSolution.CheckTenantAddress(newAlias.Trim());
+                    CoreContext.TenantManager.CheckTenantAddress(newAlias.Trim());
                 }
 
 
@@ -567,7 +586,7 @@ namespace ASC.Api.Portal
                 }
 
                 tenant.TenantAlias = alias;
-                tenant = hostedSolution.SaveTenant(tenant);
+                tenant = CoreContext.TenantManager.SaveTenant(tenant);
 
 
                 if (!String.IsNullOrEmpty(ApiSystemHelper.ApiCacheUrl))
@@ -575,8 +594,7 @@ namespace ASC.Api.Portal
                     ApiSystemHelper.RemoveTenantFromCache(oldAlias);
                 }
 
-                var newVirtualRootPath = CommonLinkUtility.GetFullAbsolutePath("~").TrimEnd('/');
-                if (!string.Equals(oldVirtualRootPath, newVirtualRootPath, StringComparison.InvariantCultureIgnoreCase))
+                if (!localhost || string.IsNullOrEmpty(tenant.MappedDomain))
                 {
                     StudioNotifyService.Instance.PortalRenameNotify(oldVirtualRootPath);
                 }
@@ -594,6 +612,30 @@ namespace ASC.Api.Portal
             };
         }
 
+        ///<visible>false</visible>
+        [Update("portalanalytics")]
+        public bool UpdatePortalAnalytics(bool enable)
+        {
+            SecurityContext.DemandPermissions(SecutiryConstants.EditPortalSettings);
+
+            if (!(TenantExtra.Opensource || (TenantExtra.Saas && SetupInfo.CustomScripts.Length != 0)) || CoreContext.Configuration.CustomMode)
+                throw new SecurityException();
+
+            if (TenantExtra.Opensource)
+            {
+                var wizardSettings = WizardSettings.Load();
+                wizardSettings.Analytics = enable;
+                wizardSettings.Save();
+            }
+            else if (TenantExtra.Saas)
+            {
+                var analyticsSettings = TenantAnalyticsSettings.Load();
+                analyticsSettings.Analytics = enable;
+                analyticsSettings.Save();
+            }
+
+            return enable;
+        }
 
         #region create reference for auth on renamed tenant
 
@@ -623,9 +665,16 @@ namespace ASC.Api.Portal
                     StudioNotifyService.Instance.SendCongratulations(currentUser);
                     FirstTimeTenantSettings.SendInstallInfo(currentUser);
 
-                    if (SetupInfo.SmsRegistration && !SetupInfo.IsSecretEmail(currentUser.Email))
+                    if (!SetupInfo.IsSecretEmail(currentUser.Email))
                     {
-                        StudioSmsNotificationSettings.Enable = true;
+                        if (SetupInfo.TfaRegistration == "sms")
+                        {
+                            StudioSmsNotificationSettings.Enable = true;
+                        }
+                        else if (SetupInfo.TfaRegistration == "code")
+                        {
+                            TfaAppAuthSettings.Enable = true;
+                        }
                     }
                     break;
                 default:
@@ -686,7 +735,7 @@ namespace ASC.Api.Portal
 
         ///<visible>false</visible>
         [Read("bar/promotions")]
-        public string GetBarPromotions(string domain, string page)
+        public string GetBarPromotions(string domain, string page, bool desktop)
         {
             try
             {
@@ -722,6 +771,7 @@ namespace ASC.Api.Portal
                 query["domain"] = domain;
                 query["page"] = page;
                 query["agent"] = Request.UserAgent ?? Request.Headers["User-Agent"];
+                query["desktop"] = desktop.ToString();
 
                 uriBuilder.Query = query.ToString();
 
@@ -733,7 +783,7 @@ namespace ASC.Api.Portal
             }
             catch (Exception ex)
             {
-                log4net.LogManager.GetLogger("ASC.Web").Error("GetBarTips", ex);
+                LogManager.GetLogger("ASC.Web").Error("GetBarTips", ex);
                 return null;
             }
         }
@@ -757,13 +807,13 @@ namespace ASC.Api.Portal
             }
             catch (Exception ex)
             {
-                log4net.LogManager.GetLogger("ASC.Web").Error("MarkBarPromotion", ex);
+                LogManager.GetLogger("ASC.Web").Error("MarkBarPromotion", ex);
             }
         }
 
         ///<visible>false</visible>
         [Read("bar/tips")]
-        public string GetBarTips(string page, bool productAdmin)
+        public string GetBarTips(string page, bool productAdmin, bool desktop)
         {
             try
             {
@@ -789,6 +839,7 @@ namespace ASC.Api.Portal
                 query["visitor"] = user.IsVisitor().ToString();
                 query["userCreatedDate"] = user.CreateDate.ToString(CultureInfo.InvariantCulture);
                 query["tenantCreatedDate"] = tenant.CreatedDateTime.ToString(CultureInfo.InvariantCulture);
+                query["desktop"] = desktop.ToString();
 
                 uriBuilder.Query = query.ToString();
 
@@ -800,7 +851,7 @@ namespace ASC.Api.Portal
             }
             catch (Exception ex)
             {
-                log4net.LogManager.GetLogger("ASC.Web").Error("GetBarTips", ex);
+                LogManager.GetLogger("ASC.Web").Error("GetBarTips", ex);
                 return null;
             }
         }
@@ -826,7 +877,7 @@ namespace ASC.Api.Portal
             }
             catch (Exception ex)
             {
-                log4net.LogManager.GetLogger("ASC.Web").Error("MarkBarTip", ex);
+                LogManager.GetLogger("ASC.Web").Error("MarkBarTip", ex);
             }
         }
 
@@ -850,8 +901,63 @@ namespace ASC.Api.Portal
             }
             catch (Exception ex)
             {
-                log4net.LogManager.GetLogger("ASC.Web").Error("DeleteBarTips", ex);
+                LogManager.GetLogger("ASC.Web").Error("DeleteBarTips", ex);
             }
+        }
+
+        [Read("search")]
+        public IEnumerable<object> GetSearchSettings()
+        {
+            return SearchSettings.GetAllItems().Select(r => new
+            {
+                id =r.ID,
+                title = r.Title,
+                enabled = r.Enabled
+            });
+        }
+
+        [Read("search/state")]
+        public object CheckSearchAvailable()
+        {
+            return FactoryIndexer.GetState();
+        }
+
+        [Create("search/reindex")]
+        public object Reindex(string name)
+        {
+            FactoryIndexer.Reindex(name);
+            return CheckSearchAvailable();
+        }
+
+        [Create("search")]
+        public void SetSearchSettings(List<SearchSettingsItem> items)
+        {
+            SearchSettings.Set(items);
+        }
+
+        /// <summary>
+        ///    Get random password
+        /// </summary>
+        /// <short>Get random password</short>
+        ///<visible>false</visible>
+        [Read(@"randompwd")]
+        public string GetRandomPassword()
+        {
+            var password = UserManagerWrapper.GeneratePassword();
+            return password;
+        }
+
+        /// <summary>
+        ///    Get information by IP address
+        /// </summary>
+        /// <short>Get information by IP address</short>
+        ///<visible>false</visible>
+        [Read("ip/{ipAddress}")]
+        public object GetIPInformation(string ipAddress)
+        {
+            GeolocationHelper helper = new GeolocationHelper("teamlabsite");
+            return helper.GetIPGeolocation(ipAddress);
+   
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -24,6 +24,7 @@
 */
 
 
+using System.Globalization;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -69,6 +70,63 @@ namespace System
             var byteHash = CSP.ComputeHash(bytes);
 
             return byteHash.Aggregate(String.Empty, (current, b) => current + String.Format("{0:x2}", b));
+        }
+
+        public static int EnumerableComparer(this string x, string y)
+        {
+            var xIndex = 0;
+            var yIndex = 0;
+
+            while (xIndex < x.Length)
+            {
+                if (yIndex >= y.Length)
+                    return 1;
+
+                if (char.IsDigit(x[xIndex]) && char.IsDigit(y[yIndex]))
+                {
+                    var xBuilder = new StringBuilder();
+                    while (xIndex < x.Length && char.IsDigit(x[xIndex]))
+                    {
+                        xBuilder.Append(x[xIndex++]);
+                    }
+
+                    var yBuilder = new StringBuilder();
+                    while (yIndex < y.Length && char.IsDigit(y[yIndex]))
+                    {
+                        yBuilder.Append(y[yIndex++]);
+                    }
+
+                    long xValue;
+                    if (!long.TryParse(xBuilder.ToString(), out xValue))
+                    {
+                        xValue = Int64.MaxValue;
+                    }
+
+                    long yValue;
+                    if (!long.TryParse(yBuilder.ToString(), out yValue))
+                    {
+                        yValue = Int64.MaxValue;
+                    }
+
+                    int difference;
+                    if ((difference = xValue.CompareTo(yValue)) != 0)
+                        return difference;
+                }
+                else
+                {
+                    int difference;
+                    if ((difference = string.Compare(x[xIndex].ToString(CultureInfo.InvariantCulture), y[yIndex].ToString(CultureInfo.InvariantCulture), StringComparison.InvariantCultureIgnoreCase)) != 0)
+                        return difference;
+
+                    xIndex++;
+                    yIndex++;
+                }
+            }
+
+            if (yIndex < y.Length)
+                return -1;
+
+            return 0;
         }
     }
 }

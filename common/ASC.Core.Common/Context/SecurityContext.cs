@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -31,6 +31,7 @@ using System.Security.Authentication;
 using System.Security.Principal;
 using System.Threading;
 using System.Web;
+using ASC.Common.Logging;
 using ASC.Common.Security;
 using ASC.Common.Security.Authentication;
 using ASC.Common.Security.Authorizing;
@@ -40,13 +41,12 @@ using ASC.Core.Security.Authorizing;
 using ASC.Core.Tenants;
 using ASC.Core.Users;
 using ASC.Security.Cryptography;
-using log4net;
 
 namespace ASC.Core
 {
     public static class SecurityContext
     {
-        private readonly static ILog log = LogManager.GetLogger("ASC.Core");
+        private static readonly ILog log = LogManager.GetLogger("ASC.Core");
 
 
         public static IAccount CurrentAccount
@@ -112,7 +112,7 @@ namespace ASC.Core
                     }
 
                     var settingsTenant = TenantCookieSettings.GetForTenant(tenant);
-                    if (!settingsTenant.IsDefault() && indexTenant != settingsTenant.Index)
+                    if (indexTenant != settingsTenant.Index)
                     {
                         return false;
                     }
@@ -127,7 +127,7 @@ namespace ASC.Core
                         if (userid != Guid.Empty)
                         {
                             var settingsUser = TenantCookieSettings.GetForUser(userid);
-                            if (!settingsUser.IsDefault() && indexUser != settingsUser.Index)
+                            if (indexUser != settingsUser.Index)
                             {
                                 return false;
                             }

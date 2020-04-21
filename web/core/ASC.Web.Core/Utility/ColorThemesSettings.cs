@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -25,7 +25,6 @@
 
 
 using System;
-using System.Configuration;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Web;
@@ -39,7 +38,6 @@ namespace ASC.Web.Core.Utility
     {
         public const string ThemeFolderTemplate = "<theme_folder>";
         private const string DefaultName = "pure-orange";
-        private static readonly string DesktopSkin = ConfigurationManager.AppSettings["web.desktop.skin"];
 
 
         [DataMember(Name = "ColorThemeName")]
@@ -65,7 +63,7 @@ namespace ASC.Web.Core.Utility
         public static string GetThemeFolderName(string path)
         {
             var folderName = GetColorThemesSettings();
-            var resolvedPath = path.ToLower().Replace(ThemeFolderTemplate, folderName);
+            var resolvedPath = path.Replace(ThemeFolderTemplate, folderName);
 
             if (!VirtualPathUtility.IsAbsolute(resolvedPath))
                 resolvedPath = VirtualPathUtility.ToAbsolute(resolvedPath);
@@ -78,7 +76,7 @@ namespace ASC.Web.Core.Utility
             }
             catch (Exception)
             {
-                resolvedPath = path.ToLower().Replace(ThemeFolderTemplate, "default");
+                resolvedPath = path.Replace(ThemeFolderTemplate, "default");
 
                 if (!VirtualPathUtility.IsAbsolute(resolvedPath))
                     resolvedPath = VirtualPathUtility.ToAbsolute(resolvedPath);
@@ -94,11 +92,6 @@ namespace ASC.Web.Core.Utility
 
         public static string GetColorThemesSettings()
         {
-            if (HttpContext.Current != null && HttpContext.Current.Request.DesktopApp())
-            {
-                return DesktopSkin ?? "bright-blue";
-            }
-
             var colorTheme = Load();
             var colorThemeName = colorTheme.ColorThemeName;
 

@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -29,8 +29,10 @@ using System.Linq;
 using System.ServiceModel.Security;
 using System.Web;
 using System.Web.UI;
+
 using AjaxPro;
 using Amazon.SecurityToken.Model;
+using ASC.Common.Logging;
 using ASC.Core;
 using ASC.Core.Tenants;
 using ASC.MessagingSystem;
@@ -40,7 +42,7 @@ using ASC.Web.Core.Security;
 using ASC.Web.Studio.Core;
 using ASC.Web.Studio.Core.Notify;
 using ASC.Web.Studio.Utility;
-using log4net;
+
 using Newtonsoft.Json;
 using Resources;
 
@@ -237,22 +239,20 @@ namespace ASC.Web.Studio.UserControls.Management
                 throw new SecurityAccessDeniedException(Resource.ErrorConfirmURLError);
             }
 
-            var curTenant = CoreContext.TenantManager.GetCurrentTenant();
-            var tariff = CoreContext.TenantManager.GetTenantQuota(curTenant.TenantId);
-
-            CoreContext.TenantManager.RemoveTenant(curTenant.TenantId);
+            var tenant = CoreContext.TenantManager.GetCurrentTenant();
+            CoreContext.TenantManager.RemoveTenant(tenant.TenantId);
 
             if (!String.IsNullOrEmpty(ApiSystemHelper.ApiCacheUrl))
             {
-                ApiSystemHelper.RemoveTenantFromCache(curTenant.TenantAlias);
+                ApiSystemHelper.RemoveTenantFromCache(tenant.TenantAlias);
             }
 
-            var currentUser = CoreContext.UserManager.GetUsers(curTenant.OwnerId);
+            var owner = CoreContext.UserManager.GetUsers(tenant.OwnerId);
             var redirectLink = SetupInfo.TeamlabSiteRedirect + "/remove-portal-feedback-form.aspx#" +
-                        Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("{\"firstname\":\"" + currentUser.FirstName +
-                                                                                    "\",\"lastname\":\"" + currentUser.LastName +
-                                                                                    "\",\"alias\":\"" + curTenant.TenantAlias +
-                                                                                    "\",\"email\":\"" + currentUser.Email + "\"}"));
+                        Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("{\"firstname\":\"" + owner.FirstName +
+                                                                                    "\",\"lastname\":\"" + owner.LastName +
+                                                                                    "\",\"alias\":\"" + tenant.TenantAlias +
+                                                                                    "\",\"email\":\"" + owner.Email + "\"}"));
 
             var authed = false;
             try
@@ -274,13 +274,13 @@ namespace ASC.Web.Studio.UserControls.Management
             _successMessage = string.Format(Resource.DeletePortalSuccessMessage, "<br/>", "<a href=\"{0}\">", "</a>");
             _successMessage = string.Format(_successMessage, redirectLink);
 
-            StudioNotifyService.Instance.SendMsgPortalDeletionSuccess(curTenant, tariff, redirectLink);
+            StudioNotifyService.Instance.SendMsgPortalDeletionSuccess(owner, redirectLink);
 
-            return JsonConvert.SerializeObject(
-                new {
+            return JsonConvert.SerializeObject(new
+                {
                     successMessage = _successMessage,
-                    redirectLink = redirectLink }
-                );
+                    redirectLink
+                });
         }
 
 

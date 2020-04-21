@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -34,5 +34,10 @@ namespace ASC.FederatedLogin
         public const string OpenId = "openid";
         public const string Box = "box";
         public const string Google = "google";
+        public const string Yandex = "yandex";
+        public const string MailRu = "mailru";
+        public const string VK = "vk";
+        public const string GosUslugi = "gosuslugi";
+        public const string Encryption = "blockchain";
     }
 }

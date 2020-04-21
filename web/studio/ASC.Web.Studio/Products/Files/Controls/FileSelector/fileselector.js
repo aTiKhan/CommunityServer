@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -149,9 +149,12 @@ window.ASC.Files.FileSelector = (function () {
                 count: ASC.Files.Constants.COUNT_ON_PAGE,
                 append: isAppend === true,
                 filter: filterSettings.filter,
-                subject: filterSettings.subject,
-                text: filterSettings.text,
+                subjectGroup: false,
+                subjectId: filterSettings.subject,
+                search: filterSettings.text,
                 orderBy: filterSettings.sorter,
+                searchInContent: false,
+                withSubfolders: false,
                 currentFolderId: ASC.Files.Folders && ASC.Files.Folders.currentFolder ? ASC.Files.Folders.currentFolder.id : null,
                 expandTree: expandTree
             }, { orderBy: filterSettings.sorter });
@@ -189,18 +192,27 @@ window.ASC.Files.FileSelector = (function () {
         folderId = folderId || ASC.Files.FileSelector.fileSelectorTree.getDefaultFolderId();
         ASC.Files.FileSelector.fileSelectorTree.setCurrent(folderId);
 
+        ASC.Files.FileSelector.fileSelectorTree.clickOnFolder(folderId);
+
         if (!isFolderSelector) {
             ASC.Files.UI.filesSelectedHandler = selectFile;
 
-            selectFolder(folderId);
+            jq("#submitFileSelector").toggleClass("disable",
+                !isFolderSelector || !ASC.Files.Common.isCorrectId(ASC.Files.FileSelector.fileSelectorTree.selectedFolderId));
         }
-
-        jq("#submitFileSelector").toggleClass("disable",
-            !isFolderSelector || !ASC.Files.Common.isCorrectId(ASC.Files.FileSelector.fileSelectorTree.selectedFolderId));
     };
 
     var setTitle = function (newTitle) {
         jq("#fileSelectorTitle").text((newTitle || "").trim());
+    };
+
+    var showThirdPartyOnly = function (providerKey) {
+        jq("#fileSelectorTree>ul>li.third-party-entry").each(function(i, treeNode) {
+            var entryData = ASC.Files.UI.getObjectData(treeNode);
+            if (entryData.provider_key != providerKey) {
+                jq(treeNode).hide();
+            }
+        });
     };
 
     var createThirdPartyTree = function (callback) {
@@ -213,7 +225,7 @@ window.ASC.Files.FileSelector = (function () {
             return;
         }
 
-        if (jsonData.length > 0) {
+        if (jsonData && jsonData.length > 0) {
             var stringXml = ASC.Files.Common.jsonToXml({ folderList: { entry: jsonData } });
 
             var htmlXml = ASC.Files.TemplateManager.translateFromString(stringXml);
@@ -230,6 +242,10 @@ window.ASC.Files.FileSelector = (function () {
     var onGetFolderItemsTree = function (xmlData, params, errorMessage) {
         ASC.Files.EventHandler.onGetFolderItems(xmlData, params, errorMessage);
 
+        if (typeof errorMessage != "undefined" || typeof xmlData == "undefined") {
+            return;
+        }
+
         if (params.expandTree) {
             ASC.Files.FileSelector.fileSelectorTree.expandFolder(params.currentFolderId, true, true);
         }
@@ -244,6 +260,7 @@ window.ASC.Files.FileSelector = (function () {
 
         toggleThirdParty: toggleThirdParty,
         createThirdPartyTree: createThirdPartyTree,
+        showThirdPartyOnly: showThirdPartyOnly,
 
         fileSelectorTree: fileSelectorTree,
         filesFilter: filesFilter,

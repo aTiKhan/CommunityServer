@@ -1,6 +1,6 @@
 /*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -46,7 +46,7 @@ jq(document).on("keyup",
 
         if (jq(this).is("#studio_confirm_pwd")) {
             //do postback
-            window.submitForm("confirmInvite", "");
+            jq("#buttonConfirmInvite").click();
             return;
         }
 
@@ -60,16 +60,19 @@ jq(document).on("keyup",
 
 jq(document).on("click", "#buttonConfirmInvite", function () {
     var requireFields = {
-        email: jq("#studio_confirm_Email"),
-        firstname: jq("#studio_confirm_FirstName"),
-        lastname: jq("#studio_confirm_LastName"),
-        psw: jq("#studio_confirm_pwd")
-    },
+            email: jq("#studio_confirm_Email"),
+            firstname: jq("#studio_confirm_FirstName"),
+            lastname: jq("#studio_confirm_LastName"),
+            psw: jq("#studio_confirm_pwd")
+        },
         error = 0;
 
     jq("#registrationForm input").removeClass("with-error");
 
     for (var item in requireFields) {
+        
+        if (requireFields[item].is(":visible")) requireFields[item].val(requireFields[item].val().trim())
+
         if (requireFields[item].is(":visible") && !requireFields[item].val()) {
             requireFields[item].addClass("with-error");
             error++;
@@ -78,6 +81,18 @@ jq(document).on("click", "#buttonConfirmInvite", function () {
 
     if (requireFields.email.is(":visible") && !jq.isValidEmail(requireFields.email.val())) {
         requireFields.email.addClass("with-error");
+        error++;
+    }
+
+    var regexp = new XRegExp(ASC.Resources.Master.UserNameRegExpr.Pattern);
+
+    if (requireFields.firstname.is(":visible") && !regexp.test(requireFields.firstname.val())) {
+        requireFields.firstname.addClass("with-error");
+        error++;
+    }
+
+    if (requireFields.lastname.is(":visible") && !regexp.test(requireFields.lastname.val())) {
+        requireFields.lastname.addClass("with-error");
         error++;
     }
 

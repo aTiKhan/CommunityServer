@@ -35,6 +35,15 @@
                 </div>
             </div>
             <% } %>
+            <% if (IsAmi)
+                { %>
+            <div>
+                <div class="label"><%= Resource.EmailAndPasswordAmiId %></div>
+                <div>
+                    <input id="amiid" class="textEdit" maxlength="50" />
+                </div>
+            </div>
+            <% } %>
         </div>
         <% if (RequestLicense)
             { %>
@@ -105,7 +114,7 @@
                           "</a>") %></label>
 </div>
 <% }
-   else if (TenantExtra.Opensource)
+   else if (TenantExtra.Opensource && !CoreContext.Configuration.CustomMode)
    { %>
 <div class="analytics-accept">
     <input type="checkbox" id="analyticsAcceptedOpenSource" checked="checked">

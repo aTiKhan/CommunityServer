@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -27,13 +27,16 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Net;
 using System.Linq;
 using ASC.Common.Caching;
+using ASC.Common.Logging;
 using ASC.Common.Threading.Workers;
 using ASC.Data.Storage;
 using ASC.Web.CRM.Configuration;
+using ASC.Web.CRM.Resources;
 using ASC.Web.Core.Utility.Skins;
 using ASC.Web.Core;
 
@@ -422,12 +425,8 @@ namespace ASC.Web.CRM.Classes
 
         public static void TryUploadPhotoFromTmp(int contactID, bool isNewContact, string tmpDirName)
         {
-            var directoryTmpPath = String.IsNullOrEmpty(tmpDirName) ? BuildFileTmpDirectory(contactID) : BuildFileTmpDirectory(tmpDirName);
             var directoryPath = BuildFileDirectory(contactID);
             var dataStore = Global.GetStore();
-
-            if (!dataStore.IsDirectory(directoryTmpPath))
-                return;
 
             try
             {
@@ -438,6 +437,7 @@ namespace ASC.Web.CRM.Classes
                 foreach (var photoSize in new[] {_bigSize, _mediumSize, _smallSize})
                 {
                     var photoTmpPath = FromDataStoreRelative(isNewContact ? 0 : contactID, photoSize, true, tmpDirName);
+                    if (string.IsNullOrEmpty(photoTmpPath)) throw new Exception("Temp phono not found");
 
                     var imageExtension = Path.GetExtension(photoTmpPath);
 
@@ -459,7 +459,7 @@ namespace ASC.Web.CRM.Classes
             }
             catch(Exception ex)
             {
-                log4net.LogManager.GetLogger("ASC.CRM").ErrorFormat("TryUploadPhotoFromTmp for contactID={0} failed witth error: {1}", contactID, ex);
+                LogManager.GetLogger("ASC.CRM").ErrorFormat("TryUploadPhotoFromTmp for contactID={0} failed witth error: {1}", contactID, ex);
                 return;
             }
         }
@@ -564,7 +564,7 @@ namespace ASC.Web.CRM.Classes
 
         #region UploadPhoto Methods
 
-        public static PhotoData UploadPhoto(String imageUrl, int contactID, bool uploadOnly)
+        public static PhotoData UploadPhoto(String imageUrl, int contactID, bool uploadOnly, bool checkFormat = true)
         {
             var request = (HttpWebRequest)WebRequest.Create(imageUrl);
             using (var response = request.GetResponse())
@@ -572,21 +572,24 @@ namespace ASC.Web.CRM.Classes
                 using (var inputStream = response.GetResponseStream())
                 {
                     var imageData = ToByteArray(inputStream, (int)response.ContentLength);
-                    return UploadPhoto(imageData, contactID, uploadOnly);
+                    return UploadPhoto(imageData, contactID, uploadOnly, checkFormat);
                 }
             }
         }
 
-        public static PhotoData UploadPhoto(Stream inputStream, int contactID, bool uploadOnly)
+        public static PhotoData UploadPhoto(Stream inputStream, int contactID, bool uploadOnly, bool checkFormat = true)
         {
             var imageData = Global.ToByteArray(inputStream);
-            return UploadPhoto(imageData, contactID, uploadOnly);
+            return UploadPhoto(imageData, contactID, uploadOnly, checkFormat);
         }
 
-        private static PhotoData UploadPhoto(byte[] imageData, int contactID, bool uploadOnly)
+        public static PhotoData UploadPhoto(byte[] imageData, int contactID, bool uploadOnly, bool checkFormat = true)
         {
             if (contactID == 0)
                 throw new ArgumentException();
+
+            if (checkFormat)
+                CheckImgFormat(imageData);
 
             DeletePhoto(contactID, uploadOnly, null, false);
 
@@ -596,7 +599,7 @@ namespace ASC.Web.CRM.Classes
         }
 
 
-        public static PhotoData UploadPhotoToTemp(String imageUrl, String tmpDirName)
+        public static PhotoData UploadPhotoToTemp(String imageUrl, String tmpDirName, bool checkFormat = true)
         {
             var request = (HttpWebRequest)WebRequest.Create(imageUrl);
             using (var response = request.GetResponse())
@@ -608,19 +611,22 @@ namespace ASC.Web.CRM.Classes
                     {
                         tmpDirName = Guid.NewGuid().ToString();
                     }
-                    return UploadPhotoToTemp(imageData, tmpDirName);
+                    return UploadPhotoToTemp(imageData, tmpDirName, checkFormat);
                 }
             }
         }
 
-        public static PhotoData UploadPhotoToTemp(Stream inputStream, String tmpDirName)
+        public static PhotoData UploadPhotoToTemp(Stream inputStream, String tmpDirName, bool checkFormat = true)
         {
             var imageData = Global.ToByteArray(inputStream);
-            return UploadPhotoToTemp(imageData, tmpDirName);
+            return UploadPhotoToTemp(imageData, tmpDirName, checkFormat);
         }
 
-        private static PhotoData UploadPhotoToTemp(byte[] imageData, String tmpDirName)
+        public static PhotoData UploadPhotoToTemp(byte[] imageData, String tmpDirName, bool checkFormat = true)
         {
+            if (checkFormat)
+                CheckImgFormat(imageData);
+
             DeletePhoto(tmpDirName);
 
             ExecGenerateThumbnail(imageData, tmpDirName);
@@ -628,6 +634,19 @@ namespace ASC.Web.CRM.Classes
             return ResizeToBigSize(imageData, tmpDirName);
         }
 
+        public static ImageFormat CheckImgFormat(byte[] imageData)
+        {
+            using (var stream = new MemoryStream(imageData))
+            using (var img = new Bitmap(stream))
+            {
+                var format = img.RawFormat;
+
+                if (!format.Equals(ImageFormat.Png) && !format.Equals(ImageFormat.Jpeg))
+                    throw new Exception(CRMJSResource.ErrorMessage_NotImageSupportFormat);
+
+                return format;
+            }
+        }
 
         public class PhotoData
         {

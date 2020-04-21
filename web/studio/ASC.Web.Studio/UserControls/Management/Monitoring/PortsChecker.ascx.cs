@@ -1,6 +1,6 @@
-﻿/*
+/*
  *
- * (c) Copyright Ascensio System Limited 2010-2016
+ * (c) Copyright Ascensio System Limited 2010-2020
  *
  * This program is freeware. You can redistribute it and/or modify it under the terms of the GNU 
  * General Public License (GPL) version 3 as published by the Free Software Foundation (https://www.gnu.org/copyleft/gpl.html). 
@@ -62,8 +62,8 @@ namespace ASC.Web.Studio.UserControls.Management
         protected void Page_Load(object sender, EventArgs e)
         {
             AjaxPro.Utility.RegisterTypeForAjax(GetType(), Page);
-            Page.RegisterBodyScripts("~/usercontrols/management/monitoring/js/portschecker.js")
-                .RegisterStyle("~/usercontrols/management/monitoring/css/monitoring.less");
+            Page.RegisterBodyScripts("~/UserControls/Management/Monitoring/js/portschecker.js")
+                .RegisterStyle("~/UserControls/Management/Monitoring/css/monitoring.less");
 
             HelpLink = CommonLinkUtility.GetHelpLink();
         }
